@@ -1,0 +1,35 @@
+{
+  "name": "sistema-ibv-frontend",
+  "version": "0.0.1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "nuxt dev",
+    "build": "nuxt build",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "lint": "eslint .",
+    "format": "prettier --write ."
+  },
+  "dependencies": {
+    "vue": "^3.4.21",
+    "nuxt": "^3.9.1",
+    "pinia": "^2.1.7",
+    "axios": "^1.6.5",
+    "html5-qrcode": "^2.3.8",
+    "xlsx": "^0.18.5",
+    "print-js": "^1.6.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.10.0",
+    "tailwindcss": "^3.4.1",
+    "postcss": "^8.4.32",
+    "autoprefixer": "^10.4.16",
+    "typescript": "^5.3.3",
+    "@types/node": "^20.10.6",
+    "vue-eslint-parser": "^9.4.0",
+    "eslint": "^8.56.0",
+    "eslint-config-prettier": "^9.1.0",
+    "prettier": "^3.1.1"
+  }
+}
