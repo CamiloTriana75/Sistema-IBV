@@ -1,0 +1,88 @@
+# =========================
+# OS & Editors
+# =========================
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.sublime-workspace
+*.sublime-project
+.vscode/
+.idea/
+
+# =========================
+# Frontend (React + Vite)
+# =========================
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+frontend/.cache/
+frontend/coverage/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# =========================
+# Backend (Laravel)
+# =========================
+backend/vendor/
+backend/node_modules/
+backend/.env
+backend/storage/*.key
+backend/storage/framework/cache/data/*
+backend/storage/framework/sessions/*
+backend/storage/framework/views/*
+backend/storage/logs/*
+backend/bootstrap/cache/*
+backend/public/hot
+backend/public/storage
+backend/.phpunit.result.cache
+backend/Homestead.yaml
+backend/Homestead.json
+backend/auth.json
+
+# =========================
+# Supabase
+# =========================
+.supabase/
+
+# =========================
+# Dependencies & Build
+# =========================
+node_modules/
+vendor/
+dist/
+build/
+*.lock
+!composer.lock
+!package-lock.json
+
+# =========================
+# Environment Variables
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Logs
+# =========================
+*.log
+logs/
+
+# =========================
+# Testing
+# =========================
+coverage/
+.phpunit.result.cache
+.pytest_cache/
+
+# =========================
+# Misc
+# =========================
+*.bak
+*.tmp
+*.temp
