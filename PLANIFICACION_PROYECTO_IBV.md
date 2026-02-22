@@ -5,7 +5,7 @@
 **Fecha de inicio de planificación:** 21 de febrero de 2026  
 **Metodología:** Scrum (Sprints de 2 semanas)  
 **Equipo:** 3 desarrolladores  
-**Stack Tecnológico:** React (Frontend) + Laravel (Backend/API) + Supabase (Base de datos - plan pago)
+**Stack Tecnológico:** Vue (Frontend) + Nuxt + Django (Backend/API) + Python + Supabase (Base de datos - plan pago)
 
 ---
 
@@ -112,24 +112,25 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 
 ```
 ┌─────────────────────────────────────────────────────┐
-│                    FRONTEND (React)                  │
-│  - React 18+ con Vite                               │
-│  - React Router DOM (rutas protegidas por rol)      │
+│                   FRONTEND (Vue/Nuxt)               │
+│  - Vue 3 + Nuxt 3                                   │
+│  - Nuxt Router (rutas protegidas por rol)           │
 │  - TailwindCSS (estilos)                            │
-│  - Zustand o Context API (estado global)            │
-│  - html5-qrcode (escaneo QR por cámara)             │
-│  - react-to-print (impresión)                       │
-│  - xlsx / exceljs (exportación Excel)               │
-│  - recharts (gráficos estadísticos)                 │
+│  - Pinia (estado global)                            │
+│  - html5-qrcode (escaneo QR por camara)             │
+│  - print-js (impresion)                             │
+│  - xlsx / exceljs (exportacion Excel)               │
+│  - echarts (graficos estadisticos)                  │
 │  - PWA (para uso en celular como app)               │
 ├─────────────────────────────────────────────────────┤
-│                    BACKEND (Laravel)                 │
-│  - Laravel 11+                                      │
-│  - Laravel Sanctum (autenticación API)              │
-│  - Spatie Laravel Permission (roles/permisos)       │
+│                    BACKEND (Django)                │
+│  - Django 5+                                        │
+│  - Django REST Framework (API)                      │
+│  - JWT (autenticacion API)                          │
+│  - Permisos por roles (Django/DRF)                  │
 │  - API RESTful                                      │
-│  - Laravel Excel (Maatwebsite) para reportes        │
-│  - QR Code Generator (simplesoftwareio/simple-qrcode)│
+│  - pandas + openpyxl (reportes Excel)               │
+│  - qrcode (generacion de QR)                        │
 ├─────────────────────────────────────────────────────┤
 │               BASE DE DATOS (Supabase)              │
 │  - PostgreSQL (motor de Supabase)                   │
@@ -206,9 +207,9 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 ### Equipo:
 | Miembro | Rol principal | Enfoque |
 |---|---|---|
-| **Dev 1** | Frontend Lead | React, UI/UX, componentes, escaneo QR |
-| **Dev 2** | Backend Lead | Laravel, API, base de datos, lógica de negocio |
-| **Dev 3** | Fullstack | Integración, reportes, módulos secundarios |
+| **Dev 1** | Frontend Lead | Vue, Nuxt, UI/UX, componentes, escaneo QR |
+| **Dev 2** | Backend Lead | Django, API, base de datos, logica de negocio |
+| **Dev 3** | Fullstack | Integracion, reportes, modulos secundarios |
 
 ---
 
@@ -218,14 +219,14 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 | Tarea | Responsable | Story Points | Descripción |
 |---|---|---|---|
 | Configurar repositorio Git + ramas (dev, staging, main) | Dev 2 | 2 | Repositorio con branching strategy |
-| Configurar proyecto React + Vite + TailwindCSS | Dev 1 | 3 | Scaffold frontend con estructura de carpetas |
-| Configurar proyecto Laravel + Sanctum + conexión Supabase | Dev 2 | 5 | Backend base con auth configurada |
+| Configurar proyecto Vue + Nuxt + TailwindCSS | Dev 1 | 3 | Scaffold frontend con estructura de carpetas |
+| Configurar proyecto Django + DRF + JWT + conexión Supabase | Dev 2 | 5 | Backend base con auth configurada |
 | Configurar Supabase: BD + Storage + esquema inicial | Dev 3 | 5 | Crear tablas, storage buckets |
 | Diseñar mockups: Login + Dashboard + Admin usuarios (pantallas 1-3) | Dev 1 | 5 | Wireframes en Figma o herramienta elegida |
 | Diseñar mockups: Recepción + Escaneo QR (pantallas 4-5, 17) | Dev 3 | 5 | Wireframes flujo de recepción |
 | Diseñar mockups: Impronta + Inventario + Despacho (pantallas 6-12) | Dev 1 | 8 | Wireframes flujo principal |
 | Diseñar mockups: Portería + Reportes + Ficha vehículo (pantallas 13-19) | Dev 3 | 5 | Wireframes módulos complementarios |
-| Definir modelo de datos y migraciones Laravel | Dev 2 | 5 | Migraciones + seeders de modelos de vehículo |
+| Definir modelo de datos y migraciones Django | Dev 2 | 5 | Migraciones + seeders de modelos de vehículo |
 | Definir endpoints de la API (documentación) | Dev 2 | 3 | Swagger/Postman collection |
 
 ---
@@ -246,7 +247,7 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 | **Frontend:** Pantalla de recepción - identificación de buque | Dev 3 | 5 | US-04 |
 | **Frontend:** Pantalla de recepción - escaneo y registro de vehículo | Dev 3 | 5 | US-05 |
 | **Frontend:** Selector de modelo pre-establecido | Dev 3 | 3 | US-06 |
-| **Integración:** Conectar frontend auth con backend Sanctum | Dev 3 | 3 | US-02 |
+| **Integración:** Conectar frontend auth con backend DRF/JWT | Dev 3 | 3 | US-02 |
 
 **Total SP Sprint 1: 55**
 
@@ -299,7 +300,7 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 | Tarea | Responsable | SP | User Story |
 |---|---|---|---|
 | **Backend:** API de estadísticas (vehículos recibidos, despachados, pendientes) | Dev 2 | 5 | US-19 |
-| **Backend:** Exportación a Excel (Laravel Excel) | Dev 2 | 5 | US-20 |
+| **Backend:** Exportación a Excel (pandas + openpyxl) | Dev 2 | 5 | US-20 |
 | **Backend:** Generación de recibos | Dev 2 | 3 | US-21 |
 | **Frontend:** Dashboard de estadísticas con gráficos | Dev 1 | 8 | US-19 |
 | **Frontend:** Botones de exportación a Excel | Dev 1 | 3 | US-20 |
@@ -335,7 +336,7 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 
 | Sprint | Dev 1 (Frontend) | Dev 2 (Backend) | Dev 3 (Fullstack) |
 |---|---|---|---|
-| Sprint 0 | Mockups UI principal + config React | Config Laravel + Supabase + modelo datos | Mockups complementarios + Config DB |
+| Sprint 0 | Mockups UI principal + config Vue/Nuxt | Config Django + Supabase + modelo datos | Mockups complementarios + Config DB |
 | Sprint 1 | Login, Admin, Componente QR | Auth API, CRUD usuarios, API buques/vehículos | Pantallas recepción, integración auth |
 | Sprint 2 | Impronta (foto+QR), vista imprimible | API impronta, storage, API inventario | Checklist inventario, ficha vehículo |
 | Sprint 3 | Despacho (inicio, escaneo, planilla) | API despacho, lógica validación, portería | Panel portería, listados, integración |
