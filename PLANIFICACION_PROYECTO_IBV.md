@@ -202,52 +202,56 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 
 ---
 
-## 8. SPRINT PLANNING - DISTRIBUCIÓN PARA 3 PERSONAS
 
-### Equipo:
-| Miembro | Rol principal | Enfoque |
-|---|---|---|
-| **Dev 1** | Frontend Lead | Vue, Nuxt, UI/UX, componentes, escaneo QR |
-| **Dev 2** | Backend Lead | Django, API, base de datos, logica de negocio |
-| **Dev 3** | Fullstack | Integracion, reportes, modulos secundarios |
+## 8. SPRINT PLANNING — DISTRIBUCIÓN PARA 3 PERSONAS (con tipo y orden)
+
+> Convenciones:
+> - **[BE]** Backend (Django/DRF)
+> - **[FE]** Frontend (Vue/Nuxt)
+> - **[DB]** Base de datos / Supabase
+> - **[INFRA]** Repositorio, ramas, CI, despliegues, configuración
+> - **[INT]** Integración FE↔BE / End-to-end
+> - **[UX]** Diseño / Mockups / Wireframes
+>
+> El **orden** está pensado para desbloquear dependencias: primero infraestructura + modelo de datos + auth, luego módulos core, luego reportes y QA.
 
 ---
 
 ### 🏃 SPRINT 0 — Configuración y Mockups (Semana 1-2)
-> **Objetivo:** Infraestructura lista + Mockups aprobados
+> **Objetivo:** Infraestructura lista + Modelo de datos definido + Mockups aprobados
 
-| Tarea | Responsable | Story Points | Descripción |
-|---|---|---|---|
-| Configurar repositorio Git + ramas (dev, staging, main) | Dev 2 | 2 | Repositorio con branching strategy |
-| Configurar proyecto Vue + Nuxt + TailwindCSS | Dev 1 | 3 | Scaffold frontend con estructura de carpetas |
-| Configurar proyecto Django + DRF + JWT + conexión Supabase | Dev 2 | 5 | Backend base con auth configurada |
-| Configurar Supabase: BD + Storage + esquema inicial | Dev 3 | 5 | Crear tablas, storage buckets |
-| Diseñar mockups: Login + Dashboard + Admin usuarios (pantallas 1-3) | Dev 1 | 5 | Wireframes en Figma o herramienta elegida |
-| Diseñar mockups: Recepción + Escaneo QR (pantallas 4-5, 17) | Dev 3 | 5 | Wireframes flujo de recepción |
-| Diseñar mockups: Impronta + Inventario + Despacho (pantallas 6-12) | Dev 1 | 8 | Wireframes flujo principal |
-| Diseñar mockups: Portería + Reportes + Ficha vehículo (pantallas 13-19) | Dev 3 | 5 | Wireframes módulos complementarios |
-| Definir modelo de datos y migraciones Django | Dev 2 | 5 | Migraciones + seeders de modelos de vehículo |
-| Definir endpoints de la API (documentación) | Dev 2 | 3 | Swagger/Postman collection |
+| Orden | Tipo | Tarea | Responsable | SP | Descripción / Dependencias |
+|---:|:---:|---|---|---:|---|
+| 1 | [INFRA] | Configurar repositorio Git + ramas (dev, staging, main) | Dev 2 | 2 | Definir estrategia de ramas, protección, PR template si aplica |
+| 2 | [DB] | Configurar Supabase: BD + Storage + esquema inicial | Dev 3 | 5 | Crear proyecto, buckets, variables, roles básicos |
+| 3 | [BE] | Definir modelo de datos y migraciones Django | Dev 2 | 5 | Modelos + migraciones alineadas con entidades principales |
+| 4 | [BE] | Configurar proyecto Django + DRF + JWT + conexión Supabase | Dev 2 | 5 | Base del backend lista para endpoints |
+| 5 | [FE] | Configurar proyecto Vue + Nuxt + TailwindCSS | Dev 1 | 3 | Estructura base, layout, rutas, Tailwind |
+| 6 | [BE] | Definir endpoints de la API (documentación) | Dev 2 | 3 | Swagger/Postman collection, contratos request/response |
+| 7 | [UX] | Diseñar mockups: Login + Dashboard + Admin usuarios (pantallas 1-3) | Dev 1 | 5 | Flujo de autenticación y administración |
+| 8 | [UX] | Diseñar mockups: Recepción + Escaneo QR (pantallas 4-5, 17) | Dev 3 | 5 | Flujo de recepción y componente QR reusable |
+| 9 | [UX] | Diseñar mockups: Impronta + Inventario + Despacho (pantallas 6-12) | Dev 1 | 8 | Flujos core con estados y validaciones visibles |
+| 10 | [UX] | Diseñar mockups: Portería + Reportes + Ficha vehículo (pantallas 13-19) | Dev 3 | 5 | Complementarios + búsqueda/listados |
 
 ---
 
 ### 🏃 SPRINT 1 — Core: Auth + Recepción + Escaneo QR (Semana 3-4)
 > **Objetivo:** Login funcional + Registro de buques y vehículos con escaneo QR
 
-| Tarea | Responsable | SP | User Story |
-|---|---|---|---|
-| **Backend:** API de autenticación (login, logout, me) | Dev 2 | 5 | US-02 |
-| **Backend:** CRUD de usuarios + roles + permisos | Dev 2 | 5 | US-01, US-03 |
-| **Frontend:** Página de Login + protección de rutas por rol | Dev 1 | 5 | US-02 |
-| **Frontend:** Panel de administración de usuarios | Dev 1 | 5 | US-01 |
-| **Frontend:** Componente reutilizable de escaneo QR (cámara + pistola) | Dev 1 | 8 | US-22, US-23 |
-| **Backend:** API de buques (CRUD + búsqueda) | Dev 2 | 3 | US-04 |
-| **Backend:** API de vehículos (registro, búsqueda, QR) | Dev 2 | 5 | US-05, US-06 |
-| **Backend:** API de modelos de vehículo pre-establecidos | Dev 2 | 3 | US-06 |
-| **Frontend:** Pantalla de recepción - identificación de buque | Dev 3 | 5 | US-04 |
-| **Frontend:** Pantalla de recepción - escaneo y registro de vehículo | Dev 3 | 5 | US-05 |
-| **Frontend:** Selector de modelo pre-establecido | Dev 3 | 3 | US-06 |
-| **Integración:** Conectar frontend auth con backend DRF/JWT | Dev 3 | 3 | US-02 |
+| Orden | Tipo | Tarea | Responsable | SP | User Story / Dependencias |
+|---:|:---:|---|---|---:|---|
+| 1 | [BE] | API de autenticación (login, logout, me) | Dev 2 | 5 | US-02. Base para todo lo demás |
+| 2 | [BE] | CRUD de usuarios + roles + permisos | Dev 2 | 5 | US-01, US-03. Depende de auth |
+| 3 | [FE] | Página de Login + protección de rutas por rol | Dev 1 | 5 | US-02. Depende de endpoints auth |
+| 4 | [INT] | Conectar frontend auth con backend DRF/JWT | Dev 3 | 3 | US-02. Manejo de tokens, refresh si aplica |
+| 5 | [FE] | Panel de administración de usuarios | Dev 1 | 5 | US-01. Depende de CRUD usuarios |
+| 6 | [FE] | Componente reutilizable de escaneo QR (cámara + pistola) | Dev 1 | 8 | US-22, US-23. Debe quedar reusable |
+| 7 | [BE] | API de buques (CRUD + búsqueda) | Dev 2 | 3 | US-04 |
+| 8 | [BE] | API de modelos de vehículo pre-establecidos | Dev 2 | 3 | US-06 |
+| 9 | [BE] | API de vehículos (registro, búsqueda, QR) | Dev 2 | 5 | US-05, US-06 |
+| 10 | [FE] | Pantalla recepción — identificación de buque | Dev 3 | 5 | US-04. Depende API buques |
+| 11 | [FE] | Pantalla recepción — escaneo y registro de vehículo | Dev 3 | 5 | US-05. Depende API vehículos + componente QR |
+| 12 | [FE] | Selector de modelo pre-establecido | Dev 3 | 3 | US-06. Depende API modelos |
 
 **Total SP Sprint 1: 55**
 
@@ -256,19 +260,19 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 ### 🏃 SPRINT 2 — Impronta + Inventario (Semana 5-6)
 > **Objetivo:** Flujo completo de impronta y checklist de inventario
 
-| Tarea | Responsable | SP | User Story |
-|---|---|---|---|
-| **Backend:** API de improntas (crear, editar, consultar) | Dev 2 | 5 | US-07, US-09 |
-| **Backend:** Subida de fotos a Supabase Storage | Dev 2 | 5 | US-07 |
-| **Backend:** API de inventario (checklist, estado completo/incompleto) | Dev 2 | 5 | US-10, US-11 |
-| **Frontend:** Pantalla de registro de impronta (foto + datos + QR) | Dev 1 | 8 | US-07 |
-| **Frontend:** Captura de foto con cámara del celular | Dev 1 | 5 | US-07 |
-| **Frontend:** Vista de impronta imprimible | Dev 1 | 3 | US-08 |
-| **Frontend:** Pantalla de checklist de inventario | Dev 3 | 8 | US-10
-| **Frontend:** Vista de inventario imprimible | Dev 3 | 3 | US-12 |
-| **Frontend:** Ficha completa del vehículo (impronta + inventario + estado) | Dev 3 | 5 | General |
-| **Integración:** Flujo recepción → impronta → inventario end-to-end | Dev 3 | 3 | - |
-| **Backend:** Validación: vehículo apto para despacho (impronta + inventario OK) | Dev 2 | 3 | US-15 |
+| Orden | Tipo | Tarea | Responsable | SP | User Story / Dependencias |
+|---:|:---:|---|---|---:|---|
+| 1 | [BE] | API de improntas (crear, editar, consultar) | Dev 2 | 5 | US-07, US-09 |
+| 2 | [BE] | Subida de fotos a Supabase Storage | Dev 2 | 5 | US-07. Depende de bucket/credenciales |
+| 3 | [FE] | Pantalla de registro de impronta (foto + datos + QR) | Dev 1 | 8 | US-07. Depende API improntas |
+| 4 | [FE] | Captura de foto con cámara del celular | Dev 1 | 5 | US-07. Integrar con flujo de subida |
+| 5 | [FE] | Vista de impronta imprimible | Dev 1 | 3 | US-08 |
+| 6 | [BE] | API de inventario (checklist, completo/incompleto) | Dev 2 | 5 | US-10, US-11 |
+| 7 | [FE] | Pantalla de checklist de inventario del vehículo | Dev 3 | 8 | US-10 |
+| 8 | [FE] | Vista de inventario imprimible | Dev 3 | 3 | US-12 |
+| 9 | [FE] | Ficha completa del vehículo (impronta + inventario + estado) | Dev 3 | 5 | General. Depende de endpoints de consulta |
+| 10 | [BE] | Validación: vehículo apto para despacho (impronta + inventario OK) | Dev 2 | 3 | US-15. Regla de negocio central |
+| 11 | [INT] | Flujo recepción → impronta → inventario end-to-end | Dev 3 | 3 | Validar estados, permisos, errores |
 
 **Total SP Sprint 2: 53**
 
@@ -277,18 +281,18 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 ### 🏃 SPRINT 3 — Despacho + Portería (Semana 7-8)
 > **Objetivo:** Proceso de despacho completo y módulo de portería
 
-| Tarea | Responsable | SP | User Story |
-|---|---|---|---|
-| **Backend:** API de despacho (crear proceso, agregar vehículos) | Dev 2 | 5 | US-13 |
-| **Backend:** Lógica de escaneo secuencial + validación de aptitud | Dev 2 | 5 | US-14, US-15 |
-| **Backend:** Generación de planillas (PDF/imprimible) | Dev 2 | 5 | US-16 |
-| **Frontend:** Pantalla inicio de despacho (digitar cantidad) | Dev 1 | 3 | US-13 |
-| **Frontend:** Pantalla de escaneo secuencial de despacho | Dev 1 | 8 | US-14 |
-| **Frontend:** Vista de planilla de despacho generada | Dev 1 | 5 | US-16 |
-| **Backend:** API de portería (ingreso/salida de vehículos y personal) | Dev 2 | 3 | US-17, US-18 |
-| **Frontend:** Panel de portería | Dev 3 | 5 | US-17, US-18 |
-| **Frontend:** Listado/búsqueda general de vehículos con filtros | Dev 3 | 5 | General |
-| **Integración:** Flujo despacho end-to-end con validaciones | Dev 3 | 5 | US-15 |
+| Orden | Tipo | Tarea | Responsable | SP | User Story / Dependencias |
+|---:|:---:|---|---|---:|---|
+| 1 | [BE] | API de despacho (crear proceso, agregar vehículos) | Dev 2 | 5 | US-13 |
+| 2 | [BE] | Lógica de escaneo secuencial + validación aptitud | Dev 2 | 5 | US-14, US-15. Depende reglas Sprint 2 |
+| 3 | [FE] | Pantalla inicio de despacho (digitar cantidad) | Dev 1 | 3 | US-13 |
+| 4 | [FE] | Pantalla de escaneo secuencial de despacho | Dev 1 | 8 | US-14. Depende componente QR + API despacho |
+| 5 | [BE] | Generación de planillas (PDF/imprimible) | Dev 2 | 5 | US-16 |
+| 6 | [FE] | Vista de planilla de despacho generada | Dev 1 | 5 | US-16. Depende endpoint planilla |
+| 7 | [BE] | API de portería (ingreso/salida vehículos y personal) | Dev 2 | 3 | US-17, US-18 |
+| 8 | [FE] | Panel de portería | Dev 3 | 5 | US-17, US-18 |
+| 9 | [FE] | Listado/búsqueda general de vehículos con filtros | Dev 3 | 5 | General (apoya portería y despacho) |
+| 10 | [INT] | Flujo despacho end-to-end con validaciones | Dev 3 | 5 | US-15. Pruebas con casos borde |
 
 **Total SP Sprint 3: 49**
 
@@ -297,18 +301,18 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 ### 🏃 SPRINT 4 — Reportes, Estadísticas y Pulido (Semana 9-10)
 > **Objetivo:** Dashboard, reportes Excel, recibos y QoL
 
-| Tarea | Responsable | SP | User Story |
-|---|---|---|---|
-| **Backend:** API de estadísticas (vehículos recibidos, despachados, pendientes) | Dev 2 | 5 | US-19 |
-| **Backend:** Exportación a Excel (pandas + openpyxl) | Dev 2 | 5 | US-20 |
-| **Backend:** Generación de recibos | Dev 2 | 3 | US-21 |
-| **Frontend:** Dashboard de estadísticas con gráficos | Dev 1 | 8 | US-19 |
-| **Frontend:** Botones de exportación a Excel | Dev 1 | 3 | US-20 |
-| **Frontend:** Vista/impresión de recibos | Dev 1 | 3 | US-21 |
-| **Frontend:** Vista del cliente (consulta de estado de vehículos) | Dev 3 | 5 | US-20 |
-| **Frontend:** Responsive / PWA - optimización móvil | Dev 3 | 5 | General |
-| **Integración:** Testing end-to-end de todos los flujos | Dev 3 | 5 | - |
-| **General:** Corrección de bugs y ajustes de UX | Todos | 8 | - |
+| Orden | Tipo | Tarea | Responsable | SP | User Story / Dependencias |
+|---:|:---:|---|---|---:|---|
+| 1 | [BE] | API de estadísticas (recibidos, despachados, pendientes) | Dev 2 | 5 | US-19 |
+| 2 | [FE] | Dashboard de estadísticas con gráficos | Dev 1 | 8 | US-19. Depende API estadísticas |
+| 3 | [BE] | Exportación a Excel (pandas + openpyxl) | Dev 2 | 5 | US-20 |
+| 4 | [FE] | Botones/flujo de exportación a Excel | Dev 1 | 3 | US-20 |
+| 5 | [BE] | Generación de recibos | Dev 2 | 3 | US-21 |
+| 6 | [FE] | Vista/impresión de recibos | Dev 1 | 3 | US-21 |
+| 7 | [FE] | Vista del cliente (consulta de estado de vehículos) | Dev 3 | 5 | (Nota: en tu tabla estaba US-20, pero corresponde más a “consulta” que a Excel) |
+| 8 | [FE] | Responsive / PWA — optimización móvil | Dev 3 | 5 | General |
+| 9 | [INT] | Testing end-to-end de todos los flujos | Dev 3 | 5 | - |
+| 10 | [INT] | Corrección de bugs y ajustes de UX | Todos | 8 | - |
 
 **Total SP Sprint 4: 50**
 
@@ -317,20 +321,29 @@ Sistema web/responsivo para gestionar el ciclo completo de recepción, inventari
 ### 🏃 SPRINT 5 — QA, Deploy y Entrega (Semana 11-12)
 > **Objetivo:** Sistema estable, desplegado y documentado
 
-| Tarea | Responsable | SP | User Story |
-|---|---|---|---|
-| Testing integral de todos los módulos | Todos | 8 | - |
-| Corrección de bugs críticos | Todos | 8 | - |
-| Despliegue frontend (Vercel/Netlify) | Dev 1 | 3 | - |
-| Despliegue backend (Railway/Forge/servidor) | Dev 2 | 5 | - |
-| Configuración de dominio y SSL | Dev 2 | 2 | - |
-| Documentación de uso del sistema | Dev 3 | 5 | - |
-| Seed de datos iniciales (modelos de vehículos, roles) | Dev 3 | 3 | - |
-| Capacitación / demo al cliente | Todos | 3 | - |
+| Orden | Tipo | Tarea | Responsable | SP | Descripción / Dependencias |
+|---:|:---:|---|---|---:|---|
+| 1 | [INT] | Testing integral de todos los módulos | Todos | 8 | Pruebas funcionales + regresión |
+| 2 | [INT] | Corrección de bugs críticos | Todos | 8 | Bloqueante antes de deploy final |
+| 3 | [INFRA] | Despliegue frontend (Vercel/Netlify) | Dev 1 | 3 | Variables de entorno, builds |
+| 4 | [INFRA] | Despliegue backend (Railway/Forge/servidor) | Dev 2 | 5 | Migraciones, secretos, CORS |
+| 5 | [INFRA] | Configuración de dominio y SSL | Dev 2 | 2 | DNS + certs |
+| 6 | [DB] | Seed de datos iniciales (modelos vehículos, roles) | Dev 3 | 3 | Datos base para producción/demo |
+| 7 | [DOC] | Documentación de uso del sistema | Dev 3 | 5 | Manual por rol + FAQs |
+| 8 | [INT] | Capacitación / demo al cliente | Todos | 3 | Checklist de entrega |
 
 **Total SP Sprint 5: 37**
 
 ---
+
+### Nota rápida (recomendación)
+En **Sprint 4** tu tabla decía: “Vista del cliente (consulta de estado de vehículos) | US-20”. Esa user story (US-20) es exportar a Excel. Si quieres, puedo:
+- crear una US nueva tipo **US-24: Cliente consulta estado de vehículos**, o
+- reasignar esa tarea a **US-02/General**.
+
+---
+
+Si me confirmas si quieres el orden **global** (como arriba) o **por responsable**, también puedo devolverte una segunda versión con el formato exacto de tu archivo (sin tablas extra, o con tablas iguales a las tuyas) para que quede 100% consistente.
 
 ## 9. RESUMEN DE CARGA POR DESARROLLADOR
 
