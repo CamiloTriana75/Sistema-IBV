@@ -16,16 +16,17 @@ Sistema integral que permite controlar todo el flujo operativo de vehículos en 
 - **Gestión de roles** — Administrador, Portería, Recibidor, Inventario, Despachador, Cliente
 - **Reportes** — Estadísticas, exportación a Excel, recibos imprimibles
 
-## Stack Tecnológico (Pendiente de confirmación)
+## Stack Tecnologico (Pendiente de confirmacion)
 
-> ⚠️ **Las tecnologías aún no están definidas oficialmente.** Las siguientes son propuestas iniciales sujetas a revisión y aprobación del equipo.
+> ⚠️ **Las tecnologias aun no estan definidas oficialmente.** Las siguientes son propuestas iniciales sujetas a revision y aprobacion del equipo.
 
 | Capa | Propuesta | Estado |
 |---|---|---|
-| **Frontend** | React 18+ (Vite) + TailwindCSS | 🟡 Pendiente |
-| **Backend** | Laravel 11+ (API RESTful) | 🟡 Pendiente |
+| **Frontend** | Vue 3 + Nuxt 3 | 🟡 Pendiente |
+| **Backend** | Django (API RESTful) | 🟡 Pendiente |
+| **Lenguaje** | Python 3.12 | 🟡 Pendiente |
 | **Base de datos** | Supabase (PostgreSQL) | 🟡 Pendiente |
-| **Autenticación** | Laravel Sanctum | 🟡 Pendiente |
+| **Autenticacion** | Django REST Framework + JWT | 🟡 Pendiente |
 | **Almacenamiento** | Supabase Storage | 🟡 Pendiente |
 
 ## Estructura del proyecto (por definir)
@@ -50,9 +51,9 @@ Sistema-IBV/
 
 | Rol | Enfoque |
 |---|---|
-| Dev 1 — Frontend Lead | React, UI/UX, componentes QR |
-| Dev 2 — Backend Lead | Laravel, API, base de datos |
-| Dev 3 — Fullstack | Integración, reportes, módulos secundarios |
+| Dev 1 — Frontend Lead | Vue, Nuxt, UI/UX, componentes QR |
+| Dev 2 — Backend Lead | Django, API, base de datos |
+| Dev 3 — Fullstack | Integracion, reportes, modulos secundarios |
 
 ## Metodología
 
