@@ -16,51 +16,35 @@ Sistema integral que permite controlar todo el flujo operativo de vehículos en 
 - **Gestión de roles** — Administrador, Portería, Recibidor, Inventario, Despachador, Cliente
 - **Reportes** — Estadísticas, exportación a Excel, recibos imprimibles
 
-## Stack Tecnológico
+## Stack Tecnológico (Pendiente de confirmación)
 
-| Capa | Tecnología |
-|---|---|
-| **Frontend** | React 18+ (Vite) + TailwindCSS |
-| **Backend** | Laravel 11+ (API RESTful) |
-| **Base de datos** | Supabase (PostgreSQL) |
-| **Autenticación** | Laravel Sanctum |
-| **Almacenamiento** | Supabase Storage |
+> ⚠️ **Las tecnologías aún no están definidas oficialmente.** Las siguientes son propuestas iniciales sujetas a revisión y aprobación del equipo.
 
-## Estructura del proyecto
+| Capa | Propuesta | Estado |
+|---|---|---|
+| **Frontend** | React 18+ (Vite) + TailwindCSS | 🟡 Pendiente |
+| **Backend** | Laravel 11+ (API RESTful) | 🟡 Pendiente |
+| **Base de datos** | Supabase (PostgreSQL) | 🟡 Pendiente |
+| **Autenticación** | Laravel Sanctum | 🟡 Pendiente |
+| **Almacenamiento** | Supabase Storage | 🟡 Pendiente |
+
+## Estructura del proyecto (por definir)
 
 ```
 Sistema-IBV/
-├── frontend/          # React + Vite + TailwindCSS
-├── backend/           # Laravel API
+├── frontend/          # Por definir
+├── backend/           # Por definir
 ├── docs/              # Documentación del proyecto
 └── README.md
 ```
 
 ## Requisitos previos
 
-- Node.js 18+
-- PHP 8.2+
-- Composer
-- Cuenta de Supabase (plan pago)
+> Se definirán una vez confirmado el stack tecnológico.
 
 ## Instalación
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-### Backend
-```bash
-cd backend
-composer install
-cp .env.example .env
-php artisan key:generate
-php artisan migrate --seed
-php artisan serve
-```
+> Se documentará una vez iniciado el desarrollo.
 
 ## Equipo
 
