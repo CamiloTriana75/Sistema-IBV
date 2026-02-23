@@ -1085,6 +1085,9 @@ components:
           type: string
         last_name:
           type: string
+        role:
+          type: string
+          enum: [admin, porteria, recibidor, inventario, despachador, cliente]
         is_active:
           type: boolean
       example:
@@ -1092,6 +1095,7 @@ components:
         email: admin@correo.com
         first_name: Admin
         last_name: IBV
+        role: admin
         is_active: true
     UserCreate:
       allOf:
@@ -1100,6 +1104,7 @@ components:
         email: nuevo@correo.com
         first_name: Nuevo
         last_name: Usuario
+        role: cliente
         is_active: true
     UserUpdate:
       allOf:
@@ -1107,6 +1112,7 @@ components:
       example:
         first_name: Actualizado
         last_name: Usuario
+        role: cliente
     Role:
       type: object
       properties:

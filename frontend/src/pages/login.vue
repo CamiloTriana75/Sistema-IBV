@@ -224,6 +224,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({
   layout: 'blank'
@@ -244,21 +245,14 @@ const showRecoverModal = ref(false)
 const recoverEmail = ref('')
 const isRecovering = ref(false)
 const recoverSent = ref(false)
+const authStore = useAuthStore()
 
 const handleLogin = async () => {
   errorMessage.value = ''
   isLoading.value = true
 
   try {
-    // TODO: Conectar con API del backend
-    await new Promise(resolve => setTimeout(resolve, 1500))
-
-    // Simular validación
-    if (!form.value.email || !form.value.password) {
-      throw new Error('Por favor completa todos los campos')
-    }
-
-    console.log('Login attempt:', form.value.email)
+    await authStore.login(form.value.email, form.value.password)
     navigateTo('/admin')
   } catch (error: any) {
     errorMessage.value = error.message || 'Credenciales incorrectas. Verifica tu email y contraseña.'

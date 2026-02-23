@@ -211,7 +211,8 @@
 import { ref, reactive } from 'vue'
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin',
+  middleware: ['auth', 'admin']
 })
 
 const showModal = ref(false)
