@@ -29,7 +29,9 @@ jobs:
 
       - name: Install dependencies
         working-directory: ./frontend
-        run: npm install --no-audit
+        run: |
+          rm -f package-lock.json
+          npm install --no-audit
 
       - name: Run ESLint
         working-directory: ./frontend
