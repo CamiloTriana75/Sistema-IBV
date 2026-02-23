@@ -5,7 +5,7 @@ Soporta cámara de celular y pistola de escaneo
 
 <template>
   <div class="space-y-4">
-    <div class="flex gap-2">
+    <div class="flex gap-2 flex-wrap">
       <button
         @click="toggleCamera"
         class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
@@ -29,7 +29,7 @@ Soporta cámara de celular y pistola de escaneo
         @keyup.enter="handleManualInput"
         type="text"
         placeholder="Escanea o digita el QR..."
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
       />
     </div>
 
@@ -47,8 +47,7 @@ Soporta cámara de celular y pistola de escaneo
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { Html5QrcodeScanner } from 'html5-qrcode'
+import { ref, onUnmounted } from 'vue'
 
 interface Props {
   onScan?: (value: string) => void
@@ -63,7 +62,6 @@ const showCamera = ref(false)
 const manualInput = ref('')
 const scannedValue = ref('')
 const error = ref('')
-let scanner: Html5QrcodeScanner | null = null
 
 const toggleCamera = async () => {
   if (showCamera.value) {
@@ -75,41 +73,11 @@ const toggleCamera = async () => {
 
 const openCamera = () => {
   showCamera.value = true
-  scanner = new Html5QrcodeScanner(
-    'qr-reader',
-    {
-      fps: 10,
-      qrbox: { width: 250, height: 250 },
-      rememberLastUsedCamera: true,
-      supportedScanTypes: ['IMAGE', 'VIDEO']
-    },
-    true
-  )
-
-  scanner.render(onScanSuccess, onScanError)
+  // TODO: Implementar html5-qrcode
 }
 
 const closeCamera = () => {
-  if (scanner) {
-    scanner.clear()
-    scanner = null
-  }
   showCamera.value = false
-}
-
-const onScanSuccess = (decodedText: string) => {
-  scannedValue.value = decodedText
-  manualInput.value = decodedText
-  error.value = ''
-  emit('scan', decodedText)
-  if (props.onScan) props.onScan(decodedText)
-  // Opcional: cerrar automáticamente
-  // closeCamera()
-}
-
-const onScanError = (error: any) => {
-  // No mostrar error en cada intento fallido
-  console.debug('QR scan error:', error)
 }
 
 const handleManualInput = () => {
