@@ -52,7 +52,7 @@
         <div class="text-right space-y-2">
           <div class="inline-block border-2 border-gray-900 px-4 py-2 rounded-xl">
             <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Lote N°</p>
-            <p class="text-2xl font-black text-gray-900">LT-2024-0089</p>
+            <p class="text-2xl font-black text-gray-900">{{ loteNumero }}</p>
           </div>
         </div>
       </div>
@@ -78,32 +78,32 @@
             </div>
             <div class="flex justify-between text-sm">
               <span class="text-gray-500 font-semibold">Despachador:</span>
-              <span class="font-bold text-gray-900">Luis Pérez</span>
+              <span class="font-bold text-gray-900">{{ despachadorNombre }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500 font-semibold">Turno:</span>
-              <span class="font-bold text-gray-900">Mañana (07:00 - 12:00)</span>
+              <span class="text-gray-500 font-semibold">Total vehículos:</span>
+              <span class="font-bold text-gray-900">{{ vehiculosDespachados.length }}</span>
             </div>
           </div>
         </div>
         <div class="bg-gray-50 rounded-xl border border-gray-200 p-5">
-          <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider mb-4">Datos de Destino</h3>
+          <h3 class="text-xs font-black text-gray-500 uppercase tracking-wider mb-4">Resumen de Verificaciones</h3>
           <div class="space-y-3">
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500 font-semibold">Cliente destinatario:</span>
-              <span class="font-bold text-gray-900">Distribuidora Caracas C.A.</span>
+              <span class="text-gray-500 font-semibold">Improntas completadas:</span>
+              <span class="font-bold text-success-700">{{ vehiculosDespachados.length }} / {{ vehiculosDespachados.length }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500 font-semibold">Destino:</span>
-              <span class="font-bold text-gray-900">Valencia, Carabobo</span>
+              <span class="text-gray-500 font-semibold">Inventarios aprobados:</span>
+              <span class="font-bold text-success-700">{{ vehiculosDespachados.length }} / {{ vehiculosDespachados.length }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500 font-semibold">Transporte:</span>
-              <span class="font-bold text-gray-900">Cama baja #TB-04</span>
+              <span class="text-gray-500 font-semibold">Clientes destino:</span>
+              <span class="font-bold text-gray-900">{{ clientesUnicos }}</span>
             </div>
             <div class="flex justify-between text-sm">
-              <span class="text-gray-500 font-semibold">Conductor:</span>
-              <span class="font-bold text-gray-900">Manuel Rodríguez</span>
+              <span class="text-gray-500 font-semibold">Estado:</span>
+              <span class="px-2 py-0.5 bg-success-100 text-success-700 rounded-full text-xs font-bold">Completado</span>
             </div>
           </div>
         </div>
@@ -123,18 +123,18 @@
               <th class="py-2.5 px-3 text-left text-xs font-bold tracking-wider">Modelo</th>
               <th class="py-2.5 px-3 text-left text-xs font-bold tracking-wider">Año</th>
               <th class="py-2.5 px-3 text-left text-xs font-bold tracking-wider">Color</th>
-              <th class="py-2.5 px-3 text-left text-xs font-bold tracking-wider rounded-tr-lg">Hora Escaneo</th>
+              <th class="py-2.5 px-3 text-left text-xs font-bold tracking-wider rounded-tr-lg">Cliente</th>
             </tr>
           </thead>
           <tbody>
-            <tr v-for="(v, idx) in vehiculosLote" :key="v.id" :class="idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
+            <tr v-for="(v, idx) in vehiculosDespachados" :key="v.vin" :class="idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'">
               <td class="py-2.5 px-3 border-b border-gray-100 text-center font-bold text-gray-500">{{ idx + 1 }}</td>
               <td class="py-2.5 px-3 border-b border-gray-100 font-mono text-xs font-bold text-gray-900">{{ v.vin }}</td>
               <td class="py-2.5 px-3 border-b border-gray-100 font-medium text-gray-700">{{ v.marca }}</td>
               <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.modelo }}</td>
               <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.anio }}</td>
               <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.color }}</td>
-              <td class="py-2.5 px-3 border-b border-gray-100 text-success-600 font-semibold text-xs">{{ v.horaEscaneo }}</td>
+              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600 text-xs">{{ v.cliente || '—' }}</td>
             </tr>
           </tbody>
           <tfoot>
@@ -143,7 +143,7 @@
                 Total de vehículos despachados:
               </td>
               <td class="py-3 px-3 text-right text-xl font-black text-gray-900">
-                {{ vehiculosLote.length }}
+                {{ vehiculosDespachados.length }}
               </td>
             </tr>
           </tfoot>
@@ -156,7 +156,10 @@
           Observaciones
         </h3>
         <div class="min-h-[60px] border border-gray-200 rounded-xl p-3">
-          <p class="text-sm text-gray-600">Todos los vehículos fueron escaneados y verificados sin novedad. Lote entregado en perfectas condiciones.</p>
+          <p class="text-sm text-gray-600">
+            Todos los vehículos fueron verificados con impronta completada e inventario aprobado antes del despacho.
+            Lote entregado conforme a protocolo IBV.
+          </p>
         </div>
       </div>
 
@@ -187,7 +190,7 @@
             </div>
             <span>Documento generado digitalmente por Sistema IBV</span>
           </div>
-          <span>Lote LT-2024-0089 | {{ fechaHoy }} {{ horaActual }}</span>
+          <span>Lote {{ loteNumero }} | {{ fechaHoy }} {{ horaActual }}</span>
         </div>
       </div>
     </div>
@@ -195,24 +198,33 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useVehiculoStore } from '~/stores/vehiculoStore'
+import { useAuthStore } from '~/stores/auth'
+
 definePageMeta({ layout: 'blank' })
 
+const route = useRoute()
+const vehiculoStore = useVehiculoStore()
+const authStore = useAuthStore()
+
+const loteNumero = (route.query.lote as string) || `LT-${new Date().getFullYear()}-0000`
 const fechaHoy = new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' })
 const horaActual = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
+const despachadorNombre = authStore.user?.name || 'Despachador'
 
-const vehiculosLote = [
-  { id: 1, vin: '1HGBH41JMN109186', marca: 'Toyota', modelo: 'Corolla', anio: 2024, color: 'Blanco', horaEscaneo: '08:12:04' },
-  { id: 2, vin: '2T1BURHE0JC063671', marca: 'Toyota', modelo: 'Yaris', anio: 2024, color: 'Gris Plata', horaEscaneo: '08:14:31' },
-  { id: 3, vin: '3VWF17AT0FM516411', marca: 'Volkswagen', modelo: 'Gol', anio: 2023, color: 'Rojo', horaEscaneo: '08:17:55' },
-  { id: 4, vin: '4T1BF1FK5CU614935', marca: 'Toyota', modelo: 'Camry', anio: 2024, color: 'Negro', horaEscaneo: '08:20:19' },
-  { id: 5, vin: '5YJSA1DN1DFP14947', marca: 'Hyundai', modelo: 'Accent', anio: 2024, color: 'Azul', horaEscaneo: '08:23:42' },
-  { id: 6, vin: '6G2EC13T9EL174836', marca: 'Chevrolet', modelo: 'Spark', anio: 2023, color: 'Blanco Perla', horaEscaneo: '08:26:08' },
-  { id: 7, vin: '7FARW2H58JE044816', marca: 'Honda', modelo: 'Fit', anio: 2024, color: 'Verde', horaEscaneo: '08:28:53' },
-  { id: 8, vin: '8AR2E3D1XMK001234', marca: 'Nissan', modelo: 'March', anio: 2023, color: 'Plateado', horaEscaneo: '08:31:15' }
-]
+// Get vehicles dispatched in this lot (or all dispatched if no specific lot)
+const vehiculosDespachados = computed(() =>
+  vehiculoStore.vehiculos.filter(v => v.despachado && (v.lotDespacho === loteNumero || !route.query.lote))
+)
+
+const clientesUnicos = computed(() => {
+  const clientes = new Set(vehiculosDespachados.value.map(v => v.cliente).filter(Boolean))
+  return clientes.size
+})
 
 const firmas = [
-  { nombre: 'Luis Pérez', rol: 'Despachador', firmado: true },
+  { nombre: despachadorNombre, rol: 'Despachador', firmado: true },
   { nombre: '___________________', rol: 'Conductor / Transportista', firmado: false },
   { nombre: '___________________', rol: 'Supervisor de Despacho', firmado: false }
 ]

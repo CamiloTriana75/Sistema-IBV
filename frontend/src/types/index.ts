@@ -2,7 +2,7 @@ export interface User {
   id: string
   name: string
   email: string
-  role: 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador' | 'cliente'
+  role: 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador'
   status: 'active' | 'inactive'
 }
 

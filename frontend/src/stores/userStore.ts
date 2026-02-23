@@ -1,67 +1,122 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { userService } from '~/services/userService'
-import type { User } from '~/types/index'
+
+// Interfaz de Usuario
+export interface StoreUser {
+  id: string
+  name: string
+  email: string
+  role: 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador'
+  status: 'active' | 'inactive'
+}
+
+// Roles del sistema con metadata
+export const SYSTEM_ROLES = [
+  { value: 'admin', label: 'Administrador', color: 'bg-primary-100 text-primary-700', dotColor: 'bg-primary-500', description: 'Acceso total al sistema' },
+  { value: 'recibidor', label: 'Recibidor', color: 'bg-blue-100 text-blue-700', dotColor: 'bg-blue-500', description: 'Recepción e impronta de vehículos' },
+  { value: 'inventario', label: 'Inventario', color: 'bg-amber-100 text-amber-700', dotColor: 'bg-amber-500', description: 'Inspección y checklist de vehículos' },
+  { value: 'despachador', label: 'Despachador', color: 'bg-green-100 text-green-700', dotColor: 'bg-green-500', description: 'Despacho y envío de lotes' },
+  { value: 'porteria', label: 'Portería', color: 'bg-purple-100 text-purple-700', dotColor: 'bg-purple-500', description: 'Control de entrada/salida' },
+] as const
+
+const STORAGE_KEY = 'ibv_users'
+
+// Datos mock iniciales
+const INITIAL_USERS: StoreUser[] = [
+  { id: '1', name: 'Carlos Administrador', email: 'admin@ibv.com', role: 'admin', status: 'active' },
+  { id: '2', name: 'María Recibidora', email: 'recibidor@ibv.com', role: 'recibidor', status: 'active' },
+  { id: '3', name: 'Juan Inventario', email: 'inventario@ibv.com', role: 'inventario', status: 'active' },
+  { id: '4', name: 'Luis Despachador', email: 'despachador@ibv.com', role: 'despachador', status: 'active' },
+  { id: '5', name: 'Ana Portería', email: 'porteria@ibv.com', role: 'porteria', status: 'active' },
+  { id: '6', name: 'Pedro Inspector', email: 'pedro@ibv.com', role: 'inventario', status: 'active' },
+  { id: '7', name: 'Laura Recepción', email: 'laura@ibv.com', role: 'recibidor', status: 'inactive' },
+  { id: '8', name: 'Diego Despacho', email: 'diego@ibv.com', role: 'despachador', status: 'active' },
+]
+
+function loadUsers(): StoreUser[] {
+  if (typeof window === 'undefined') return INITIAL_USERS
+  const stored = localStorage.getItem(STORAGE_KEY)
+  if (stored) {
+    try { return JSON.parse(stored) } catch { /* fallback */ }
+  }
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_USERS))
+  return [...INITIAL_USERS]
+}
+
+function persistUsers(list: StoreUser[]) {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+  }
+}
 
 export const useUserStore = defineStore('user', () => {
-  const users = ref<User[]>([])
-  const roles = ref([])
+  const users = ref<StoreUser[]>(loadUsers())
   const loading = ref(false)
   const error = ref<string | null>(null)
 
   const userCount = computed(() => users.value.length)
   const activeUsers = computed(() => users.value.filter(u => u.status === 'active').length)
 
+  const getRoleInfo = (roleValue: string) => {
+    return SYSTEM_ROLES.find(r => r.value === roleValue) || SYSTEM_ROLES[0]
+  }
+
   const fetchUsers = async () => {
     loading.value = true
     error.value = null
     try {
-      users.value = await userService.getUsers()
+      // Simulamos carga con delay breve
+      await new Promise(resolve => setTimeout(resolve, 300))
+      users.value = loadUsers()
     } catch (err) {
       error.value = 'Error al cargar usuarios'
-      console.error(err)
     } finally {
       loading.value = false
     }
   }
 
-  const fetchRoles = async () => {
-    try {
-      roles.value = await userService.getRoles()
-    } catch (err) {
-      console.error('Error fetching roles:', err)
-    }
-  }
-
-  const createUser = async (userData: Partial<User>) => {
+  const createUser = async (userData: Omit<StoreUser, 'id'>) => {
     loading.value = true
     error.value = null
     try {
-      const newUser = await userService.createUser(userData)
+      // Verificar email duplicado
+      const exists = users.value.some(u => u.email.toLowerCase() === userData.email.toLowerCase())
+      if (exists) {
+        throw new Error('Ya existe un usuario con ese email')
+      }
+      await new Promise(resolve => setTimeout(resolve, 300))
+      const newUser: StoreUser = {
+        ...userData,
+        id: String(Date.now()),
+      }
       users.value.push(newUser)
+      persistUsers(users.value)
       return newUser
-    } catch (err) {
-      error.value = 'Error al crear usuario'
-      console.error(err)
+    } catch (err: any) {
+      error.value = err.message || 'Error al crear usuario'
       throw err
     } finally {
       loading.value = false
     }
   }
 
-  const updateUser = async (id: string, userData: Partial<User>) => {
+  const updateUser = async (id: string, userData: Partial<StoreUser>) => {
     loading.value = true
     error.value = null
     try {
-      const updatedUser = await userService.updateUser(id, userData)
+      await new Promise(resolve => setTimeout(resolve, 300))
       const index = users.value.findIndex(u => u.id === id)
-      if (index !== -1) {
-        users.value[index] = updatedUser
+      if (index === -1) throw new Error('Usuario no encontrado')
+      // Verificar email duplicado (excluyendo el usuario actual)
+      if (userData.email) {
+        const emailExists = users.value.some(u => u.id !== id && u.email.toLowerCase() === userData.email!.toLowerCase())
+        if (emailExists) throw new Error('Ya existe un usuario con ese email')
       }
-      return updatedUser
-    } catch (err) {
-      error.value = 'Error al actualizar usuario'
-      console.error(err)
+      users.value[index] = { ...users.value[index], ...userData }
+      persistUsers(users.value)
+      return users.value[index]
+    } catch (err: any) {
+      error.value = err.message || 'Error al actualizar usuario'
       throw err
     } finally {
       loading.value = false
@@ -72,28 +127,36 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true
     error.value = null
     try {
-      await userService.deleteUser(id)
+      await new Promise(resolve => setTimeout(resolve, 300))
       users.value = users.value.filter(u => u.id !== id)
-    } catch (err) {
-      error.value = 'Error al eliminar usuario'
-      console.error(err)
+      persistUsers(users.value)
+    } catch (err: any) {
+      error.value = err.message || 'Error al eliminar usuario'
       throw err
     } finally {
       loading.value = false
     }
   }
 
+  const toggleStatus = async (id: string) => {
+    const user = users.value.find(u => u.id === id)
+    if (!user) return
+    const newStatus = user.status === 'active' ? 'inactive' : 'active'
+    return updateUser(id, { status: newStatus })
+  }
+
   return {
     users,
-    roles,
     loading,
     error,
     userCount,
     activeUsers,
+    getRoleInfo,
     fetchUsers,
-    fetchRoles,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    toggleStatus,
+    SYSTEM_ROLES
   }
 })

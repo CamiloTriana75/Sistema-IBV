@@ -38,27 +38,28 @@
 
         <!-- Info del vehículo -->
         <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-wrap items-center gap-6">
-          <div class="w-14 h-14 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
-            <svg class="w-8 h-8 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <button @click="showVehicleSelector = true" title="Cambiar vehículo"
+            class="w-14 h-14 bg-primary-100 hover:bg-primary-200 rounded-xl flex items-center justify-center shrink-0 transition cursor-pointer group">
+            <svg class="w-8 h-8 text-primary-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
             </svg>
-          </div>
+          </button>
           <div class="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4">
             <div>
               <p class="text-xs text-gray-400 font-semibold uppercase">VIN</p>
-              <p class="text-sm font-bold text-gray-900 font-mono">1HGBH41J</p>
+              <p class="text-sm font-bold text-gray-900 font-mono">{{ vehiculoActual.vin }}</p>
             </div>
             <div>
               <p class="text-xs text-gray-400 font-semibold uppercase">Vehículo</p>
-              <p class="text-sm font-bold text-gray-900">Toyota Corolla 2024</p>
+              <p class="text-sm font-bold text-gray-900">{{ vehiculoActual.marca }} {{ vehiculoActual.modelo }} {{ vehiculoActual.anio }}</p>
             </div>
             <div>
               <p class="text-xs text-gray-400 font-semibold uppercase">Color</p>
-              <p class="text-sm font-bold text-gray-900">Blanco Perla</p>
+              <p class="text-sm font-bold text-gray-900">{{ vehiculoActual.color }}</p>
             </div>
             <div>
               <p class="text-xs text-gray-400 font-semibold uppercase">Cliente</p>
-              <p class="text-sm font-bold text-gray-900">Distribuidora CCS</p>
+              <p class="text-sm font-bold text-gray-900">{{ vehiculoActual.cliente }}</p>
             </div>
           </div>
           <div class="flex items-center gap-2 px-3 py-1.5 bg-warning-50 border border-warning-200 rounded-lg">
@@ -276,6 +277,67 @@
       </div>
     </div>
 
+    <!-- Modal selector de vehículo -->
+    <Teleport to="body">
+      <Transition enter-active-class="transition duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100"
+        leave-active-class="transition duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
+        <div v-if="showVehicleSelector" class="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showVehicleSelector = false" />
+          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+            <!-- Header -->
+            <div class="px-6 py-4 border-b border-gray-100 shrink-0">
+              <h3 class="text-lg font-bold text-gray-900">Seleccionar Vehículo</h3>
+              <p class="text-sm text-gray-500 mt-0.5">Elige el vehículo para inspeccionar</p>
+            </div>
+            <!-- Search -->
+            <div class="px-6 py-3 border-b border-gray-100 shrink-0">
+              <div class="relative">
+                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                </svg>
+                <input v-model="vehicleSearch" type="text" placeholder="Buscar por VIN, placa, marca..."
+                  class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+              </div>
+            </div>
+            <!-- List -->
+            <div class="overflow-y-auto flex-1 px-3 py-2">
+              <div v-if="vehiculosDisponibles.length === 0" class="py-8 text-center">
+                <p class="text-gray-400 text-sm">No hay vehículos disponibles</p>
+              </div>
+              <button v-for="v in vehiculosDisponibles" :key="v.id" @click="seleccionarVehiculo(v)"
+                class="w-full flex items-center gap-4 p-3 rounded-xl text-left transition"
+                :class="vehiculoActual.vin === v.vin ? 'bg-primary-50 border-2 border-primary-300' : 'hover:bg-gray-50 border-2 border-transparent'">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                  :class="vehiculoActual.vin === v.vin ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-500'">
+                  <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z" />
+                  </svg>
+                </div>
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-semibold text-gray-900">{{ v.marca }} {{ v.modelo }} {{ v.anio }}</p>
+                  <p class="text-xs text-gray-500 font-mono">{{ v.placa || 'Sin placa' }} · {{ v.vin ? v.vin.slice(-8) : 'S/N' }}</p>
+                </div>
+                <div class="text-right shrink-0">
+                  <p class="text-xs text-gray-400">{{ v.improntaFolio || '' }}</p>
+                  <p class="text-xs text-gray-500">{{ v.cliente || '—' }}</p>
+                </div>
+                <svg v-if="vehiculoActual.vin === v.vin" class="w-5 h-5 text-primary-600 shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                </svg>
+              </button>
+            </div>
+            <!-- Footer -->
+            <div class="px-6 py-3 border-t border-gray-100 shrink-0 flex justify-end">
+              <button @click="showVehicleSelector = false"
+                class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition text-sm">
+                Cerrar
+              </button>
+            </div>
+          </div>
+        </div>
+      </Transition>
+    </Teleport>
+
     <!-- Toast -->
     <div v-if="showToast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white animate-bounce-in"
       :class="tipoToast === 'ok' ? 'bg-success-600' : 'bg-danger-600'">
@@ -289,9 +351,72 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
+import { useVehiculoStore, type VehiculoPipeline } from '~/stores/vehiculoStore'
+import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'admin' })
+
+const vehiculoStore = useVehiculoStore()
+const authStore = useAuthStore()
+const route = useRoute()
+const router = useRouter()
+
+// Vehicle selector
+const showVehicleSelector = ref(false)
+const vehicleSearch = ref('')
+const selectedVin = ref<string | null>(null)
+
+// Initialize from query param ?vin=
+onMounted(() => {
+  const vinParam = route.query.vin as string
+  if (vinParam) {
+    const v = vehiculoStore.getByVin(vinParam)
+    if (v) selectedVin.value = v.vin
+  }
+})
+
+// Get vehicles with completed improntas but pending inventory
+const vehiculosDisponibles = computed(() => {
+  let list = vehiculoStore.getPendientesInventario
+  if (vehicleSearch.value) {
+    const q = vehicleSearch.value.toLowerCase()
+    list = list.filter(v =>
+      v.vin.toLowerCase().includes(q) ||
+      v.placa.toLowerCase().includes(q) ||
+      v.marca.toLowerCase().includes(q) ||
+      v.modelo.toLowerCase().includes(q) ||
+      (v.improntaFolio || '').toLowerCase().includes(q) ||
+      v.cliente.toLowerCase().includes(q)
+    )
+  }
+  return list
+})
+
+// Current vehicle being inspected
+const vehiculoActual = computed(() => {
+  if (selectedVin.value) {
+    const found = vehiculoStore.getByVin(selectedVin.value)
+    if (found) return found
+  }
+  // Default to first pending vehicle
+  const first = vehiculoStore.getPendientesInventario[0]
+  if (first) return first
+  return { id: '', vin: '—', placa: '', marca: '—', modelo: '', anio: '', color: '—', cliente: '—', fechaRecepcion: '', horaRecepcion: '', improntaCompletada: false, inventarioCompletado: false, inventarioAprobado: false, despachado: false, estado: 'recibido' as const } as VehiculoPipeline
+})
+
+const seleccionarVehiculo = (v: VehiculoPipeline) => {
+  selectedVin.value = v.vin
+  showVehicleSelector.value = false
+  // Reset checklist when switching vehicle
+  categorias.forEach(cat => {
+    cat.items.forEach(item => {
+      item.estado = 'pendiente'
+      item.nota = ''
+    })
+  })
+  mostrarToast('ok', `Vehículo cambiado: ${v.marca} ${v.modelo}`)
+}
 
 const notaInspector = ref('')
 const showModalRechazo = ref(false)
@@ -436,13 +561,31 @@ const mostrarToast = (tipo: 'ok' | 'error', mensaje: string) => {
 
 const aprobar = () => {
   if (!puedeAprobar.value) return
-  mostrarToast('ok', 'Inventario aprobado — Listo para despacho')
+  const v = vehiculoActual.value
+  if (!v || !v.vin || v.vin === '—') return
+
+  const resultado = {
+    totalItems: todosLosItems.value.length,
+    aprobados: totalOk.value,
+    fallas: totalFallas.value,
+    na: totalNa.value,
+    nota: notaInspector.value || undefined,
+  }
+  const inspector = authStore.user?.name || 'Inspector'
+  vehiculoStore.aprobarInventario(v.vin, resultado, inspector)
+  mostrarToast('ok', `Inventario aprobado — ${v.marca} ${v.modelo} listo para despacho`)
+  setTimeout(() => router.push('/inventario'), 1500)
 }
 
 const rechazar = () => { showModalRechazo.value = true }
 
 const confirmarRechazo = () => {
+  const v = vehiculoActual.value
+  if (v && v.vin && v.vin !== '—') {
+    vehiculoStore.rechazarInventario(v.vin, motivoRechazo.value)
+  }
   showModalRechazo.value = false
   mostrarToast('error', 'Inventario rechazado')
+  setTimeout(() => router.push('/inventario'), 1500)
 }
 </script>

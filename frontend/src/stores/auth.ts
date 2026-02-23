@@ -10,8 +10,9 @@ const MOCK_USERS: Record<string, { name: string; role: string; roleLabel: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<any>(JSON.parse(localStorage.getItem('auth_user') || 'null'))
-  const token = ref(localStorage.getItem('auth_token') || '')
+  const isClient = typeof window !== 'undefined'
+  const user = ref<any>(isClient ? JSON.parse(localStorage.getItem('auth_user') || 'null') : null)
+  const token = ref(isClient ? (localStorage.getItem('auth_token') || '') : '')
   const isAuthenticated = computed(() => !!token.value)
 
   const login = async (email: string, password: string) => {
@@ -30,8 +31,10 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = () => {
     user.value = null
     token.value = ''
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('auth_user')
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
+    }
   }
 
   return {
