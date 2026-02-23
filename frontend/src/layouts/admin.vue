@@ -124,16 +124,44 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useAuthStore } from '~/stores/auth'
 
 const route = useRoute()
 const sidebarOpen = ref(false)
+const authStore = useAuthStore()
 
-// Simular usuario actual (luego viene del store)
-const currentUser = ref({
-  name: 'Admin IBV',
-  initials: 'AI',
-  role: 'admin',
-  roleName: 'Administrador'
+const roleLabels: Record<string, string> = {
+  admin: 'Administrador',
+  porteria: 'Porteria',
+  recibidor: 'Recibidor',
+  inventario: 'Inventario',
+  despachador: 'Despachador',
+  cliente: 'Cliente'
+}
+
+const buildInitials = (fullName: string) => {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean)
+  const initials = parts.slice(0, 2).map(part => part[0]).join('')
+  return initials || 'U'
+}
+
+const currentUser = computed(() => {
+  const user = authStore.user
+  if (!user) {
+    return {
+      name: 'Usuario',
+      initials: 'U',
+      role: 'cliente',
+      roleName: roleLabels.cliente
+    }
+  }
+
+  return {
+    name: user.name,
+    initials: buildInitials(user.name || user.email),
+    role: user.role,
+    roleName: roleLabels[user.role] || user.role
+  }
 })
 
 const pageTitle = computed(() => {
@@ -184,7 +212,8 @@ const isActive = (path: string) => {
   return false
 }
 
-const handleLogout = () => {
+const handleLogout = async () => {
+  await authStore.logout()
   navigateTo('/login')
 }
 </script>

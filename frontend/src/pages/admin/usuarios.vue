@@ -102,7 +102,7 @@
                 </div>
               </td>
               <!-- Creado -->
-              <td class="px-6 py-4 text-sm text-gray-500">{{ user.createdAt }}</td>
+              <td class="px-6 py-4 text-sm text-gray-500">{{ user.createdAt || '—' }}</td>
               <!-- Acciones -->
               <td class="px-6 py-4">
                 <div class="flex items-center justify-end gap-1">
@@ -311,10 +311,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useUserStore } from '~/stores/userStore'
 
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin',
+  middleware: ['auth', 'admin']
 })
 
 // Filtros
@@ -324,25 +326,16 @@ const filters = ref({
   status: ''
 })
 
+const userStore = useUserStore()
+const users = computed(() => userStore.users)
+
 // Paginación
 const currentPage = ref(1)
 const perPage = 8
 
-// Datos mock
-const users = ref([
-  { id: '1', name: 'Carlos Admin', email: 'admin@ibv.com', role: 'admin', status: 'active', createdAt: '15/01/2026' },
-  { id: '2', name: 'María Portero', email: 'maria@ibv.com', role: 'porteria', status: 'active', createdAt: '20/01/2026' },
-  { id: '3', name: 'Juan Recibidor', email: 'juan@ibv.com', role: 'recibidor', status: 'active', createdAt: '22/01/2026' },
-  { id: '4', name: 'Ana Inventario', email: 'ana@ibv.com', role: 'inventario', status: 'active', createdAt: '25/01/2026' },
-  { id: '5', name: 'Pedro Despacho', email: 'pedro@ibv.com', role: 'despachador', status: 'active', createdAt: '28/01/2026' },
-  { id: '6', name: 'Laura Cliente', email: 'laura@ibv.com', role: 'cliente', status: 'inactive', createdAt: '01/02/2026' },
-  { id: '7', name: 'Diego López', email: 'diego@ibv.com', role: 'recibidor', status: 'active', createdAt: '05/02/2026' },
-  { id: '8', name: 'Sofía Martínez', email: 'sofia@ibv.com', role: 'inventario', status: 'active', createdAt: '08/02/2026' },
-  { id: '9', name: 'Andrés Torres', email: 'andres@ibv.com', role: 'despachador', status: 'inactive', createdAt: '10/02/2026' },
-  { id: '10', name: 'Valentina Ríos', email: 'valentina@ibv.com', role: 'admin', status: 'active', createdAt: '12/02/2026' },
-  { id: '11', name: 'Felipe Gómez', email: 'felipe@ibv.com', role: 'porteria', status: 'active', createdAt: '15/02/2026' },
-  { id: '12', name: 'Camila Herrera', email: 'camila@ibv.com', role: 'recibidor', status: 'active', createdAt: '18/02/2026' },
-])
+onMounted(async () => {
+  await userStore.fetchUsers()
+})
 
 // Filtrar usuarios
 const filteredUsers = computed(() => {
@@ -429,10 +422,9 @@ const closeModal = () => {
 
 const saveUser = async () => {
   if (editingUser.value) {
-    const idx = users.value.findIndex(u => u.id === editingUser.value.id)
-    if (idx !== -1) users.value[idx] = { ...users.value[idx], ...form.value }
+    await userStore.updateUser(editingUser.value.id, form.value)
   } else {
-    users.value.push({ ...form.value, id: String(Date.now()), createdAt: '23/02/2026' })
+    await userStore.createUser(form.value)
   }
   closeModal()
 }
@@ -447,8 +439,10 @@ const closeDeleteModal = () => {
   userToDelete.value = null
 }
 
-const confirmDelete = () => {
-  users.value = users.value.filter(u => u.id !== userToDelete.value?.id)
+const confirmDelete = async () => {
+  if (userToDelete.value?.id) {
+    await userStore.deleteUser(userToDelete.value.id)
+  }
   closeDeleteModal()
 }
 </script>

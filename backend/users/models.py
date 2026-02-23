@@ -2,6 +2,15 @@ from django.contrib.auth.models import AbstractBaseUser, BaseUserManager, Permis
 from django.db import models
 from django.utils import timezone
 
+ROLE_CHOICES = [
+	("admin", "Administrador"),
+	("porteria", "Porteria"),
+	("recibidor", "Recibidor"),
+	("inventario", "Inventario"),
+	("despachador", "Despachador"),
+	("cliente", "Cliente"),
+]
+
 
 class UserManager(BaseUserManager):
 	def create_user(self, email, password=None, **extra_fields):
@@ -30,6 +39,7 @@ class User(AbstractBaseUser, PermissionsMixin):
 	email = models.EmailField(unique=True)
 	first_name = models.CharField(max_length=150, blank=True)
 	last_name = models.CharField(max_length=150, blank=True)
+	role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="cliente")
 	is_active = models.BooleanField(default=True)
 	is_staff = models.BooleanField(default=False)
 	date_joined = models.DateTimeField(default=timezone.now)
