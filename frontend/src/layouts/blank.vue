@@ -1,6 +1,6 @@
 <template>
   <div class="min-h-screen">
-    <!-- Solo contenido, sin layout -->
+    <!-- Sin layout, contenido directo -->
     <slot />
   </div>
 </template>

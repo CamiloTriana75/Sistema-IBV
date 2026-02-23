@@ -1,4 +1,5 @@
 export default defineNuxtConfig({
+  compatibilityDate: '2026-02-23',
   devtools: { enabled: true },
   modules: [
     '@nuxtjs/tailwindcss',
@@ -23,14 +24,14 @@ export default defineNuxtConfig({
   },
 
   typescript: {
-    strict: true,
-    shim: false
+    shim: false,
+    strict: true
   },
 
-  nitro: {
-    prerender: {
-      crawlLinks: false,
-      routes: ['/sitemap.xml', '/rss.xml']
+  postcss: {
+    plugins: {
+      tailwindcss: {},
+      autoprefixer: {}
     }
   }
 })

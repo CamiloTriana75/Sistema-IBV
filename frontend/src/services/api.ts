@@ -1,4 +1,3 @@
-// API service para comunicarse con el backend
 import axios from 'axios'
 
 const config = useRuntimeConfig()
@@ -8,7 +7,7 @@ const apiClient = axios.create({
   timeout: 10000
 })
 
-// Agregar token a cada petición
+// Interceptor para agregar token a cada petición
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('auth_token')
   if (token) {
