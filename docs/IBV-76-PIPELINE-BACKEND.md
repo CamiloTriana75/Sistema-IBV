@@ -83,7 +83,7 @@ Script PowerShell que ejecuta todas las verificaciones localmente antes de hacer
 - Extensiones recomendadas
 
 ### 6. Documentación
-**Archivos:** 
+**Archivos:**
 - `.github/README.md` - Documentación del pipeline
 - `backend/README.md` - Documentación del backend
 

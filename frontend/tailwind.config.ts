@@ -7,7 +7,7 @@ export default {
     './pages/**/*.vue',
     './plugins/**/*.{js,ts}',
     './app.vue',
-    './src/**/*.{js,vue,ts}'
+    './src/**/*.{js,vue,ts}',
   ],
   theme: {
     extend: {
@@ -18,25 +18,25 @@ export default {
           500: '#0ea5e9',
           600: '#0284c7',
           700: '#0369a1',
-          900: '#082f49'
+          900: '#082f49',
         },
         success: {
           500: '#10b981',
-          600: '#059669'
+          600: '#059669',
         },
         warning: {
           500: '#f59e0b',
-          600: '#d97706'
+          600: '#d97706',
         },
         danger: {
           500: '#ef4444',
-          600: '#dc2626'
-        }
+          600: '#dc2626',
+        },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif']
-      }
-    }
+        sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+    },
   },
-  plugins: []
+  plugins: [],
 } satisfies Config

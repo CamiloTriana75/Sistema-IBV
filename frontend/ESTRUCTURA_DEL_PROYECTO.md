@@ -89,44 +89,53 @@ frontend/
 ## 🚀 Guía Rápida por Directorio
 
 ### 📄 Pages
+
 - **Propósito:** Define las rutas de la aplicación
 - **Automático:** Nuxt genera rutas basadas en la estructura
 - **Convención:** kepan-case para archivos, `[id]` para parámetros dinámicos
 
 ### 🧩 Components
+
 - **Propósito:** Componentes Vue reutilizables
 - **Subdirectorios:** `common/`, `forms/`, `layout/`, `admin/`
 - **Convención:** PascalCase, `scoped` styles
 
 ### 🎨 Layouts
+
 - **Propósito:** Envuelven las páginas
 - **Disponibles:** `default.vue`, `blank.vue`
 - **Uso:** `definePageMeta({ layout: 'admin' })`
 
 ### 🏪 Stores
+
 - **Propósito:** Estado global con Pinia
 - **Disponibles:** `auth.ts`, `userStore.ts`
 - **Convención:** `useAuthStore()`, `useUserStore()`
 
 ### 🔧 Services
+
 - **Propósito:** Lógica de negocio e integración con API
 - **Disponibles:** `api.ts` (axios), `userService.ts`
 - **Convención:** CRUD methods, stateless
 
 ### 🛠️ Composables
+
 - **Propósito:** Lógica reutilizable con Composition API
 - **Convención:** Prefijo `use`: `useAuth()`, `useFetch()`
 
 ### 📝 Middleware
+
 - **Propósito:** Proteger rutas y ejecutar lógica antes de renderizar
 - **Convención:** Auto-importados y nombrados por archivo
 
 ### 🗂️ Assets
+
 - **Propósito:** Recursos estáticos: imágenes, estilos, fuentes
 - **Subdirectorios:** `images/`, `styles/`, `fonts/`
 - **Acceso:** `~/assets/...` o `@/assets/...`
 
 ### 📡 Server
+
 - **Propósito:** Backend con Nitro
 - **Subdirectorios:** `api/`, `middleware/`
 - **Acceso:** `/api/*` desde cliente
@@ -180,4 +189,5 @@ npm run format          # Formatear con Prettier
 5. Crear páginas según requerimientos de Sistema IBV
 
 ---
+
 **Última actualización:** Febrero 2026

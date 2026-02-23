@@ -5,26 +5,41 @@ Este proyecto está configurado con TailwindCSS 3.4 integrado con Nuxt 3 a trav�
 ## 📋 Archivos de Configuración
 
 ### 1. `tailwind.config.ts`
+
 Configuración de TailwindCSS con:
+
 - **Content**: Paths donde Tailwind busca clases (componentes, layouts, páginas)
 - **Theme**: Personalizaciones de colores, fuentes y espaciado
 - **Plugins**: Extensiones de Tailwind (actualmente vacío)
 
 **Colores personalizados:**
+
 ```typescript
-primary: { 50, 100, 500, 600, 700, 900 }  // Azul corporativo
-success: { 500, 600 }                      // Verde
-warning: { 500, 600 }                      // Naranja
-danger: { 500, 600 }                       // Rojo
+primary: {
+  ;(50, 100, 500, 600, 700, 900)
+} // Azul corporativo
+success: {
+  ;(500, 600)
+} // Verde
+warning: {
+  ;(500, 600)
+} // Naranja
+danger: {
+  ;(500, 600)
+} // Rojo
 ```
 
 ### 2. `postcss.config.js`
+
 Configuración de PostCSS:
+
 - **TailwindCSS**: Procesador principal
 - **Autoprefixer**: Añade prefijos CSS para compatibilidad
 
 ### 3. `nuxt.config.ts`
+
 Integración con Nuxt:
+
 ```typescript
 modules: ['@nuxtjs/tailwindcss'],
 postcss: {
@@ -38,12 +53,14 @@ postcss: {
 ## 📁 Archivos de Estilos
 
 ### `src/assets/styles/global.css`
+
 - Importa directivas de Tailwind: `@tailwind base, components, utilities`
 - Estilos globales para elementos HTML
 - Reset de estilos por defecto
 - Styles personalizados para inputs, buttons, scrollbar
 
 ### `src/assets/styles/variables.css`
+
 - Variables CSS globales accesibles en componentes
 - Colores, espaciado, bordes, sombras
 - Soporte para modo oscuro
@@ -51,6 +68,7 @@ postcss: {
 ## 🎨 Cómo Usar TailwindCSS
 
 ### En Templates
+
 ```vue
 <template>
   <div class="flex items-center justify-center min-h-screen bg-gray-50">
@@ -60,6 +78,7 @@ postcss: {
 ```
 
 ### En Estilos Scoped
+
 ```vue
 <style scoped>
 .custom-class {
@@ -69,6 +88,7 @@ postcss: {
 ```
 
 ### Responsive Design
+
 ```vue
 <!-- Mobile: w-full, Tablet (md): w-1/2, Desktop (lg): w-1/3 -->
 <div class="w-full md:w-1/2 lg:w-1/3">
@@ -77,6 +97,7 @@ postcss: {
 ```
 
 ### Estados (Hover, Focus, etc.)
+
 ```vue
 <!-- Hover -->
 <button class="bg-primary-600 hover:bg-primary-700">Botón</button>
@@ -91,7 +112,9 @@ postcss: {
 ## 🧩 Componentes Incluidos
 
 ### `Button.vue`
+
 Botón reutilizable con variantes:
+
 ```vue
 <script setup lang="ts">
 import Button from '~/components/common/Button.vue'
@@ -105,24 +128,22 @@ import Button from '~/components/common/Button.vue'
 ```
 
 **Props:**
+
 - `variant`: primary | secondary | success | danger
 - `disabled`: boolean
 
 ### `FormInput.vue`
+
 Input de formulario con etiqueta:
+
 ```vue
 <template>
-  <FormInput 
-    v-model="email"
-    type="email"
-    label="Email"
-    placeholder="tu@email.com"
-    required
-  />
+  <FormInput v-model="email" type="email" label="Email" placeholder="tu@email.com" required />
 </template>
 ```
 
 **Props:**
+
 - `modelValue`: string
 - `label`: string
 - `type`: string (default: text)
@@ -131,12 +152,14 @@ Input de formulario con etiqueta:
 - `disabled`: boolean
 
 ### `Card.vue`
+
 Contenedor de contenido:
+
 ```vue
 <template>
   <Card title="Mi Tarjeta">
     Contenido de la tarjeta
-    
+
     <template #footer>
       <button>Aceptar</button>
     </template>
@@ -145,15 +168,18 @@ Contenedor de contenido:
 ```
 
 **Props:**
+
 - `title`: string (encabezado opcional)
 
 **Slots:**
+
 - `default`: Contenido principal
 - `footer`: Contenido del pie de página
 
 ## 📐 Breakpoints
 
 TailwindCSS incluye breakpoints predefinidos:
+
 - `sm`: 640px
 - `md`: 768px
 - `lg`: 1024px
@@ -161,6 +187,7 @@ TailwindCSS incluye breakpoints predefinidos:
 - `2xl`: 1536px
 
 Uso:
+
 ```html
 <!-- Oculto en mobile, visible en md y arriba -->
 <div class="hidden md:block">Contenido</div>
@@ -172,6 +199,7 @@ Uso:
 ## 🎯 Paleta de Colores
 
 ### Colores Primarios
+
 ```
 bg-primary-50   #f0f9ff
 bg-primary-100  #e0f2fe
@@ -182,6 +210,7 @@ bg-primary-900  #082f49  ← Dark
 ```
 
 ### Estados
+
 ```
 bg-success-500  #10b981  (Verde)
 bg-warning-500  #f59e0b  (Naranja)
@@ -189,6 +218,7 @@ bg-danger-500   #ef4444  (Rojo)
 ```
 
 ### Escala Gris
+
 ```
 bg-gray-50   (Muy claro)
 bg-gray-100  (Claro)
@@ -220,5 +250,6 @@ bg-gray-900  (Muy oscuro)
 - ✅ app.vue importa estilos globales
 
 ---
+
 **Última actualización:** Febrero 2026
 **Versión TailwindCSS:** 3.4.19

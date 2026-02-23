@@ -29,13 +29,15 @@ try {
     if ($LASTEXITCODE -eq 0) {
         Write-Host "   OK - Dependencias de desarrollo instaladas" -ForegroundColor Green
         Write-Host ""
-    } else {
+    }
+    else {
         Write-Host "   Instalando dependencias de desarrollo..." -ForegroundColor Yellow
         pip install -q -r requirements-dev.txt
         Write-Host "   OK - Dependencias instaladas" -ForegroundColor Green
         Write-Host ""
     }
-} catch {
+}
+catch {
     Write-Host "   ERROR instalando dependencias" -ForegroundColor Red
     Write-Host ""
     $ErrorCount++
@@ -46,7 +48,8 @@ Write-Host "2. Black - Verificando formato de codigo..." -ForegroundColor Blue
 $blackOutput = python -m black --check backend/ 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "   OK - Codigo correctamente formateado" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   ADVERTENCIA - Archivos que necesitan formateo" -ForegroundColor Yellow
     Write-Host "   Ejecuta: python -m black backend/" -ForegroundColor Cyan
     $WarningCount++
@@ -58,7 +61,8 @@ Write-Host "3. Flake8 - Analisis estatico de codigo..." -ForegroundColor Blue
 $flake8Output = python -m flake8 backend/ --statistics 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "   OK - Sin problemas de linting" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   ADVERTENCIA - Problemas encontrados:" -ForegroundColor Yellow
     Write-Host $flake8Output
     $WarningCount++
@@ -75,7 +79,8 @@ $env:DATABASE_URL = "sqlite:///db.sqlite3"
 $migrationOutput = python manage.py makemigrations --check --dry-run --no-input 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "   OK - No hay migraciones pendientes" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   ADVERTENCIA - Hay migraciones pendientes" -ForegroundColor Yellow
     Write-Host "   Ejecuta: python manage.py makemigrations" -ForegroundColor Cyan
     $WarningCount++
@@ -89,7 +94,8 @@ Push-Location backend
 $testOutput = python manage.py test --no-input 2>&1
 if ($LASTEXITCODE -eq 0) {
     Write-Host "   OK - Todos los tests pasaron" -ForegroundColor Green
-} else {
+}
+else {
     Write-Host "   ERROR - Algunos tests fallaron" -ForegroundColor Red
     Write-Host $testOutput
     $ErrorCount++
@@ -114,11 +120,13 @@ Write-Host "========================================" -ForegroundColor Cyan
 if ($ErrorCount -eq 0 -and $WarningCount -eq 0) {
     Write-Host "OK - Todo perfecto! Puedes hacer commit con confianza." -ForegroundColor Green
     exit 0
-} elseif ($ErrorCount -eq 0) {
+}
+elseif ($ErrorCount -eq 0) {
     Write-Host "ADVERTENCIA - $WarningCount advertencia(s) encontrada(s)" -ForegroundColor Yellow
     Write-Host "Revisa los problemas antes de hacer commit." -ForegroundColor Yellow
     exit 0
-} else {
+}
+else {
     Write-Host "ERROR - $ErrorCount error(es) critico(s) encontrado(s)" -ForegroundColor Red
     Write-Host "Corrige los problemas antes de hacer commit." -ForegroundColor Red
     exit 1

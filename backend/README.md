@@ -211,7 +211,7 @@ from rest_framework.test import APIClient
 class VehicleAPITestCase(TestCase):
     def setUp(self):
         self.client = APIClient()
-    
+
     def test_list_vehicles(self):
         response = self.client.get('/api/vehicles/')
         self.assertEqual(response.status_code, 200)
