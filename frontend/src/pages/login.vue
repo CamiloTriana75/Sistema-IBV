@@ -1,3 +1,56 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useAuthStore } from '~/stores/auth'
+
+definePageMeta({
+  layout: 'blank'
+})
+
+const form = ref({
+  email: '',
+  password: '',
+  remember: false
+})
+
+const showPassword = ref(false)
+const isLoading = ref(false)
+const errorMessage = ref('')
+
+// Recuperar contraseña
+const showRecoverModal = ref(false)
+const recoverEmail = ref('')
+const isRecovering = ref(false)
+const recoverSent = ref(false)
+const authStore = useAuthStore()
+
+const handleLogin = async () => {
+  errorMessage.value = ''
+  isLoading.value = true
+
+  try {
+    await authStore.login(form.value.email, form.value.password)
+    navigateTo('/admin')
+  } catch (error: any) {
+    errorMessage.value = error.message || 'Credenciales incorrectas. Verifica tu email y contraseña.'
+  } finally {
+    isLoading.value = false
+  }
+}
+
+const handleRecover = async () => {
+  isRecovering.value = true
+  try {
+    // TODO: Conectar con API del backend
+    await new Promise(resolve => setTimeout(resolve, 1500))
+    recoverSent.value = true
+  } catch (error) {
+    console.error('Error recovering password:', error)
+  } finally {
+    isRecovering.value = false
+  }
+}
+</script>
+
 <template>
   <div class="flex min-h-screen">
     <!-- Panel izquierdo: Branding -->
@@ -61,7 +114,7 @@
         </div>
 
         <!-- Formulario -->
-        <form @submit.prevent="handleLogin" class="space-y-5">
+        <form class="space-y-5" @submit.prevent="handleLogin">
           <!-- Email -->
           <div>
             <label for="email" class="block text-sm font-semibold text-gray-700 mb-2">
@@ -107,8 +160,8 @@
               />
               <button
                 type="button"
-                @click="showPassword = !showPassword"
                 class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-gray-600 transition"
+                @click="showPassword = !showPassword"
               >
                 <svg v-if="!showPassword" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -133,8 +186,8 @@
             </label>
             <button
               type="button"
-              @click="showRecoverModal = true"
               class="text-sm font-semibold text-primary-600 hover:text-primary-700 transition"
+              @click="showRecoverModal = true"
             >
               ¿Olvidaste tu contraseña?
             </button>
@@ -166,7 +219,7 @@
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 transform transition-all">
         <div class="flex items-center justify-between mb-6">
           <h3 class="text-xl font-bold text-gray-900">Recuperar Contraseña</h3>
-          <button @click="showRecoverModal = false" class="text-gray-400 hover:text-gray-600 transition">
+          <button class="text-gray-400 hover:text-gray-600 transition" @click="showRecoverModal = false">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -185,7 +238,7 @@
           <span class="text-sm text-success-600">Se han enviado las instrucciones a tu correo electrónico.</span>
         </div>
 
-        <form v-else @submit.prevent="handleRecover" class="space-y-5">
+        <form v-else class="space-y-5" @submit.prevent="handleRecover">
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-2">Correo electrónico</label>
             <input
@@ -210,8 +263,8 @@
             </button>
             <button
               type="button"
-              @click="showRecoverModal = false"
               class="px-4 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold rounded-xl transition-all"
+              @click="showRecoverModal = false"
             >
               Cancelar
             </button>
@@ -221,56 +274,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { useAuthStore } from '~/stores/auth'
-
-definePageMeta({
-  layout: 'blank'
-})
-
-const form = ref({
-  email: '',
-  password: '',
-  remember: false
-})
-
-const showPassword = ref(false)
-const isLoading = ref(false)
-const errorMessage = ref('')
-
-// Recuperar contraseña
-const showRecoverModal = ref(false)
-const recoverEmail = ref('')
-const isRecovering = ref(false)
-const recoverSent = ref(false)
-const authStore = useAuthStore()
-
-const handleLogin = async () => {
-  errorMessage.value = ''
-  isLoading.value = true
-
-  try {
-    await authStore.login(form.value.email, form.value.password)
-    navigateTo('/admin')
-  } catch (error: any) {
-    errorMessage.value = error.message || 'Credenciales incorrectas. Verifica tu email y contraseña.'
-  } finally {
-    isLoading.value = false
-  }
-}
-
-const handleRecover = async () => {
-  isRecovering.value = true
-  try {
-    // TODO: Conectar con API del backend
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    recoverSent.value = true
-  } catch (error) {
-    console.error('Error recovering password:', error)
-  } finally {
-    isRecovering.value = false
-  }
-}
-</script>

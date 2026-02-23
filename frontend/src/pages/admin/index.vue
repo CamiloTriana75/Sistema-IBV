@@ -1,3 +1,61 @@
+<script setup lang="ts">
+definePageMeta({
+  layout: 'admin',
+  middleware: ['auth', 'admin']
+})
+
+const stats = [
+  {
+    label: 'Total Usuarios',
+    value: '24',
+    change: '+3 este mes',
+    changePositive: true,
+    bgColor: 'bg-primary-100',
+    icon: '<svg class="text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>'
+  },
+  {
+    label: 'Vehículos Activos',
+    value: '156',
+    change: '+12 esta semana',
+    changePositive: true,
+    bgColor: 'bg-success-500/10',
+    icon: '<svg class="text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z" /></svg>'
+  },
+  {
+    label: 'Despachos Hoy',
+    value: '8',
+    change: '-2 vs ayer',
+    changePositive: false,
+    bgColor: 'bg-warning-500/10',
+    icon: '<svg class="text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>'
+  },
+  {
+    label: 'Pendientes',
+    value: '5',
+    change: '3 urgentes',
+    changePositive: false,
+    bgColor: 'bg-danger-500/10',
+    icon: '<svg class="text-danger-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
+  }
+]
+
+const recentActivity = [
+  { id: 1, title: 'Nuevo vehículo recibido', description: 'Toyota Corolla - BIN: VH-2024-0156', time: 'Hace 5 min', color: 'bg-success-500/10 text-success-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 4v16m8-8H4" /></svg>' },
+  { id: 2, title: 'Usuario creado', description: 'Carlos Pérez - Rol: Recibidor', time: 'Hace 15 min', color: 'bg-primary-100 text-primary-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>' },
+  { id: 3, title: 'Despacho completado', description: 'Lote #D-045 - 12 vehículos', time: 'Hace 1h', color: 'bg-warning-500/10 text-warning-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' },
+  { id: 4, title: 'Inspección finalizada', description: 'Chevrolet Spark - VH-2024-0148', time: 'Hace 2h', color: 'bg-blue-100 text-blue-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>' },
+  { id: 5, title: 'Vehículo despachado', description: 'Nissan Versa - BIN: VH-2024-0140', time: 'Hace 3h', color: 'bg-gray-100 text-gray-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>' }
+]
+
+const vehicleStatuses = [
+  { label: 'Pendientes', count: 12, percent: 8, textColor: 'text-gray-600', barColor: 'bg-gray-400' },
+  { label: 'Recibidos', count: 38, percent: 24, textColor: 'text-primary-600', barColor: 'bg-primary-500' },
+  { label: 'Improntados', count: 45, percent: 29, textColor: 'text-warning-600', barColor: 'bg-warning-500' },
+  { label: 'Inventariados', count: 42, percent: 27, textColor: 'text-success-600', barColor: 'bg-success-500' },
+  { label: 'Despachados', count: 19, percent: 12, textColor: 'text-blue-600', barColor: 'bg-blue-500' }
+]
+</script>
+
 <template>
   <div>
     <!-- Bienvenida -->
@@ -18,7 +76,7 @@
             </p>
           </div>
           <div :class="['w-12 h-12 rounded-xl flex items-center justify-center', stat.bgColor]">
-            <span v-html="stat.icon" class="w-6 h-6" />
+            <span class="w-6 h-6" v-html="stat.icon" />
           </div>
         </div>
       </div>
@@ -35,7 +93,7 @@
         <div class="divide-y divide-gray-50">
           <div v-for="activity in recentActivity" :key="activity.id" class="px-6 py-4 flex items-center gap-4 hover:bg-gray-50 transition">
             <div :class="['w-10 h-10 rounded-full flex items-center justify-center shrink-0', activity.color]">
-              <span v-html="activity.icon" class="w-5 h-5" />
+              <span class="w-5 h-5" v-html="activity.icon" />
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm font-medium text-gray-900">{{ activity.title }}</p>
@@ -130,61 +188,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-definePageMeta({
-  layout: 'admin',
-  middleware: ['auth', 'admin']
-})
-
-const stats = [
-  {
-    label: 'Total Usuarios',
-    value: '24',
-    change: '+3 este mes',
-    changePositive: true,
-    bgColor: 'bg-primary-100',
-    icon: '<svg class="text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>'
-  },
-  {
-    label: 'Vehículos Activos',
-    value: '156',
-    change: '+12 esta semana',
-    changePositive: true,
-    bgColor: 'bg-success-500/10',
-    icon: '<svg class="text-success-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z" /></svg>'
-  },
-  {
-    label: 'Despachos Hoy',
-    value: '8',
-    change: '-2 vs ayer',
-    changePositive: false,
-    bgColor: 'bg-warning-500/10',
-    icon: '<svg class="text-warning-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>'
-  },
-  {
-    label: 'Pendientes',
-    value: '5',
-    change: '3 urgentes',
-    changePositive: false,
-    bgColor: 'bg-danger-500/10',
-    icon: '<svg class="text-danger-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>'
-  }
-]
-
-const recentActivity = [
-  { id: 1, title: 'Nuevo vehículo recibido', description: 'Toyota Corolla - BIN: VH-2024-0156', time: 'Hace 5 min', color: 'bg-success-500/10 text-success-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M12 4v16m8-8H4" /></svg>' },
-  { id: 2, title: 'Usuario creado', description: 'Carlos Pérez - Rol: Recibidor', time: 'Hace 15 min', color: 'bg-primary-100 text-primary-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" /></svg>' },
-  { id: 3, title: 'Despacho completado', description: 'Lote #D-045 - 12 vehículos', time: 'Hace 1h', color: 'bg-warning-500/10 text-warning-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>' },
-  { id: 4, title: 'Inspección finalizada', description: 'Chevrolet Spark - VH-2024-0148', time: 'Hace 2h', color: 'bg-blue-100 text-blue-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>' },
-  { id: 5, title: 'Vehículo despachado', description: 'Nissan Versa - BIN: VH-2024-0140', time: 'Hace 3h', color: 'bg-gray-100 text-gray-600', icon: '<svg fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="2"><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>' }
-]
-
-const vehicleStatuses = [
-  { label: 'Pendientes', count: 12, percent: 8, textColor: 'text-gray-600', barColor: 'bg-gray-400' },
-  { label: 'Recibidos', count: 38, percent: 24, textColor: 'text-primary-600', barColor: 'bg-primary-500' },
-  { label: 'Improntados', count: 45, percent: 29, textColor: 'text-warning-600', barColor: 'bg-warning-500' },
-  { label: 'Inventariados', count: 42, percent: 27, textColor: 'text-success-600', barColor: 'bg-success-500' },
-  { label: 'Despachados', count: 19, percent: 12, textColor: 'text-blue-600', barColor: 'bg-blue-500' }
-]
-</script>

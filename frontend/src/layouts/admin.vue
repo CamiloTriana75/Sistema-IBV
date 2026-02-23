@@ -1,127 +1,3 @@
-<template>
-  <div class="min-h-screen bg-gray-100">
-    <!-- Overlay mobile -->
-    <div
-      v-if="sidebarOpen"
-      class="fixed inset-0 bg-black/50 z-40 lg:hidden"
-      @click="sidebarOpen = false"
-    />
-
-    <!-- Sidebar -->
-    <aside
-      :class="[
-        'fixed top-0 left-0 bottom-0 z-50 w-72 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col',
-        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-      ]"
-    >
-      <!-- Logo -->
-      <div class="flex items-center gap-3 px-6 h-16 border-b border-gray-800 shrink-0">
-        <div class="w-9 h-9 bg-primary-500 rounded-lg flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z" />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-lg font-bold">Sistema IBV</h1>
-          <p class="text-xs text-gray-400">Gestión de Vehículos</p>
-        </div>
-      </div>
-
-      <!-- Perfil del usuario -->
-      <div class="px-6 py-4 border-b border-gray-800 shrink-0">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-sm font-bold">
-            {{ currentUser.initials }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium truncate">{{ currentUser.name }}</p>
-            <p class="text-xs text-gray-400 truncate">{{ currentUser.roleName }}</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Navegación -->
-      <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-        <template v-for="item in menuItems" :key="item.to">
-          <NuxtLink
-            :to="item.to"
-            :class="[
-              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
-              isActive(item.to)
-                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
-                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
-            ]"
-            @click="sidebarOpen = false"
-          >
-            <span v-html="item.icon" class="w-5 h-5 shrink-0" />
-            <span>{{ item.label }}</span>
-            <span v-if="item.badge" class="ml-auto bg-danger-500 text-white text-xs px-2 py-0.5 rounded-full">
-              {{ item.badge }}
-            </span>
-          </NuxtLink>
-        </template>
-      </nav>
-
-      <!-- Cerrar sesión -->
-      <div class="px-4 py-4 border-t border-gray-800 shrink-0">
-        <button
-          @click="handleLogout"
-          class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-red-600/20 hover:text-red-400 transition-all"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          <span>Cerrar Sesión</span>
-        </button>
-      </div>
-    </aside>
-
-    <!-- Main Content Area -->
-    <div class="lg:pl-72">
-      <!-- Top Header -->
-      <header class="sticky top-0 z-30 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 shadow-sm">
-        <!-- Toggle sidebar (mobile) -->
-        <button @click="sidebarOpen = !sidebarOpen" class="lg:hidden text-gray-500 hover:text-gray-700">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
-
-        <!-- Breadcrumb / Título -->
-        <div class="hidden lg:block">
-          <h2 class="text-lg font-semibold text-gray-800">{{ pageTitle }}</h2>
-        </div>
-
-        <!-- Right side -->
-        <div class="flex items-center gap-4">
-          <!-- Notificaciones -->
-          <button class="relative text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-            </svg>
-            <span class="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">3</span>
-          </button>
-
-          <!-- Perfil -->
-          <div class="flex items-center gap-2 pl-4 border-l border-gray-200">
-            <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
-              {{ currentUser.initials }}
-            </div>
-            <div class="hidden sm:block">
-              <p class="text-sm font-medium text-gray-700">{{ currentUser.name }}</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
-      <!-- Page Content -->
-      <main class="p-4 sm:p-6 lg:p-8">
-        <slot />
-      </main>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAuthStore } from '~/stores/auth'
@@ -217,3 +93,127 @@ const handleLogout = async () => {
   navigateTo('/login')
 }
 </script>
+
+<template>
+  <div class="min-h-screen bg-gray-100">
+    <!-- Overlay mobile -->
+    <div
+      v-if="sidebarOpen"
+      class="fixed inset-0 bg-black/50 z-40 lg:hidden"
+      @click="sidebarOpen = false"
+    />
+
+    <!-- Sidebar -->
+    <aside
+      :class="[
+        'fixed top-0 left-0 bottom-0 z-50 w-72 bg-gray-900 text-white transform transition-transform duration-300 ease-in-out lg:translate-x-0 flex flex-col',
+        sidebarOpen ? 'translate-x-0' : '-translate-x-full'
+      ]"
+    >
+      <!-- Logo -->
+      <div class="flex items-center gap-3 px-6 h-16 border-b border-gray-800 shrink-0">
+        <div class="w-9 h-9 bg-primary-500 rounded-lg flex items-center justify-center">
+          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold">Sistema IBV</h1>
+          <p class="text-xs text-gray-400">Gestión de Vehículos</p>
+        </div>
+      </div>
+
+      <!-- Perfil del usuario -->
+      <div class="px-6 py-4 border-b border-gray-800 shrink-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-sm font-bold">
+            {{ currentUser.initials }}
+          </div>
+          <div class="flex-1 min-w-0">
+            <p class="text-sm font-medium truncate">{{ currentUser.name }}</p>
+            <p class="text-xs text-gray-400 truncate">{{ currentUser.roleName }}</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Navegación -->
+      <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+        <template v-for="item in menuItems" :key="item.to">
+          <NuxtLink
+            :to="item.to"
+            :class="[
+              'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200',
+              isActive(item.to)
+                ? 'bg-primary-600 text-white shadow-lg shadow-primary-600/30'
+                : 'text-gray-300 hover:bg-gray-800 hover:text-white'
+            ]"
+            @click="sidebarOpen = false"
+          >
+            <span class="w-5 h-5 shrink-0" v-html="item.icon" />
+            <span>{{ item.label }}</span>
+            <span v-if="item.badge" class="ml-auto bg-danger-500 text-white text-xs px-2 py-0.5 rounded-full">
+              {{ item.badge }}
+            </span>
+          </NuxtLink>
+        </template>
+      </nav>
+
+      <!-- Cerrar sesión -->
+      <div class="px-4 py-4 border-t border-gray-800 shrink-0">
+        <button
+          class="flex items-center gap-3 w-full px-3 py-2.5 rounded-lg text-sm font-medium text-gray-300 hover:bg-red-600/20 hover:text-red-400 transition-all"
+          @click="handleLogout"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+          </svg>
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <div class="lg:pl-72">
+      <!-- Top Header -->
+      <header class="sticky top-0 z-30 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 shadow-sm">
+        <!-- Toggle sidebar (mobile) -->
+        <button class="lg:hidden text-gray-500 hover:text-gray-700" @click="sidebarOpen = !sidebarOpen">
+          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <!-- Breadcrumb / Título -->
+        <div class="hidden lg:block">
+          <h2 class="text-lg font-semibold text-gray-800">{{ pageTitle }}</h2>
+        </div>
+
+        <!-- Right side -->
+        <div class="flex items-center gap-4">
+          <!-- Notificaciones -->
+          <button class="relative text-gray-400 hover:text-gray-600 transition">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span class="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">3</span>
+          </button>
+
+          <!-- Perfil -->
+          <div class="flex items-center gap-2 pl-4 border-l border-gray-200">
+            <div class="w-8 h-8 bg-primary-600 rounded-full flex items-center justify-center text-xs font-bold text-white">
+              {{ currentUser.initials }}
+            </div>
+            <div class="hidden sm:block">
+              <p class="text-sm font-medium text-gray-700">{{ currentUser.name }}</p>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Page Content -->
+      <main class="p-4 sm:p-6 lg:p-8">
+        <slot />
+      </main>
+    </div>
+  </div>
+</template>
