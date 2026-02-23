@@ -17,7 +17,7 @@ export const authService = {
   async logout(): Promise<void> {
     const apiClient = getApiClient()
     await apiClient.post('/auth/logout/')
-  }
+  },
 }
 
 export default authService

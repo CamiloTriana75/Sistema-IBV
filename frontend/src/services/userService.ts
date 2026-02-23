@@ -11,7 +11,7 @@ const mapApiUserToUi = (apiUser: ApiUser): User => {
     email: apiUser.email,
     role: apiUser.role,
     status: apiUser.is_active ? 'active' : 'inactive',
-    createdAt: apiUser.date_joined ? formatters.date(apiUser.date_joined) : undefined
+    createdAt: apiUser.date_joined ? formatters.date(apiUser.date_joined) : undefined,
   }
 }
 
@@ -54,7 +54,7 @@ export const userService = {
         last_name: nameParts.last_name,
         role: data.role || 'cliente',
         is_active: data.status ? data.status === 'active' : true,
-        password: data.password || undefined
+        password: data.password || undefined,
       }
       const response = await apiClient.post<ApiUser>('/users/', payload)
       return mapApiUserToUi(response.data)
@@ -74,7 +74,7 @@ export const userService = {
         last_name: data.name ? nameParts.last_name : undefined,
         role: data.role,
         is_active: data.status ? data.status === 'active' : undefined,
-        password: data.password || undefined
+        password: data.password || undefined,
       }
       const response = await apiClient.put<ApiUser>(`/users/${id}`, payload)
       return mapApiUserToUi(response.data)

@@ -4,14 +4,14 @@ import { useUserStore } from '~/stores/userStore'
 
 definePageMeta({
   layout: 'admin',
-  middleware: ['auth', 'admin']
+  middleware: ['auth', 'admin'],
 })
 
 // Filtros
 const filters = ref({
   search: '',
   role: '',
-  status: ''
+  status: '',
 })
 
 const userStore = useUserStore()
@@ -27,8 +27,9 @@ onMounted(async () => {
 
 // Filtrar usuarios
 const filteredUsers = computed(() => {
-  return users.value.filter(u => {
-    const matchSearch = !filters.value.search ||
+  return users.value.filter((u) => {
+    const matchSearch =
+      !filters.value.search ||
       u.name.toLowerCase().includes(filters.value.search.toLowerCase()) ||
       u.email.toLowerCase().includes(filters.value.search.toLowerCase())
     const matchRole = !filters.value.role || u.role === filters.value.role
@@ -39,7 +40,9 @@ const filteredUsers = computed(() => {
 
 const totalPages = computed(() => Math.ceil(filteredUsers.value.length / perPage))
 const paginationStart = computed(() => (currentPage.value - 1) * perPage + 1)
-const paginationEnd = computed(() => Math.min(currentPage.value * perPage, filteredUsers.value.length))
+const paginationEnd = computed(() =>
+  Math.min(currentPage.value * perPage, filteredUsers.value.length)
+)
 
 // Helpers de estilo
 const getAvatarColor = (role: string) => {
@@ -49,7 +52,7 @@ const getAvatarColor = (role: string) => {
     recibidor: 'bg-success-600',
     inventario: 'bg-blue-600',
     despachador: 'bg-purple-600',
-    cliente: 'bg-gray-500'
+    cliente: 'bg-gray-500',
   }
   return colors[role] || 'bg-gray-500'
 }
@@ -61,7 +64,7 @@ const getRoleBadge = (role: string) => {
     recibidor: 'bg-success-500/10 text-success-700',
     inventario: 'bg-blue-100 text-blue-700',
     despachador: 'bg-purple-100 text-purple-700',
-    cliente: 'bg-gray-100 text-gray-700'
+    cliente: 'bg-gray-100 text-gray-700',
   }
   return badges[role] || 'bg-gray-100 text-gray-700'
 }
@@ -73,7 +76,7 @@ const getRoleName = (role: string) => {
     recibidor: 'Recibidor',
     inventario: 'Inventario',
     despachador: 'Despachador',
-    cliente: 'Cliente'
+    cliente: 'Cliente',
   }
   return names[role] || role
 }
@@ -88,7 +91,7 @@ const form = ref({
   email: '',
   password: '',
   role: 'cliente',
-  status: 'active'
+  status: 'active',
 })
 
 const openCreateModal = () => {
@@ -148,7 +151,12 @@ const confirmDelete = async () => {
         @click="openCreateModal"
       >
         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 4v16m8-8H4"
+          />
         </svg>
         Nuevo Usuario
       </button>
@@ -159,8 +167,18 @@ const confirmDelete = async () => {
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <!-- Búsqueda -->
         <div class="relative lg:col-span-2">
-          <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          <svg
+            class="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+            />
           </svg>
           <input
             v-model="filters.search"
@@ -202,11 +220,31 @@ const confirmDelete = async () => {
         <table class="w-full">
           <thead class="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuario</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Creado</th>
-              <th class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
+              <th
+                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                Usuario
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                Rol
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                Estado
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                Creado
+              </th>
+              <th
+                class="px-6 py-3 text-right text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                Acciones
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-50">
@@ -214,7 +252,10 @@ const confirmDelete = async () => {
               <!-- Usuario -->
               <td class="px-6 py-4">
                 <div class="flex items-center gap-3">
-                  <div class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white" :class="getAvatarColor(user.role)">
+                  <div
+                    class="w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white"
+                    :class="getAvatarColor(user.role)"
+                  >
                     {{ user.name.charAt(0) }}{{ user.name.split(' ')[1]?.charAt(0) || '' }}
                   </div>
                   <div>
@@ -225,15 +266,30 @@ const confirmDelete = async () => {
               </td>
               <!-- Rol -->
               <td class="px-6 py-4">
-                <span :class="['inline-flex px-2.5 py-1 text-xs font-semibold rounded-full', getRoleBadge(user.role)]">
+                <span
+                  :class="[
+                    'inline-flex px-2.5 py-1 text-xs font-semibold rounded-full',
+                    getRoleBadge(user.role),
+                  ]"
+                >
                   {{ getRoleName(user.role) }}
                 </span>
               </td>
               <!-- Estado -->
               <td class="px-6 py-4">
                 <div class="flex items-center gap-2">
-                  <span :class="['w-2 h-2 rounded-full', user.status === 'active' ? 'bg-success-500' : 'bg-gray-300']" />
-                  <span :class="['text-xs font-medium', user.status === 'active' ? 'text-success-600' : 'text-gray-500']">
+                  <span
+                    :class="[
+                      'w-2 h-2 rounded-full',
+                      user.status === 'active' ? 'bg-success-500' : 'bg-gray-300',
+                    ]"
+                  />
+                  <span
+                    :class="[
+                      'text-xs font-medium',
+                      user.status === 'active' ? 'text-success-600' : 'text-gray-500',
+                    ]"
+                  >
                     {{ user.status === 'active' ? 'Activo' : 'Inactivo' }}
                   </span>
                 </div>
@@ -249,7 +305,12 @@ const confirmDelete = async () => {
                     @click="editUser(user)"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                      />
                     </svg>
                   </button>
                   <button
@@ -258,7 +319,12 @@ const confirmDelete = async () => {
                     @click="openDeleteModal(user)"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -269,11 +335,17 @@ const confirmDelete = async () => {
       </div>
 
       <!-- Paginación -->
-      <div class="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div
+        class="px-6 py-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-4"
+      >
         <p class="text-sm text-gray-500">
-          Mostrando <span class="font-medium text-gray-700">{{ paginationStart }}</span> a
-          <span class="font-medium text-gray-700">{{ paginationEnd }}</span> de
-          <span class="font-medium text-gray-700">{{ filteredUsers.length }}</span> resultados
+          Mostrando
+          <span class="font-medium text-gray-700">{{ paginationStart }}</span>
+          a
+          <span class="font-medium text-gray-700">{{ paginationEnd }}</span>
+          de
+          <span class="font-medium text-gray-700">{{ filteredUsers.length }}</span>
+          resultados
         </p>
         <div class="flex items-center gap-1">
           <button
@@ -290,7 +362,7 @@ const confirmDelete = async () => {
               'w-9 h-9 text-sm rounded-lg transition font-medium',
               currentPage === page
                 ? 'bg-primary-600 text-white shadow-sm'
-                : 'text-gray-600 hover:bg-gray-50'
+                : 'text-gray-600 hover:bg-gray-50',
             ]"
             @click="currentPage = page"
           >
@@ -308,7 +380,10 @@ const confirmDelete = async () => {
     </div>
 
     <!-- Modal Crear/Editar -->
-    <div v-if="showModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      v-if="showModal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    >
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg transform transition-all">
         <!-- Modal Header -->
         <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100">
@@ -317,12 +392,21 @@ const confirmDelete = async () => {
               {{ editingUser ? 'Editar Usuario' : 'Crear Nuevo Usuario' }}
             </h2>
             <p class="text-sm text-gray-500 mt-0.5">
-              {{ editingUser ? 'Modifica la información del usuario' : 'Completa los datos para crear un usuario' }}
+              {{
+                editingUser
+                  ? 'Modifica la información del usuario'
+                  : 'Completa los datos para crear un usuario'
+              }}
             </p>
           </div>
           <button class="text-gray-400 hover:text-gray-600 transition p-1" @click="closeModal">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M6 18L18 6M6 6l12 12"
+              />
             </svg>
           </button>
         </div>
@@ -343,7 +427,9 @@ const confirmDelete = async () => {
 
           <!-- Email -->
           <div>
-            <label class="block text-sm font-semibold text-gray-700 mb-1.5">Correo electrónico</label>
+            <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+              Correo electrónico
+            </label>
             <input
               v-model="form.email"
               type="email"
@@ -414,18 +500,34 @@ const confirmDelete = async () => {
     </div>
 
     <!-- Modal Eliminar -->
-    <div v-if="showDeleteModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+    <div
+      v-if="showDeleteModal"
+      class="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4"
+    >
       <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md p-6 transform transition-all">
         <div class="flex flex-col items-center text-center">
-          <div class="w-14 h-14 bg-danger-500/10 rounded-full flex items-center justify-center mb-4">
-            <svg class="w-7 h-7 text-danger-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          <div
+            class="w-14 h-14 bg-danger-500/10 rounded-full flex items-center justify-center mb-4"
+          >
+            <svg
+              class="w-7 h-7 text-danger-500"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z"
+              />
             </svg>
           </div>
           <h3 class="text-lg font-bold text-gray-900 mb-2">Eliminar Usuario</h3>
           <p class="text-sm text-gray-500 mb-6">
-            ¿Estás seguro que deseas eliminar a <span class="font-semibold text-gray-700">{{ userToDelete?.name }}</span>?
-            Esta acción no se puede deshacer.
+            ¿Estás seguro que deseas eliminar a
+            <span class="font-semibold text-gray-700">{{ userToDelete?.name }}</span>
+            ? Esta acción no se puede deshacer.
           </p>
           <div class="flex gap-3 w-full">
             <button
