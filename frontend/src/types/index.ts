@@ -1,9 +1,26 @@
+export interface ApiUser {
+  id: number
+  email: string
+  first_name: string
+  last_name: string
+  role: 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador' | 'cliente'
+  is_active: boolean
+  date_joined?: string
+}
+
+export interface TokenResponse {
+  access: string
+  refresh: string
+}
+
 export interface User {
   id: string
   name: string
   email: string
   role: 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador'
   status: 'active' | 'inactive'
+  createdAt?: string
+  password?: string
 }
 
 export interface Vehicle {

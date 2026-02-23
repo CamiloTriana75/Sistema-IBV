@@ -1,5 +1,8 @@
 # Sistema IBV - Inventario y Despacho de Vehículos en Bodegas
 
+![Backend CI](https://github.com/CamiloTriana75/Sistema-IBV/workflows/Backend%20CI/badge.svg)
+![Frontend CI](https://github.com/CamiloTriana75/Sistema-IBV/workflows/Frontend%20CI/badge.svg)
+
 Sistema web/responsivo para gestionar el ciclo completo de recepción, inventario, impronta y despacho de vehículos provenientes de buques hacia bodegas.
 
 ## Descripción
@@ -47,6 +50,46 @@ Sistema-IBV/
 - **Node.js:** 18+ (para Nuxt/Vue)
 - **PostgreSQL:** Supabase (cloud)
 - **Git:** Para control de versiones
+
+## CI/CD Pipeline
+
+Este proyecto tiene configurado GitHub Actions para integración continua y despliegue automático.
+
+### 🔄 Workflows Automáticos
+
+#### Backend CI
+- **Trigger:** Push o PR a `develop` o `main` con cambios en `backend/` o `requirements.txt`
+- **Pasos:**
+  - ✅ Formateo de código (Black)
+  - ✅ Análisis estático (Flake8)
+  - ✅ Verificación de migraciones Django
+  - ✅ Tests unitarios
+  - ✅ Reporte de cobertura
+- **Matrices:** Python 3.12 y 3.13
+
+#### Frontend CI
+- **Trigger:** Push o PR a `develop` o `main` con cambios en `frontend/`
+- **Pasos:**
+  - ✅ Linting (ESLint)
+  - ✅ Formateo (Prettier)
+  - ✅ Type checking (TypeScript)
+  - ✅ Build del proyecto (Nuxt)
+  - ✅ Tests (si existen)
+- **Matrices:** Node.js 18.x y 20.x
+
+### 🛠️ Scripts de Pre-Commit
+
+Ejecuta verificaciones localmente antes de hacer commit:
+
+```bash
+# Backend
+.\scripts\pre-commit-backend.ps1
+
+# Frontend
+.\scripts\pre-commit-frontend.ps1
+```
+
+Ver documentación completa en [.github/README.md](.github/README.md)
 
 ## Instalación
 

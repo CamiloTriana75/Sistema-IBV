@@ -29,11 +29,12 @@ pages/
 - Cada página debe definir su próprio layout usando `definePageMeta()`
 
 Ejemplo:
+
 ```vue
 <script setup lang="ts">
 definePageMeta({
   layout: 'admin',
-  middleware: 'auth'
+  middleware: 'auth',
 })
 </script>
 ```

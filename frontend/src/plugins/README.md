@@ -10,6 +10,7 @@ Plugins de Nuxt para extender funcionalidades.
 ## Ejemplos
 
 ### `vueQuery.ts` - Integrar TanStack Query
+
 ```typescript
 import { VueQueryPlugin } from '@tanstack/vue-query'
 
@@ -19,6 +20,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 ```
 
 ### `i18n.ts` - Internacionalización
+
 ```typescript
 import i18n from './i18n.config'
 
@@ -32,6 +34,7 @@ export default defineNuxtPlugin((nuxtApp) => {
 Los plugins se cargan automáticamente y están disponibles en toda la app.
 
 Acceder desde componentes:
+
 ```vue
 <script setup lang="ts">
 const { $i18n } = useNuxtApp()

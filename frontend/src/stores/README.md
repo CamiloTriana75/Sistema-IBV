@@ -16,23 +16,23 @@ import { defineStore } from 'pinia'
 export const useMyStore = defineStore('my-store', {
   state: () => ({
     count: 0,
-    items: []
+    items: [],
   }),
 
   getters: {
-    doubleCount: (state) => state.count * 2
+    doubleCount: (state) => state.count * 2,
   },
 
   actions: {
     increment() {
       this.count++
     },
-    
+
     async fetchItems() {
       const data = await $fetch('/api/items')
       this.items = data
-    }
-  }
+    },
+  },
 })
 ```
 
