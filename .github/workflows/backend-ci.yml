@@ -52,6 +52,8 @@ jobs:
           SECRET_KEY: "test-secret-key-for-ci"
           DEBUG: "False"
           DATABASE_URL: "sqlite:///db.sqlite3"
+          ALLOWED_HOSTS: "localhost,127.0.0.1"
+          CORS_ALLOW_ALL_ORIGINS: "True"
         run: |
           python manage.py makemigrations --check --dry-run --no-input
 
@@ -61,6 +63,8 @@ jobs:
           SECRET_KEY: "test-secret-key-for-ci"
           DEBUG: "False"
           DATABASE_URL: "sqlite:///db.sqlite3"
+          ALLOWED_HOSTS: "localhost,127.0.0.1"
+          CORS_ALLOW_ALL_ORIGINS: "True"
         run: |
           python manage.py test --no-input
 
@@ -70,6 +74,8 @@ jobs:
           SECRET_KEY: "test-secret-key-for-ci"
           DEBUG: "False"
           DATABASE_URL: "sqlite:///db.sqlite3"
+          ALLOWED_HOSTS: "localhost,127.0.0.1"
+          CORS_ALLOW_ALL_ORIGINS: "True"
         run: |
           coverage run --source='.' manage.py test
           coverage report
