@@ -4,6 +4,8 @@ from typing import Protocol
 
 from .entities import UserEntity
 
+# flake8: noqa: E704  # Protocol methods use ellipsis syntax
+
 
 class UserRepository(Protocol):
     def list(self) -> list[UserEntity]: ...
