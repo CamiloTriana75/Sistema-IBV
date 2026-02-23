@@ -5,18 +5,24 @@ Archivos estáticos: imágenes, estilos, fuentes.
 ## Estructura
 
 ### `styles/`
+
 Estilos globales y de Tailwind CSS.
+
 - `global.css` - Estilos globales
 - `variables.css` - Variables CSS customizadas
 
 ### `images/`
+
 Imágenes, iconos y recursos visuales.
+
 - `logo.png`
 - `icons/`
 - `backgrounds/`
 
 ### `fonts/`
+
 Fuentes personalizadas.
+
 - `roboto/`
 - `inter/`
 

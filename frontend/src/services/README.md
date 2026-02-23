@@ -25,22 +25,22 @@ export const vehicleService = {
   async create(data: any) {
     return await $fetch('/api/vehicles', {
       method: 'POST',
-      body: data
+      body: data,
     })
   },
 
   async update(id: string, data: any) {
     return await $fetch(`/api/vehicles/${id}`, {
       method: 'PUT',
-      body: data
+      body: data,
     })
   },
 
   async delete(id: string) {
     return await $fetch(`/api/vehicles/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
     })
-  }
+  },
 }
 ```
 

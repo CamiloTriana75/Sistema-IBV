@@ -5,6 +5,7 @@ Funciones de utilidad reutilizables.
 ## Ejemplos
 
 ### `helpers.ts`
+
 ```typescript
 // Validación
 export const isValidEmail = (email: string): boolean => {
@@ -19,7 +20,7 @@ export const formatDate = (date: Date | string): string => {
 export const formatCurrency = (amount: number): string => {
   return new Intl.NumberFormat('es-ES', {
     style: 'currency',
-    currency: 'USD'
+    currency: 'USD',
   }).format(amount)
 }
 
@@ -40,6 +41,7 @@ export const slugify = (text: string): string => {
 - Usar en componentes y services
 
 Uso:
+
 ```typescript
 import { formatDate, formatCurrency } from '~/utils/helpers'
 

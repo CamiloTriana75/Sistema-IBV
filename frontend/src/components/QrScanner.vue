@@ -3,49 +3,6 @@ Componente reutilizable para escaneo QR
 Soporta cámara de celular y pistola de escaneo
 -->
 
-<template>
-  <div class="space-y-4">
-    <div class="flex gap-2 flex-wrap">
-      <button
-        @click="toggleCamera"
-        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
-      >
-        {{ showCamera ? '❌ Cerrar cámara' : '📷 Abrir cámara' }}
-      </button>
-    </div>
-
-    <!-- Preview de la cámara -->
-    <div v-if="showCamera" class="bg-gray-900 rounded-lg overflow-hidden">
-      <div id="qr-reader" class="w-full"></div>
-    </div>
-
-    <!-- Campo de entrada manual -->
-    <div>
-      <label class="block text-sm font-medium text-gray-700 mb-1">
-        O digita/escanea manualmente:
-      </label>
-      <input
-        v-model="manualInput"
-        @keyup.enter="handleManualInput"
-        type="text"
-        placeholder="Escanea o digita el QR..."
-        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-      />
-    </div>
-
-    <!-- Resultado -->
-    <div v-if="scannedValue" class="bg-green-50 border border-green-200 p-4 rounded-lg">
-      <p class="text-sm text-gray-600">QR Escaneado:</p>
-      <p class="text-lg font-semibold text-green-600">{{ scannedValue }}</p>
-    </div>
-
-    <!-- Error -->
-    <div v-if="error" class="bg-red-50 border border-red-200 p-4 rounded-lg">
-      <p class="text-sm font-medium text-red-600">{{ error }}</p>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref, onUnmounted } from 'vue'
 
@@ -93,3 +50,46 @@ onUnmounted(() => {
   closeCamera()
 })
 </script>
+
+<template>
+  <div class="space-y-4">
+    <div class="flex gap-2 flex-wrap">
+      <button
+        class="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+        @click="toggleCamera"
+      >
+        {{ showCamera ? '❌ Cerrar cámara' : '📷 Abrir cámara' }}
+      </button>
+    </div>
+
+    <!-- Preview de la cámara -->
+    <div v-if="showCamera" class="bg-gray-900 rounded-lg overflow-hidden">
+      <div id="qr-reader" class="w-full"></div>
+    </div>
+
+    <!-- Campo de entrada manual -->
+    <div>
+      <label class="block text-sm font-medium text-gray-700 mb-1">
+        O digita/escanea manualmente:
+      </label>
+      <input
+        v-model="manualInput"
+        type="text"
+        placeholder="Escanea o digita el QR..."
+        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+        @keyup.enter="handleManualInput"
+      />
+    </div>
+
+    <!-- Resultado -->
+    <div v-if="scannedValue" class="bg-green-50 border border-green-200 p-4 rounded-lg">
+      <p class="text-sm text-gray-600">QR Escaneado:</p>
+      <p class="text-lg font-semibold text-green-600">{{ scannedValue }}</p>
+    </div>
+
+    <!-- Error -->
+    <div v-if="error" class="bg-red-50 border border-red-200 p-4 rounded-lg">
+      <p class="text-sm font-medium text-red-600">{{ error }}</p>
+    </div>
+  </div>
+</template>

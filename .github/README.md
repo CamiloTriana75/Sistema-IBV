@@ -1,8 +1,10 @@
 # Backend CI/CD Pipeline
 
-Este directorio contiene la configuración del pipeline de CI/CD para el backend del Sistema IBV.
+Este directorio contiene la configuración del pipeline de CI/CD para el Sistema IBV.
 
-## 🚀 Workflow: Backend CI
+## 🚀 Workflows
+
+### Backend CI
 
 El workflow `backend-ci.yml` se ejecuta automáticamente en los siguientes casos:
 
@@ -13,8 +15,31 @@ El workflow `backend-ci.yml` se ejecuta automáticamente en los siguientes casos
 
 - **Pull Requests** hacia `develop` o `main` con los mismos criterios
 
-## 📋 Pasos del Pipeline
+### Frontend CI
 
+El workflow `frontend-ci.yml` se ejecuta automáticamente cuando:
+
+- **Push** a las ramas `develop` o `main` que modifiquen:
+  - Archivos en `frontend/`
+  - El propio workflow
+
+- **Pull Requests** hacia `develop` o `main` con los mismos criterios
+
+## 📋 Pasos del Pipeline
+# Frontend Pipeline
+
+1. **Checkout del código**
+2. **Configuración de Node.js** (18.x y 20.x)
+3. **Instalación de dependencias** (npm ci)
+4. **ESLint** - Análisis estático
+5. **Prettier** - Verificación de formato
+6. **Type Check** - Verificación de tipos TypeScript
+7. **Build** - Compilación del proyecto
+8. **Tests** - Ejecución de pruebas (si existen)
+
+## 🔧 Ejecutar verificaciones localmente
+
+### Backend
 1. **Checkout del código**
 2. **Configuración de Python** (3.12 y 3.13)
 3. **Instalación de dependencias**
@@ -42,7 +67,41 @@ black backend/
 flake8 backend/
 
 # Verificar migraciones
-cd backend
+cd bFrontend
+
+```bash
+# Navegar al directorio frontend
+**Backend:**
+```bash
+.\scripts\pre-commit-backend.ps1
+```
+
+**Frontend:**
+```bash
+.\scripts\pre-commit-front
+# Instalar dependencias
+npm install
+
+# Linting con ESLint
+npm run lint
+
+# Fix automático de ESLint
+npm run lint:fix
+
+# Verificar formato con Prettier
+npm run format:check
+
+# Formatear código con Prettier
+npm run format
+
+# Type checking
+npm run type-check
+
+# Build
+npm run build
+```
+
+### ackend
 python manage.py makemigrations --check --dry-run
 
 # Ejecutar tests

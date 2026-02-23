@@ -4,7 +4,7 @@ const config = useRuntimeConfig()
 
 const apiClient = axios.create({
   baseURL: config.public.apiBase,
-  timeout: 10000
+  timeout: 10000,
 })
 
 // Interceptor para agregar token a cada petición

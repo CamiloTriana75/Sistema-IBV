@@ -1,3 +1,25 @@
+<script setup lang="ts">
+interface Props {
+  modelValue: string
+  label: string
+  type?: string
+  placeholder?: string
+  required?: boolean
+  disabled?: boolean
+}
+
+withDefaults(defineProps<Props>(), {
+  type: 'text',
+  placeholder: '',
+  required: false,
+  disabled: false,
+})
+
+defineEmits<{
+  'update:modelValue': [value: string]
+}>()
+</script>
+
 <template>
   <div class="space-y-2">
     <label class="block text-sm font-semibold text-gray-700">
@@ -15,25 +37,3 @@
     />
   </div>
 </template>
-
-<script setup lang="ts">
-interface Props {
-  modelValue: string
-  label: string
-  type?: string
-  placeholder?: string
-  required?: boolean
-  disabled?: boolean
-}
-
-withDefaults(defineProps<Props>(), {
-  type: 'text',
-  placeholder: '',
-  required: false,
-  disabled: false
-})
-
-defineEmits<{
-  'update:modelValue': [value: string]
-}>()
-</script>

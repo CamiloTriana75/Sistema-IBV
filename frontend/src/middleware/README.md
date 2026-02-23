@@ -10,10 +10,11 @@ Middlewares de Nuxt para proteger rutas y ejecutar lógica antes de renderizar.
 ## Ejemplos
 
 ### auth.ts - Proteger rutas autenticadas
+
 ```typescript
 export default defineRouteMiddleware((to, from) => {
   const authStore = useAuthStore()
-  
+
   if (!authStore.isAuthenticated) {
     return navigateTo('/login')
   }
@@ -21,10 +22,11 @@ export default defineRouteMiddleware((to, from) => {
 ```
 
 ### admin.ts - Proteger rutas administrativas
+
 ```typescript
 export default defineRouteMiddleware((to, from) => {
   const authStore = useAuthStore()
-  
+
   if (authStore.user?.role !== 'admin') {
     return navigateTo('/')
   }
@@ -36,7 +38,7 @@ export default defineRouteMiddleware((to, from) => {
 ```vue
 <script setup lang="ts">
 definePageMeta({
-  middleware: ['auth', 'admin']
+  middleware: ['auth', 'admin'],
 })
 </script>
 ```

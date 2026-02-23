@@ -10,7 +10,7 @@ export const useUserStore = defineStore('user', () => {
   const error = ref<string | null>(null)
 
   const userCount = computed(() => users.value.length)
-  const activeUsers = computed(() => users.value.filter(u => u.status === 'active').length)
+  const activeUsers = computed(() => users.value.filter((u) => u.status === 'active').length)
 
   const fetchUsers = async () => {
     loading.value = true
@@ -54,7 +54,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
     try {
       const updatedUser = await userService.updateUser(id, userData)
-      const index = users.value.findIndex(u => u.id === id)
+      const index = users.value.findIndex((u) => u.id === id)
       if (index !== -1) {
         users.value[index] = updatedUser
       }
@@ -73,7 +73,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
     try {
       await userService.deleteUser(id)
-      users.value = users.value.filter(u => u.id !== id)
+      users.value = users.value.filter((u) => u.id !== id)
     } catch (err) {
       error.value = 'Error al eliminar usuario'
       console.error(err)
@@ -94,6 +94,6 @@ export const useUserStore = defineStore('user', () => {
     fetchRoles,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
   }
 })

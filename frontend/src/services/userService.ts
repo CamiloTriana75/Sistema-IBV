@@ -59,7 +59,7 @@ export const userService = {
       console.error('Error fetching roles:', error)
       throw error
     }
-  }
+  },
 }
 
 export default userService
