@@ -5,6 +5,7 @@ Frontend Nuxt 3 + TailwindCSS para el Sistema de Inventario y Despacho de Vehíc
 ## 🚀 Inicio rápido
 
 ### Requisitos
+
 - Node.js 18+
 - npm o pnpm
 

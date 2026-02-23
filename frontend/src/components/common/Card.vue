@@ -1,3 +1,13 @@
+<script setup lang="ts">
+interface Props {
+  title?: string
+}
+
+withDefaults(defineProps<Props>(), {
+  title: '',
+})
+</script>
+
 <template>
   <div class="rounded-lg border border-gray-200 bg-white shadow-md overflow-hidden">
     <!-- Card Header -->
@@ -16,16 +26,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-interface Props {
-  title?: string
-}
-
-withDefaults(defineProps<Props>(), {
-  title: ''
-})
-</script>
 
 <style scoped>
 /* Hover effect */

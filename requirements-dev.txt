@@ -1,0 +1,23 @@
+# Development Dependencies - Sistema IBV Backend
+# Linting y formateo de código
+black>=24.1.0
+flake8>=6.0.0,<7.0.0
+# flake8-django>=1.4  # Deshabilitado: incompatible con Python 3.12 (TypeAlias)
+flake8-bugbear>=24.1.0
+flake8-comprehensions>=3.14.0
+flake8-simplify>=0.21.0
+
+# Testing
+pytest>=8.0.0
+pytest-django>=4.8.0
+pytest-cov>=4.1.0
+coverage>=7.4.0
+
+# Herramientas de desarrollo
+ipython>=8.21.0
+django-debug-toolbar>=4.3.0
+django-extensions>=3.2.3
+
+# Type checking (opcional)
+mypy>=1.8.0
+django-stubs>=4.2.7

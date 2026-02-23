@@ -11,6 +11,7 @@ Lógica reutilizable usando Composition API.
 ## Ejemplos
 
 ### useAuth.ts
+
 ```typescript
 export const useAuth = () => {
   const user = ref(null)
@@ -21,7 +22,7 @@ export const useAuth = () => {
     try {
       const response = await $fetch('/api/auth/login', {
         method: 'POST',
-        body: { email, password }
+        body: { email, password },
       })
       user.value = response.user
     } finally {
@@ -34,6 +35,7 @@ export const useAuth = () => {
 ```
 
 ### useFetch.ts
+
 ```typescript
 export const useFetch = (url: string) => {
   const data = ref(null)

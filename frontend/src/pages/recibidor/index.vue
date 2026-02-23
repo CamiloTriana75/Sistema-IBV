@@ -1,3 +1,15 @@
+<script setup lang="ts">
+definePageMeta({ layout: 'admin' })
+
+const pendingVehicles = [
+  { bin: 'VH-2024-0157', model: 'Toyota Corolla', color: 'Blanco', date: '23/02/2026' },
+  { bin: 'VH-2024-0158', model: 'Chevrolet Spark', color: 'Rojo', date: '23/02/2026' },
+  { bin: 'VH-2024-0159', model: 'Nissan Versa', color: 'Plata', date: '23/02/2026' },
+  { bin: 'VH-2024-0160', model: 'Kia Rio', color: 'Negro', date: '23/02/2026' },
+  { bin: 'VH-2024-0161', model: 'Hyundai Accent', color: 'Azul', date: '23/02/2026' },
+]
+</script>
+
 <template>
   <div>
     <div class="mb-8">
@@ -25,7 +37,9 @@
     <div class="bg-white rounded-xl shadow-sm border border-gray-100">
       <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
         <h3 class="font-semibold text-gray-900">Vehículos Pendientes de Recepción</h3>
-        <button class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition">
+        <button
+          class="px-4 py-2 bg-primary-600 text-white text-sm font-medium rounded-lg hover:bg-primary-700 transition"
+        >
           + Registrar Vehículo
         </button>
       </div>
@@ -33,11 +47,31 @@
         <table class="w-full">
           <thead class="bg-gray-50 border-b border-gray-100">
             <tr>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">BIN</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Modelo</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Color</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha</th>
-              <th class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">Acción</th>
+              <th
+                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                BIN
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                Modelo
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                Color
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                Fecha
+              </th>
+              <th
+                class="px-6 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider"
+              >
+                Acción
+              </th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-50">
@@ -47,7 +81,9 @@
               <td class="px-6 py-4 text-sm text-gray-700">{{ v.color }}</td>
               <td class="px-6 py-4 text-sm text-gray-500">{{ v.date }}</td>
               <td class="px-6 py-4">
-                <button class="px-3 py-1.5 text-xs font-medium text-white bg-success-500 rounded-lg hover:bg-success-600 transition">
+                <button
+                  class="px-3 py-1.5 text-xs font-medium text-white bg-success-500 rounded-lg hover:bg-success-600 transition"
+                >
                   Recibir
                 </button>
               </td>
@@ -58,15 +94,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-definePageMeta({ layout: 'admin' })
-
-const pendingVehicles = [
-  { bin: 'VH-2024-0157', model: 'Toyota Corolla', color: 'Blanco', date: '23/02/2026' },
-  { bin: 'VH-2024-0158', model: 'Chevrolet Spark', color: 'Rojo', date: '23/02/2026' },
-  { bin: 'VH-2024-0159', model: 'Nissan Versa', color: 'Plata', date: '23/02/2026' },
-  { bin: 'VH-2024-0160', model: 'Kia Rio', color: 'Negro', date: '23/02/2026' },
-  { bin: 'VH-2024-0161', model: 'Hyundai Accent', color: 'Azul', date: '23/02/2026' },
-]
-</script>

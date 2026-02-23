@@ -34,7 +34,9 @@ class DjangoUserRepository(UserRepository):
         user = User.objects.create_user(password=password, **data)
         return _to_entity(user)
 
-    def update(self, user_id: int, data: dict, password: str | None = None) -> UserEntity | None:
+    def update(
+        self, user_id: int, data: dict, password: str | None = None
+    ) -> UserEntity | None:
         try:
             user = User.objects.get(pk=user_id)
         except User.DoesNotExist:

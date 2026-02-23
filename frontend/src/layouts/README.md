@@ -12,7 +12,7 @@ Layouts que envuelven las páginas.
 ```vue
 <script setup lang="ts">
 definePageMeta({
-  layout: 'admin'
+  layout: 'admin',
 })
 </script>
 ```
@@ -27,6 +27,7 @@ Si no especificas layout, se usa `default.vue` automáticamente.
 - Usar `<NuxtPage />` para renderizar la página
 
 Ejemplo:
+
 ```vue
 <template>
   <div class="layout">

@@ -19,7 +19,9 @@ class UserCreateSerializer(serializers.Serializer):
     email = serializers.EmailField()
     first_name = serializers.CharField(allow_blank=True, required=False)
     last_name = serializers.CharField(allow_blank=True, required=False)
-    role = serializers.ChoiceField(choices=ROLE_CHOICES, required=False, default="cliente")
+    role = serializers.ChoiceField(
+        choices=ROLE_CHOICES, required=False, default="cliente"
+    )
     is_active = serializers.BooleanField(required=False, default=True)
     password = serializers.CharField(write_only=True, required=False)
 

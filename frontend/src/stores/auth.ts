@@ -24,7 +24,7 @@ export const useAuthStore = defineStore('auth', () => {
         name: email.split('@')[0] || 'Usuario',
         email,
         role: 'admin',
-        status: 'active'
+        status: 'active',
       }
     } catch (error) {
       console.error('Login error:', error)
@@ -51,6 +51,6 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     login,
     logout,
-    loadUser
+    loadUser,
   }
 })

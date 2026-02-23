@@ -107,5 +107,8 @@ class RolesView(APIView):
     permission_classes = [IsAdminUser]
 
     def get(self, _request):
-        roles = [{"id": index + 1, "name": label} for index, (_code, label) in enumerate(ROLE_CHOICES)]
+        roles = [
+            {"id": index + 1, "name": label}
+            for index, (_code, label) in enumerate(ROLE_CHOICES)
+        ]
         return Response(roles)
