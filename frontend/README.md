@@ -1,37 +1,21 @@
 # Sistema IBV - Frontend
 
-## Estructura del Proyecto
+Frontend Nuxt 3 + TailwindCSS para el Sistema de Inventario y Despacho de Vehículos en Bodegas.
 
-```
-frontend/
-├── src/
-│   ├── pages/              # Páginas (rutas automáticas)
-│   ├── components/         # Componentes reutilizables
-│   ├── layouts/            # Layouts de página
-│   ├── stores/             # Pinia stores (estado global)
-│   ├── services/           # Servicios API
-│   ├── composables/        # Composables reutilizables
-│   ├── types/              # TypeScript types
-│   ├── utils/              # Utilidades
-│   ├── assets/             # Imágenes, fonts, etc.
-│   └── app.vue            # Componente raíz
-├── public/                 # Archivos estáticos
-├── nuxt.config.ts         # Configuración Nuxt
-├── tailwind.config.ts     # Configuración Tailwind
-├── tsconfig.json          # Configuración TypeScript
-├── .eslintrc.json         # Configuración ESLint
-├── .env.example           # Variables de ejemplo
-└── package.json
-```
+## 🚀 Inicio rápido
 
-## Instalación
+### Requisitos
+- Node.js 18+
+- npm o pnpm
+
+### Instalación
 
 ```bash
 cd frontend
 npm install
 ```
 
-## Desarrollo
+### Desarrollo
 
 ```bash
 npm run dev
@@ -39,29 +23,79 @@ npm run dev
 
 Accede a `http://localhost:3000`
 
-## Build
+### Build
 
 ```bash
 npm run build
 npm run preview
 ```
 
-## Tecnologías
+## 📁 Estructura
 
-- **Vue 3**: Framework de UI
-- **Nuxt 3**: Meta-framework para Vue
-- **TailwindCSS**: Utilidades de CSS
-- **Pinia**: Gestión de estado
-- **TypeScript**: Tipado estático
-- **html5-qrcode**: Escaneo de QR
-- **Axios**: Cliente HTTP
+```
+frontend/
+├── src/
+│   ├── pages/           # Rutas (Nuxt auto-routing)
+│   ├── components/      # Componentes reutilizables
+│   ├── layouts/         # Layouts de página
+│   ├── stores/          # Pinia stores
+│   ├── services/        # Cliente API
+│   ├── types/           # TypeScript types
+│   ├── utils/           # Utilidades
+│   ├── assets/          # Recursos estáticos
+│   └── app.vue          # Componente raíz
+├── public/              # Archivos públicos
+├── nuxt.config.ts       # Configuración Nuxt
+├── tailwind.config.ts   # Configuración TailwindCSS
+└── package.json
+```
 
-## Próximas Tareas
+## 🎨 Tecnologías
 
-- [ ] Página de Login completa
-- [ ] Sistema de autenticación con JWT
-- [ ] Rutas protegidas por rol
-- [ ] Módulo de Recepción de Vehículos
-- [ ] Módulo de Impronta
-- [ ] Módulo de Inventario
-- [ ] Módulo de Despacho
+- **Vue 3** - Framework reactivo
+- **Nuxt 3** - Meta-framework
+- **TailwindCSS** - Utilidades CSS
+- **Pinia** - Gestión de estado
+- **TypeScript** - Tipado estático
+- **Axios** - Cliente HTTP
+- **html5-qrcode** - Escaneo QR
+- **PrintJS** - Impresión
+- **XLSX** - Exportación Excel
+
+## 🔑 Variables de Entorno
+
+Copia `.env.example` a `.env.local`:
+
+```env
+NUXT_PUBLIC_API_BASE=http://localhost:8000/api
+DEBUG=false
+```
+
+## 📖 Páginas
+
+- `/` - Inicio
+- `/login` - Iniciar sesión
+- `/admin` - Panel de administración
+- `/admin/usuarios` - Gestión de usuarios (requiere autenticación)
+
+## 🧩 Componentes
+
+- `QrScanner` - Escaneo de códigos QR (cámara + entrada manual)
+
+## 🏪 Stores (Pinia)
+
+- `auth` - Autenticación y sesión de usuario
+
+## 📝 Próximas tareas
+
+- [ ] Conectar con API del backend
+- [ ] Implementar autenticación
+- [ ] Módulo de recepción de vehículos
+- [ ] Módulo de impronta
+- [ ] Módulo de inventario
+- [ ] Módulo de despacho
+- [ ] Dashboard y reportes
+
+## 📄 Licencia
+
+Privado - Todos los derechos reservados.

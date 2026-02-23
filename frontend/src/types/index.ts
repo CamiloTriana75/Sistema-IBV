@@ -1,4 +1,11 @@
-// Tipos comunes del sistema
+export interface User {
+  id: string
+  name: string
+  email: string
+  role: 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador' | 'cliente'
+  status: 'active' | 'inactive'
+}
+
 export interface Vehicle {
   id: string
   bin: string
@@ -7,14 +14,6 @@ export interface Vehicle {
   color: string
   status: 'pending' | 'received' | 'imprinted' | 'inventoried' | 'dispatched'
   createdAt: string
-}
-
-export interface User {
-  id: string
-  name: string
-  email: string
-  role: 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador' | 'cliente'
-  status: 'active' | 'inactive'
 }
 
 export interface Imprint {

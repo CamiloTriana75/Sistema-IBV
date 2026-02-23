@@ -1,18 +1,15 @@
-// Utilidades de validación
 export const validators = {
   email: (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
   bin: (bin: string) => /^[A-Z0-9]{17}$/.test(bin),
   qrCode: (code: string) => code.length > 0
 }
 
-// Utilidades de formato
 export const formatters = {
   date: (date: string | Date) => new Date(date).toLocaleDateString('es-ES'),
   time: (date: string | Date) => new Date(date).toLocaleTimeString('es-ES'),
   dateTime: (date: string | Date) => new Date(date).toLocaleString('es-ES')
 }
 
-// Utilidades de descargas
 export const downloadFile = (content: any, fileName: string, type: string = 'application/json') => {
   const blob = new Blob([content], { type })
   const url = window.URL.createObjectURL(blob)
