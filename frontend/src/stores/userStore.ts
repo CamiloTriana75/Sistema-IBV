@@ -12,32 +12,108 @@ export interface StoreUser {
 
 // Roles del sistema con metadata
 export const SYSTEM_ROLES = [
-  { value: 'admin', label: 'Administrador', color: 'bg-primary-100 text-primary-700', dotColor: 'bg-primary-500', description: 'Acceso total al sistema' },
-  { value: 'recibidor', label: 'Recibidor', color: 'bg-blue-100 text-blue-700', dotColor: 'bg-blue-500', description: 'Recepción e impronta de vehículos' },
-  { value: 'inventario', label: 'Inventario', color: 'bg-amber-100 text-amber-700', dotColor: 'bg-amber-500', description: 'Inspección y checklist de vehículos' },
-  { value: 'despachador', label: 'Despachador', color: 'bg-green-100 text-green-700', dotColor: 'bg-green-500', description: 'Despacho y envío de lotes' },
-  { value: 'porteria', label: 'Portería', color: 'bg-purple-100 text-purple-700', dotColor: 'bg-purple-500', description: 'Control de entrada/salida' },
+  {
+    value: 'admin',
+    label: 'Administrador',
+    color: 'bg-primary-100 text-primary-700',
+    dotColor: 'bg-primary-500',
+    description: 'Acceso total al sistema',
+  },
+  {
+    value: 'recibidor',
+    label: 'Recibidor',
+    color: 'bg-blue-100 text-blue-700',
+    dotColor: 'bg-blue-500',
+    description: 'Recepción e impronta de vehículos',
+  },
+  {
+    value: 'inventario',
+    label: 'Inventario',
+    color: 'bg-amber-100 text-amber-700',
+    dotColor: 'bg-amber-500',
+    description: 'Inspección y checklist de vehículos',
+  },
+  {
+    value: 'despachador',
+    label: 'Despachador',
+    color: 'bg-green-100 text-green-700',
+    dotColor: 'bg-green-500',
+    description: 'Despacho y envío de lotes',
+  },
+  {
+    value: 'porteria',
+    label: 'Portería',
+    color: 'bg-purple-100 text-purple-700',
+    dotColor: 'bg-purple-500',
+    description: 'Control de entrada/salida',
+  },
 ] as const
 
 const STORAGE_KEY = 'ibv_users'
 
 // Datos mock iniciales
 const INITIAL_USERS: StoreUser[] = [
-  { id: '1', name: 'Carlos Administrador', email: 'admin@ibv.com', role: 'admin', status: 'active' },
-  { id: '2', name: 'María Recibidora', email: 'recibidor@ibv.com', role: 'recibidor', status: 'active' },
-  { id: '3', name: 'Juan Inventario', email: 'inventario@ibv.com', role: 'inventario', status: 'active' },
-  { id: '4', name: 'Luis Despachador', email: 'despachador@ibv.com', role: 'despachador', status: 'active' },
+  {
+    id: '1',
+    name: 'Carlos Administrador',
+    email: 'admin@ibv.com',
+    role: 'admin',
+    status: 'active',
+  },
+  {
+    id: '2',
+    name: 'María Recibidora',
+    email: 'recibidor@ibv.com',
+    role: 'recibidor',
+    status: 'active',
+  },
+  {
+    id: '3',
+    name: 'Juan Inventario',
+    email: 'inventario@ibv.com',
+    role: 'inventario',
+    status: 'active',
+  },
+  {
+    id: '4',
+    name: 'Luis Despachador',
+    email: 'despachador@ibv.com',
+    role: 'despachador',
+    status: 'active',
+  },
   { id: '5', name: 'Ana Portería', email: 'porteria@ibv.com', role: 'porteria', status: 'active' },
-  { id: '6', name: 'Pedro Inspector', email: 'pedro@ibv.com', role: 'inventario', status: 'active' },
-  { id: '7', name: 'Laura Recepción', email: 'laura@ibv.com', role: 'recibidor', status: 'inactive' },
-  { id: '8', name: 'Diego Despacho', email: 'diego@ibv.com', role: 'despachador', status: 'active' },
+  {
+    id: '6',
+    name: 'Pedro Inspector',
+    email: 'pedro@ibv.com',
+    role: 'inventario',
+    status: 'active',
+  },
+  {
+    id: '7',
+    name: 'Laura Recepción',
+    email: 'laura@ibv.com',
+    role: 'recibidor',
+    status: 'inactive',
+  },
+  {
+    id: '8',
+    name: 'Diego Despacho',
+    email: 'diego@ibv.com',
+    role: 'despachador',
+    status: 'active',
+  },
 ]
 
 function loadUsers(): StoreUser[] {
   if (typeof window === 'undefined') return INITIAL_USERS
   const stored = localStorage.getItem(STORAGE_KEY)
   if (stored) {
-    try { return JSON.parse(stored) } catch { /* fallback */ }
+    try {
+      return JSON.parse(stored)
+    } catch {
+      /* fallback */
+    }
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_USERS))
   return [...INITIAL_USERS]
@@ -55,10 +131,10 @@ export const useUserStore = defineStore('user', () => {
   const error = ref<string | null>(null)
 
   const userCount = computed(() => users.value.length)
-  const activeUsers = computed(() => users.value.filter(u => u.status === 'active').length)
+  const activeUsers = computed(() => users.value.filter((u) => u.status === 'active').length)
 
   const getRoleInfo = (roleValue: string) => {
-    return SYSTEM_ROLES.find(r => r.value === roleValue) || SYSTEM_ROLES[0]
+    return SYSTEM_ROLES.find((r) => r.value === roleValue) || SYSTEM_ROLES[0]
   }
 
   const fetchUsers = async () => {
@@ -66,7 +142,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
     try {
       // Simulamos carga con delay breve
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise((resolve) => setTimeout(resolve, 300))
       users.value = loadUsers()
     } catch (err) {
       error.value = 'Error al cargar usuarios'
@@ -80,11 +156,11 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
     try {
       // Verificar email duplicado
-      const exists = users.value.some(u => u.email.toLowerCase() === userData.email.toLowerCase())
+      const exists = users.value.some((u) => u.email.toLowerCase() === userData.email.toLowerCase())
       if (exists) {
         throw new Error('Ya existe un usuario con ese email')
       }
-      await new Promise(resolve => setTimeout(resolve, 300))
+      await new Promise((resolve) => setTimeout(resolve, 300))
       const newUser: StoreUser = {
         ...userData,
         id: String(Date.now()),
@@ -104,12 +180,14 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true
     error.value = null
     try {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      const index = users.value.findIndex(u => u.id === id)
+      await new Promise((resolve) => setTimeout(resolve, 300))
+      const index = users.value.findIndex((u) => u.id === id)
       if (index === -1) throw new Error('Usuario no encontrado')
       // Verificar email duplicado (excluyendo el usuario actual)
       if (userData.email) {
-        const emailExists = users.value.some(u => u.id !== id && u.email.toLowerCase() === userData.email!.toLowerCase())
+        const emailExists = users.value.some(
+          (u) => u.id !== id && u.email.toLowerCase() === userData.email!.toLowerCase()
+        )
         if (emailExists) throw new Error('Ya existe un usuario con ese email')
       }
       users.value[index] = { ...users.value[index], ...userData }
@@ -127,8 +205,8 @@ export const useUserStore = defineStore('user', () => {
     loading.value = true
     error.value = null
     try {
-      await new Promise(resolve => setTimeout(resolve, 300))
-      users.value = users.value.filter(u => u.id !== id)
+      await new Promise((resolve) => setTimeout(resolve, 300))
+      users.value = users.value.filter((u) => u.id !== id)
       persistUsers(users.value)
     } catch (err: unknown) {
       error.value = (err as Error).message || 'Error al eliminar usuario'
@@ -139,7 +217,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const toggleStatus = async (id: string) => {
-    const user = users.value.find(u => u.id === id)
+    const user = users.value.find((u) => u.id === id)
     if (!user) return
     const newStatus = user.status === 'active' ? 'inactive' : 'active'
     return updateUser(id, { status: newStatus })
@@ -157,6 +235,6 @@ export const useUserStore = defineStore('user', () => {
     updateUser,
     deleteUser,
     toggleStatus,
-    SYSTEM_ROLES
+    SYSTEM_ROLES,
   }
 })

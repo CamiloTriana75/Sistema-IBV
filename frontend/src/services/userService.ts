@@ -69,7 +69,7 @@ export const userService = {
       const apiClient = getApiClient()
       const nameParts = data.name ? splitName(data.name) : null
       const payload: Record<string, string | boolean | undefined> = {}
-      
+
       if (data.email) payload.email = data.email
       if (nameParts) {
         payload.first_name = nameParts.first_name
@@ -78,7 +78,7 @@ export const userService = {
       if (data.role) payload.role = data.role
       if (data.status !== undefined) payload.is_active = data.status === 'active'
       if (data.password) payload.password = data.password
-      
+
       const response = await apiClient.put<ApiUser>(`/users/${id}`, payload)
       return mapApiUserToUi(response.data)
     } catch (error) {

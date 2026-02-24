@@ -3,15 +3,22 @@ import { ref, computed } from 'vue'
 
 /**
  * Store central del ciclo de vida de cada vehículo en el sistema IBV.
- * 
+ *
  * Flujo: Recepción (VIN escaneado) → Impronta → Inventario → Despacho
- * 
+ *
  * Un vehículo NO puede despacharse si:
  * - No tiene impronta completada
  * - No tiene inventario aprobado
  */
 
-export type EstadoVehiculo = 'recibido' | 'impronta_pendiente' | 'impronta_completada' | 'inventario_pendiente' | 'inventario_aprobado' | 'listo_despacho' | 'despachado'
+export type EstadoVehiculo =
+  | 'recibido'
+  | 'impronta_pendiente'
+  | 'impronta_completada'
+  | 'inventario_pendiente'
+  | 'inventario_aprobado'
+  | 'listo_despacho'
+  | 'despachado'
 
 export interface VehiculoPipeline {
   id: string
@@ -104,7 +111,13 @@ const INITIAL_VEHICULOS: VehiculoPipeline[] = [
     inventarioAprobado: true,
     inventarioFecha: '2026-02-22',
     inventarioInspector: 'Carlos Inspector',
-    inventarioResultado: { totalItems: 30, aprobados: 26, fallas: 2, na: 2, nota: 'Rayón en lateral derecho' },
+    inventarioResultado: {
+      totalItems: 30,
+      aprobados: 26,
+      fallas: 2,
+      na: 2,
+      nota: 'Rayón en lateral derecho',
+    },
     despachado: false,
     estado: 'listo_despacho',
   },
@@ -213,7 +226,12 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     if (typeof window === 'undefined') return
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored) {
-      try { vehiculos.value = JSON.parse(stored) } catch { vehiculos.value = [...INITIAL_VEHICULOS]; persist() }
+      try {
+        vehiculos.value = JSON.parse(stored)
+      } catch {
+        vehiculos.value = [...INITIAL_VEHICULOS]
+        persist()
+      }
     } else {
       vehiculos.value = [...INITIAL_VEHICULOS]
       persist()
@@ -227,28 +245,37 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
 
   // === Computados ===
   const total = computed(() => vehiculos.value.length)
-  const recibidos = computed(() => vehiculos.value.filter(v => !v.despachado).length)
-  const conImpronta = computed(() => vehiculos.value.filter(v => v.improntaCompletada).length)
-  const conInventario = computed(() => vehiculos.value.filter(v => v.inventarioAprobado).length)
-  const listosDespacho = computed(() => vehiculos.value.filter(v => v.estado === 'listo_despacho').length)
-  const despachados = computed(() => vehiculos.value.filter(v => v.despachado).length)
-  const pendientesImpronta = computed(() => vehiculos.value.filter(v => !v.improntaCompletada && !v.despachado).length)
-  const pendientesInventario = computed(() => vehiculos.value.filter(v => v.improntaCompletada && !v.inventarioAprobado && !v.despachado).length)
+  const recibidos = computed(() => vehiculos.value.filter((v) => !v.despachado).length)
+  const conImpronta = computed(() => vehiculos.value.filter((v) => v.improntaCompletada).length)
+  const conInventario = computed(() => vehiculos.value.filter((v) => v.inventarioAprobado).length)
+  const listosDespacho = computed(
+    () => vehiculos.value.filter((v) => v.estado === 'listo_despacho').length
+  )
+  const despachados = computed(() => vehiculos.value.filter((v) => v.despachado).length)
+  const pendientesImpronta = computed(
+    () => vehiculos.value.filter((v) => !v.improntaCompletada && !v.despachado).length
+  )
+  const pendientesInventario = computed(
+    () =>
+      vehiculos.value.filter((v) => v.improntaCompletada && !v.inventarioAprobado && !v.despachado)
+        .length
+  )
 
   // === Getters ===
-  const getByVin = (vin: string) => vehiculos.value.find(v => v.vin.toLowerCase() === vin.toLowerCase())
-  const getById = (id: string) => vehiculos.value.find(v => v.id === id)
+  const getByVin = (vin: string) =>
+    vehiculos.value.find((v) => v.vin.toLowerCase() === vin.toLowerCase())
+  const getById = (id: string) => vehiculos.value.find((v) => v.id === id)
 
   const getListosParaDespacho = computed(() =>
-    vehiculos.value.filter(v => v.improntaCompletada && v.inventarioAprobado && !v.despachado)
+    vehiculos.value.filter((v) => v.improntaCompletada && v.inventarioAprobado && !v.despachado)
   )
 
   const getPendientesInventario = computed(() =>
-    vehiculos.value.filter(v => v.improntaCompletada && !v.inventarioAprobado && !v.despachado)
+    vehiculos.value.filter((v) => v.improntaCompletada && !v.inventarioAprobado && !v.despachado)
   )
 
   const getPendientesImpronta = computed(() =>
-    vehiculos.value.filter(v => !v.improntaCompletada && !v.despachado)
+    vehiculos.value.filter((v) => !v.improntaCompletada && !v.despachado)
   )
 
   // === Validación de despacho ===
@@ -263,8 +290,15 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
 
   // === Actions ===
   const registrarRecepcion = (data: {
-    vin: string, placa?: string, marca: string, modelo: string, anio: string, color: string,
-    cliente?: string, contenedorId?: string, contenedorCodigo?: string
+    vin: string
+    placa?: string
+    marca: string
+    modelo: string
+    anio: string
+    color: string
+    cliente?: string
+    contenedorId?: string
+    contenedorCodigo?: string
   }): VehiculoPipeline => {
     // Check if already registered
     const existing = getByVin(data.vin)
@@ -315,7 +349,11 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     }
   }
 
-  const aprobarInventario = (vin: string, resultado: VehiculoPipeline['inventarioResultado'], inspector: string) => {
+  const aprobarInventario = (
+    vin: string,
+    resultado: VehiculoPipeline['inventarioResultado'],
+    inspector: string
+  ) => {
     const v = getByVin(vin)
     if (v) {
       v.inventarioCompletado = true
@@ -347,7 +385,11 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     const now = new Date()
     v.despachado = true
     v.fechaDespacho = now.toISOString().split('T')[0]
-    v.horaDespacho = now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    v.horaDespacho = now.toLocaleTimeString('es-VE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
     v.lotDespacho = lote
     v.despachador = despachador
     v.estado = 'despachado'

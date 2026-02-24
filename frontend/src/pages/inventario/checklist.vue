@@ -29,13 +29,14 @@ const vehiculosDisponibles = computed(() => {
   let list = vehiculoStore.getPendientesInventario
   if (vehicleSearch.value) {
     const q = vehicleSearch.value.toLowerCase()
-    list = list.filter(v =>
-      v.vin.toLowerCase().includes(q) ||
-      v.placa.toLowerCase().includes(q) ||
-      v.marca.toLowerCase().includes(q) ||
-      v.modelo.toLowerCase().includes(q) ||
-      (v.improntaFolio || '').toLowerCase().includes(q) ||
-      v.cliente.toLowerCase().includes(q)
+    list = list.filter(
+      (v) =>
+        v.vin.toLowerCase().includes(q) ||
+        v.placa.toLowerCase().includes(q) ||
+        v.marca.toLowerCase().includes(q) ||
+        v.modelo.toLowerCase().includes(q) ||
+        (v.improntaFolio || '').toLowerCase().includes(q) ||
+        v.cliente.toLowerCase().includes(q)
     )
   }
   return list
@@ -50,15 +51,31 @@ const vehiculoActual = computed(() => {
   // Default to first pending vehicle
   const first = vehiculoStore.getPendientesInventario[0]
   if (first) return first
-  return { id: '', vin: '—', placa: '', marca: '—', modelo: '', anio: '', color: '—', cliente: '—', fechaRecepcion: '', horaRecepcion: '', improntaCompletada: false, inventarioCompletado: false, inventarioAprobado: false, despachado: false, estado: 'recibido' as const } as VehiculoPipeline
+  return {
+    id: '',
+    vin: '—',
+    placa: '',
+    marca: '—',
+    modelo: '',
+    anio: '',
+    color: '—',
+    cliente: '—',
+    fechaRecepcion: '',
+    horaRecepcion: '',
+    improntaCompletada: false,
+    inventarioCompletado: false,
+    inventarioAprobado: false,
+    despachado: false,
+    estado: 'recibido' as const,
+  } as VehiculoPipeline
 })
 
 const seleccionarVehiculo = (v: VehiculoPipeline) => {
   selectedVin.value = v.vin
   showVehicleSelector.value = false
   // Reset checklist when switching vehicle
-  categorias.forEach(cat => {
-    cat.items.forEach(item => {
+  categorias.forEach((cat) => {
+    cat.items.forEach((item) => {
       item.estado = 'pendiente'
       item.nota = ''
     })
@@ -97,22 +114,44 @@ const categorias = reactive<Categoria[]>([
     id: 'documentacion',
     nombre: 'Documentación',
     descripcion: 'Documentos legales del vehículo',
-    icono: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
+    icono:
+      'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
     colorFondo: 'bg-blue-100',
     colorIcono: 'text-blue-600',
     abierta: true,
     items: [
-      { id: 'doc1', nombre: 'Certificado de Origen', descripcion: 'Documento original del fabricante', estado: 'pendiente' },
-      { id: 'doc2', nombre: 'Factura de Compra', descripcion: 'Factura del concesionario o importador', estado: 'pendiente' },
-      { id: 'doc3', nombre: 'Autorización de Tránsito', descripcion: 'Permiso de circulación vigente', estado: 'pendiente' },
-      { id: 'doc4', nombre: 'Manifiesto de Importación', descripcion: 'Solo vehículos importados', estado: 'pendiente' }
-    ]
+      {
+        id: 'doc1',
+        nombre: 'Certificado de Origen',
+        descripcion: 'Documento original del fabricante',
+        estado: 'pendiente',
+      },
+      {
+        id: 'doc2',
+        nombre: 'Factura de Compra',
+        descripcion: 'Factura del concesionario o importador',
+        estado: 'pendiente',
+      },
+      {
+        id: 'doc3',
+        nombre: 'Autorización de Tránsito',
+        descripcion: 'Permiso de circulación vigente',
+        estado: 'pendiente',
+      },
+      {
+        id: 'doc4',
+        nombre: 'Manifiesto de Importación',
+        descripcion: 'Solo vehículos importados',
+        estado: 'pendiente',
+      },
+    ],
   },
   {
     id: 'mecanico',
     nombre: 'Mecánico',
     descripcion: 'Estado del motor y componentes mecánicos',
-    icono: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
+    icono:
+      'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z',
     colorFondo: 'bg-orange-100',
     colorIcono: 'text-orange-600',
     abierta: false,
@@ -122,8 +161,13 @@ const categorias = reactive<Categoria[]>([
       { id: 'mec3', nombre: 'Nivel de líquido de frenos', estado: 'pendiente' },
       { id: 'mec4', nombre: 'Batería', descripcion: 'Estado y carga', estado: 'pendiente' },
       { id: 'mec5', nombre: 'Neumáticos', descripcion: 'Presión y desgaste', estado: 'pendiente' },
-      { id: 'mec6', nombre: 'Frenos', descripcion: 'Funcionamiento del sistema de frenos', estado: 'pendiente' }
-    ]
+      {
+        id: 'mec6',
+        nombre: 'Frenos',
+        descripcion: 'Funcionamiento del sistema de frenos',
+        estado: 'pendiente',
+      },
+    ],
   },
   {
     id: 'electrico',
@@ -141,8 +185,8 @@ const categorias = reactive<Categoria[]>([
       { id: 'ele5', nombre: 'Radio / Sistema de audio', estado: 'pendiente' },
       { id: 'ele6', nombre: 'Aire acondicionado', estado: 'pendiente' },
       { id: 'ele7', nombre: 'Elevalunas eléctrico', estado: 'pendiente' },
-      { id: 'ele8', nombre: 'Sensores y cámara de retro', estado: 'pendiente' }
-    ]
+      { id: 'ele8', nombre: 'Sensores y cámara de retro', estado: 'pendiente' },
+    ],
   },
   {
     id: 'cosmético',
@@ -153,13 +197,28 @@ const categorias = reactive<Categoria[]>([
     colorIcono: 'text-pink-600',
     abierta: false,
     items: [
-      { id: 'cos1', nombre: 'Pintura', descripcion: 'Sin rayaduras ni burbujas', estado: 'pendiente' },
-      { id: 'cos2', nombre: 'Parabrisas', descripcion: 'Sin grietas ni impactos', estado: 'pendiente' },
+      {
+        id: 'cos1',
+        nombre: 'Pintura',
+        descripcion: 'Sin rayaduras ni burbujas',
+        estado: 'pendiente',
+      },
+      {
+        id: 'cos2',
+        nombre: 'Parabrisas',
+        descripcion: 'Sin grietas ni impactos',
+        estado: 'pendiente',
+      },
       { id: 'cos3', nombre: 'Ventanas laterales', estado: 'pendiente' },
-      { id: 'cos4', nombre: 'Espejos', descripcion: 'Espejos laterales y retrovisor', estado: 'pendiente' },
+      {
+        id: 'cos4',
+        nombre: 'Espejos',
+        descripcion: 'Espejos laterales y retrovisor',
+        estado: 'pendiente',
+      },
       { id: 'cos5', nombre: 'Molduras y cromados', estado: 'pendiente' },
-      { id: 'cos6', nombre: 'Rines y tapacubos', estado: 'pendiente' }
-    ]
+      { id: 'cos6', nombre: 'Rines y tapacubos', estado: 'pendiente' },
+    ],
   },
   {
     id: 'accesorios',
@@ -174,29 +233,36 @@ const categorias = reactive<Categoria[]>([
       { id: 'acc2', nombre: 'Gato hidráulico', estado: 'pendiente' },
       { id: 'acc3', nombre: 'Llave de ruedas', estado: 'pendiente' },
       { id: 'acc4', nombre: 'Manual del propietario', estado: 'pendiente' },
-      { id: 'acc5', nombre: 'Llaves del vehículo', descripcion: 'Principal + copia', estado: 'pendiente' },
-      { id: 'acc6', nombre: 'Triángulos de emergencia', estado: 'pendiente' }
-    ]
-  }
+      {
+        id: 'acc5',
+        nombre: 'Llaves del vehículo',
+        descripcion: 'Principal + copia',
+        estado: 'pendiente',
+      },
+      { id: 'acc6', nombre: 'Triángulos de emergencia', estado: 'pendiente' },
+    ],
+  },
 ])
 
-const todosLosItems = computed(() => categorias.flatMap(c => c.items))
-const totalOk = computed(() => todosLosItems.value.filter(i => i.estado === 'ok').length)
-const totalFallas = computed(() => todosLosItems.value.filter(i => i.estado === 'falla').length)
-const totalNa = computed(() => todosLosItems.value.filter(i => i.estado === 'na').length)
-const totalPendientes = computed(() => todosLosItems.value.filter(i => i.estado === 'pendiente').length)
+const todosLosItems = computed(() => categorias.flatMap((c) => c.items))
+const totalOk = computed(() => todosLosItems.value.filter((i) => i.estado === 'ok').length)
+const totalFallas = computed(() => todosLosItems.value.filter((i) => i.estado === 'falla').length)
+const totalNa = computed(() => todosLosItems.value.filter((i) => i.estado === 'na').length)
+const totalPendientes = computed(
+  () => todosLosItems.value.filter((i) => i.estado === 'pendiente').length
+)
 const progresoGlobal = computed(() => {
-  const resueltos = todosLosItems.value.filter(i => i.estado !== 'pendiente').length
+  const resueltos = todosLosItems.value.filter((i) => i.estado !== 'pendiente').length
   return Math.round((resueltos / todosLosItems.value.length) * 100)
 })
 
 const progresoCategoria = (cat: Categoria) => {
   if (cat.items.length === 0) return 0
-  const resueltos = cat.items.filter(i => i.estado !== 'pendiente').length
+  const resueltos = cat.items.filter((i) => i.estado !== 'pendiente').length
   return Math.round((resueltos / cat.items.length) * 100)
 }
 
-const itemsResueltos = (cat: Categoria) => cat.items.filter(i => i.estado !== 'pendiente').length
+const itemsResueltos = (cat: Categoria) => cat.items.filter((i) => i.estado !== 'pendiente').length
 
 const puedeAprobar = computed(() => progresoGlobal.value === 100)
 
@@ -204,7 +270,9 @@ const mostrarToast = (tipo: 'ok' | 'error', mensaje: string) => {
   tipoToast.value = tipo
   mensajeToast.value = mensaje
   showToast.value = true
-  setTimeout(() => { showToast.value = false }, 3000)
+  setTimeout(() => {
+    showToast.value = false
+  }, 3000)
 }
 
 const aprobar = () => {
@@ -225,7 +293,9 @@ const aprobar = () => {
   setTimeout(() => router.push('/inventario'), 1500)
 }
 
-const rechazar = () => { showModalRechazo.value = true }
+const rechazar = () => {
+  showModalRechazo.value = true
+}
 
 const confirmarRechazo = () => {
   const v = vehiculoActual.value
@@ -243,9 +313,17 @@ const confirmarRechazo = () => {
     <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/inventario" class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition">
+        <NuxtLink
+          to="/inventario"
+          class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition"
+        >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
         </NuxtLink>
         <div>
@@ -255,19 +333,36 @@ const confirmarRechazo = () => {
       </div>
       <div class="flex gap-3">
         <button
-class="inline-flex items-center gap-2 px-4 py-2.5 border border-danger-200 bg-danger-50 text-danger-700 text-sm font-semibold rounded-xl hover:bg-danger-100 transition"
-          @click="rechazar">
+          class="inline-flex items-center gap-2 px-4 py-2.5 border border-danger-200 bg-danger-50 text-danger-700 text-sm font-semibold rounded-xl hover:bg-danger-100 transition"
+          @click="rechazar"
+        >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M6 18L18 6M6 6l12 12"
+            />
           </svg>
           Rechazar
         </button>
         <button
-:disabled="!puedeAprobar" class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition shadow-lg"
-          :class="puedeAprobar ? 'bg-success-600 text-white hover:bg-success-700 shadow-success-500/25' : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'"
-          @click="aprobar">
+          :disabled="!puedeAprobar"
+          class="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl transition shadow-lg"
+          :class="
+            puedeAprobar
+              ? 'bg-success-600 text-white hover:bg-success-700 shadow-success-500/25'
+              : 'bg-gray-100 text-gray-400 cursor-not-allowed shadow-none'
+          "
+          @click="aprobar"
+        >
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
           </svg>
           Aprobar Inventario
         </button>
@@ -277,14 +372,27 @@ class="inline-flex items-center gap-2 px-4 py-2.5 border border-danger-200 bg-da
     <div class="grid grid-cols-1 xl:grid-cols-4 gap-6">
       <!-- Columna principal: Checklist -->
       <div class="xl:col-span-3 space-y-4">
-
         <!-- Info del vehículo -->
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-wrap items-center gap-6">
+        <div
+          class="bg-white rounded-xl shadow-sm border border-gray-100 p-5 flex flex-wrap items-center gap-6"
+        >
           <button
-title="Cambiar vehículo" class="w-14 h-14 bg-primary-100 hover:bg-primary-200 rounded-xl flex items-center justify-center shrink-0 transition cursor-pointer group"
-            @click="showVehicleSelector = true">
-            <svg class="w-8 h-8 text-primary-600 group-hover:scale-110 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4" />
+            title="Cambiar vehículo"
+            class="w-14 h-14 bg-primary-100 hover:bg-primary-200 rounded-xl flex items-center justify-center shrink-0 transition cursor-pointer group"
+            @click="showVehicleSelector = true"
+          >
+            <svg
+              class="w-8 h-8 text-primary-600 group-hover:scale-110 transition-transform"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              />
             </svg>
           </button>
           <div class="flex-1 grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -294,7 +402,9 @@ title="Cambiar vehículo" class="w-14 h-14 bg-primary-100 hover:bg-primary-200 r
             </div>
             <div>
               <p class="text-xs text-gray-400 font-semibold uppercase">Vehículo</p>
-              <p class="text-sm font-bold text-gray-900">{{ vehiculoActual.marca }} {{ vehiculoActual.modelo }} {{ vehiculoActual.anio }}</p>
+              <p class="text-sm font-bold text-gray-900">
+                {{ vehiculoActual.marca }} {{ vehiculoActual.modelo }} {{ vehiculoActual.anio }}
+              </p>
             </div>
             <div>
               <p class="text-xs text-gray-400 font-semibold uppercase">Color</p>
@@ -305,22 +415,43 @@ title="Cambiar vehículo" class="w-14 h-14 bg-primary-100 hover:bg-primary-200 r
               <p class="text-sm font-bold text-gray-900">{{ vehiculoActual.cliente }}</p>
             </div>
           </div>
-          <div class="flex items-center gap-2 px-3 py-1.5 bg-warning-50 border border-warning-200 rounded-lg">
+          <div
+            class="flex items-center gap-2 px-3 py-1.5 bg-warning-50 border border-warning-200 rounded-lg"
+          >
             <div class="w-2 h-2 bg-warning-500 rounded-full animate-pulse" />
             <span class="text-xs font-semibold text-warning-700">En verificación</span>
           </div>
         </div>
 
         <!-- Categorías del checklist -->
-        <div v-for="categoria in categorias" :key="categoria.id" class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div
+          v-for="categoria in categorias"
+          :key="categoria.id"
+          class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden"
+        >
           <!-- Header de categoría -->
           <button
-class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition"
-            @click="categoria.abierta = !categoria.abierta">
+            class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-50 transition"
+            @click="categoria.abierta = !categoria.abierta"
+          >
             <div class="flex items-center gap-3">
-              <div class="w-8 h-8 rounded-xl flex items-center justify-center" :class="categoria.colorFondo">
-                <svg class="w-4 h-4" :class="categoria.colorIcono" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="categoria.icono" />
+              <div
+                class="w-8 h-8 rounded-xl flex items-center justify-center"
+                :class="categoria.colorFondo"
+              >
+                <svg
+                  class="w-4 h-4"
+                  :class="categoria.colorIcono"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    :d="categoria.icono"
+                  />
                 </svg>
               </div>
               <div>
@@ -333,19 +464,30 @@ class="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gra
               <div class="hidden sm:flex items-center gap-2">
                 <div class="w-32 bg-gray-100 rounded-full h-1.5">
                   <div
-class="h-1.5 rounded-full transition-all duration-500"
-                    :class="progresoCategoria(categoria) === 100 ? 'bg-success-500' : 'bg-primary-500'"
-                    :style="`width: ${progresoCategoria(categoria)}%`" />
+                    class="h-1.5 rounded-full transition-all duration-500"
+                    :class="
+                      progresoCategoria(categoria) === 100 ? 'bg-success-500' : 'bg-primary-500'
+                    "
+                    :style="`width: ${progresoCategoria(categoria)}%`"
+                  />
                 </div>
                 <span class="text-xs text-gray-500 font-semibold w-16 text-right">
                   {{ itemsResueltos(categoria) }}/{{ categoria.items.length }}
                 </span>
               </div>
               <svg
-class="w-5 h-5 text-gray-400 transition-transform"
+                class="w-5 h-5 text-gray-400 transition-transform"
                 :class="categoria.abierta ? 'rotate-180' : ''"
-                fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </div>
           </button>
@@ -353,54 +495,84 @@ class="w-5 h-5 text-gray-400 transition-transform"
           <!-- Items de la categoría -->
           <div v-if="categoria.abierta" class="border-t border-gray-100">
             <div
-v-for="(item, idx) in categoria.items" :key="item.id"
+              v-for="(item, idx) in categoria.items"
+              :key="item.id"
               class="px-5 py-3 flex items-start gap-4 transition-colors"
               :class="[
                 idx < categoria.items.length - 1 ? 'border-b border-gray-50' : '',
-                item.estado === 'falla' ? 'bg-danger-50' : item.estado === 'ok' ? 'bg-success-50/40' : 'hover:bg-gray-50'
-              ]">
+                item.estado === 'falla'
+                  ? 'bg-danger-50'
+                  : item.estado === 'ok'
+                    ? 'bg-success-50/40'
+                    : 'hover:bg-gray-50',
+              ]"
+            >
               <!-- Nombre del ítem -->
               <div class="flex-1 min-w-0 pt-0.5">
                 <p class="text-sm font-medium text-gray-800">{{ item.nombre }}</p>
-                <p v-if="item.descripcion" class="text-xs text-gray-400 mt-0.5">{{ item.descripcion }}</p>
+                <p v-if="item.descripcion" class="text-xs text-gray-400 mt-0.5">
+                  {{ item.descripcion }}
+                </p>
                 <!-- Campo de notas para fallas -->
                 <div v-if="item.estado === 'falla'" class="mt-2">
                   <input
-v-model="item.nota" type="text" placeholder="Describir la falla o faltante..."
-                    class="w-full px-2.5 py-1.5 text-xs border border-danger-200 rounded-lg bg-white focus:ring-1 focus:ring-danger-400 focus:border-danger-400 transition" />
+                    v-model="item.nota"
+                    type="text"
+                    placeholder="Describir la falla o faltante..."
+                    class="w-full px-2.5 py-1.5 text-xs border border-danger-200 rounded-lg bg-white focus:ring-1 focus:ring-danger-400 focus:border-danger-400 transition"
+                  />
                 </div>
               </div>
 
               <!-- Botones de estado -->
               <div class="flex items-center gap-2 shrink-0">
                 <button
-class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-2 transition-all"
-                  :class="item.estado === 'ok'
-                    ? 'bg-success-500 border-success-500 text-white shadow-md shadow-success-500/30'
-                    : 'bg-white border-gray-200 text-gray-500 hover:border-success-300 hover:text-success-600'"
-                  @click="item.estado = 'ok'">
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-2 transition-all"
+                  :class="
+                    item.estado === 'ok'
+                      ? 'bg-success-500 border-success-500 text-white shadow-md shadow-success-500/30'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-success-300 hover:text-success-600'
+                  "
+                  @click="item.estado = 'ok'"
+                >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M5 13l4 4L19 7"
+                    />
                   </svg>
                   OK
                 </button>
                 <button
-class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-2 transition-all"
-                  :class="item.estado === 'falla'
-                    ? 'bg-danger-500 border-danger-500 text-white shadow-md shadow-danger-500/30'
-                    : 'bg-white border-gray-200 text-gray-500 hover:border-danger-300 hover:text-danger-600'"
-                  @click="item.estado = 'falla'">
+                  class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-lg border-2 transition-all"
+                  :class="
+                    item.estado === 'falla'
+                      ? 'bg-danger-500 border-danger-500 text-white shadow-md shadow-danger-500/30'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-danger-300 hover:text-danger-600'
+                  "
+                  @click="item.estado = 'falla'"
+                >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M6 18L18 6M6 6l12 12" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2.5"
+                      d="M6 18L18 6M6 6l12 12"
+                    />
                   </svg>
                   Falla
                 </button>
                 <button
-class="px-3 py-1.5 text-xs font-semibold rounded-lg border-2 transition-all"
-                  :class="item.estado === 'na'
-                    ? 'bg-gray-400 border-gray-400 text-white'
-                    : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700'"
-                  @click="item.estado = 'na'">
+                  class="px-3 py-1.5 text-xs font-semibold rounded-lg border-2 transition-all"
+                  :class="
+                    item.estado === 'na'
+                      ? 'bg-gray-400 border-gray-400 text-white'
+                      : 'bg-white border-gray-200 text-gray-500 hover:border-gray-400 hover:text-gray-700'
+                  "
+                  @click="item.estado = 'na'"
+                >
                   N/A
                 </button>
               </div>
@@ -417,17 +589,24 @@ class="px-3 py-1.5 text-xs font-semibold rounded-lg border-2 transition-all"
           <div class="flex items-center justify-center mb-5">
             <div class="relative w-28 h-28">
               <svg class="w-full h-full -rotate-90" viewBox="0 0 100 100">
-                <circle cx="50" cy="50" r="40" fill="none" stroke="#f1f5f9" stroke-width="10"/>
+                <circle cx="50" cy="50" r="40" fill="none" stroke="#f1f5f9" stroke-width="10" />
                 <circle
-cx="50" cy="50" r="40" fill="none"
+                  cx="50"
+                  cy="50"
+                  r="40"
+                  fill="none"
                   :stroke="progresoGlobal === 100 ? '#22c55e' : '#3b82f6'"
                   stroke-width="10"
                   stroke-linecap="round"
                   :stroke-dasharray="`${progresoGlobal * 2.51} 251`"
-                  class="transition-all duration-700"/>
+                  class="transition-all duration-700"
+                />
               </svg>
               <div class="absolute inset-0 flex flex-col items-center justify-center">
-                <span class="text-3xl font-black" :class="progresoGlobal === 100 ? 'text-success-600' : 'text-primary-600'">
+                <span
+                  class="text-3xl font-black"
+                  :class="progresoGlobal === 100 ? 'text-success-600' : 'text-primary-600'"
+                >
                   {{ progresoGlobal }}%
                 </span>
                 <span class="text-xs text-gray-400 font-semibold">completado</span>
@@ -456,7 +635,9 @@ cx="50" cy="50" r="40" fill="none"
               </span>
               <span class="font-bold text-gray-500">{{ totalNa }}</span>
             </div>
-            <div class="flex items-center justify-between text-sm border-t border-gray-100 pt-2 mt-1">
+            <div
+              class="flex items-center justify-between text-sm border-t border-gray-100 pt-2 mt-1"
+            >
               <span class="text-gray-500 flex items-center gap-2">
                 <span class="w-2.5 h-2.5 bg-gray-200 rounded-full" />
                 Pendientes
@@ -471,21 +652,38 @@ cx="50" cy="50" r="40" fill="none"
           <h3 class="text-sm font-bold text-gray-900 mb-4">Estado por Sección</h3>
           <div class="space-y-3">
             <div v-for="cat in categorias" :key="cat.id" class="flex items-center gap-3">
-              <div class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0" :class="cat.colorFondo">
-                <svg class="w-3 h-3" :class="cat.colorIcono" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="cat.icono" />
+              <div
+                class="w-6 h-6 rounded-lg flex items-center justify-center shrink-0"
+                :class="cat.colorFondo"
+              >
+                <svg
+                  class="w-3 h-3"
+                  :class="cat.colorIcono"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    :d="cat.icono"
+                  />
                 </svg>
               </div>
               <div class="flex-1 min-w-0">
                 <div class="flex justify-between items-center mb-1">
                   <span class="text-xs font-semibold text-gray-600 truncate">{{ cat.nombre }}</span>
-                  <span class="text-xs text-gray-400 ml-2 shrink-0">{{ progresoCategoria(cat) }}%</span>
+                  <span class="text-xs text-gray-400 ml-2 shrink-0">
+                    {{ progresoCategoria(cat) }}%
+                  </span>
                 </div>
                 <div class="w-full bg-gray-100 rounded-full h-1">
                   <div
-class="h-1 rounded-full transition-all duration-500"
+                    class="h-1 rounded-full transition-all duration-500"
                     :class="progresoCategoria(cat) === 100 ? 'bg-success-400' : 'bg-primary-400'"
-                    :style="`width: ${progresoCategoria(cat)}%`" />
+                    :style="`width: ${progresoCategoria(cat)}%`"
+                  />
                 </div>
               </div>
             </div>
@@ -498,36 +696,59 @@ class="h-1 rounded-full transition-all duration-500"
             Nota del inspector
           </label>
           <textarea
-v-model="notaInspector" rows="3" placeholder="Observaciones finales del inspector..."
-            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition resize-none" />
+            v-model="notaInspector"
+            rows="3"
+            placeholder="Observaciones finales del inspector..."
+            class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition resize-none"
+          />
         </div>
       </div>
     </div>
 
     <!-- Modal de rechazo -->
-    <div v-if="showModalRechazo" class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div
+      v-if="showModalRechazo"
+      class="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4"
+    >
       <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl">
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 bg-danger-100 rounded-xl flex items-center justify-center">
-            <svg class="w-5 h-5 text-danger-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            <svg
+              class="w-5 h-5 text-danger-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+              />
             </svg>
           </div>
           <h2 class="text-lg font-bold text-gray-900">Rechazar Inventario</h2>
         </div>
-        <p class="text-sm text-gray-600 mb-4">Indica el motivo del rechazo. El vehículo será devuelto para correcciones.</p>
+        <p class="text-sm text-gray-600 mb-4">
+          Indica el motivo del rechazo. El vehículo será devuelto para correcciones.
+        </p>
         <textarea
-v-model="motivoRechazo" rows="3" placeholder="Motivo del rechazo..."
-          class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-danger-500 focus:border-danger-500 transition resize-none mb-4" />
+          v-model="motivoRechazo"
+          rows="3"
+          placeholder="Motivo del rechazo..."
+          class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-danger-500 focus:border-danger-500 transition resize-none mb-4"
+        />
         <div class="flex gap-3 justify-end">
           <button
-class="px-4 py-2.5 border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition"
-            @click="showModalRechazo = false">
+            class="px-4 py-2.5 border border-gray-200 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition"
+            @click="showModalRechazo = false"
+          >
             Cancelar
           </button>
           <button
-class="px-5 py-2.5 bg-danger-600 text-white text-sm font-semibold rounded-xl hover:bg-danger-700 transition"
-            @click="confirmarRechazo">
+            class="px-5 py-2.5 bg-danger-600 text-white text-sm font-semibold rounded-xl hover:bg-danger-700 transition"
+            @click="confirmarRechazo"
+          >
             Confirmar Rechazo
           </button>
         </div>
@@ -537,11 +758,24 @@ class="px-5 py-2.5 bg-danger-600 text-white text-sm font-semibold rounded-xl hov
     <!-- Modal selector de vehículo -->
     <Teleport to="body">
       <Transition
-enter-active-class="transition duration-200" enter-from-class="opacity-0" enter-to-class="opacity-100"
-        leave-active-class="transition duration-150" leave-from-class="opacity-100" leave-to-class="opacity-0">
-        <div v-if="showVehicleSelector" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div class="absolute inset-0 bg-black/50 backdrop-blur-sm" @click="showVehicleSelector = false" />
-          <div class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col">
+        enter-active-class="transition duration-200"
+        enter-from-class="opacity-0"
+        enter-to-class="opacity-100"
+        leave-active-class="transition duration-150"
+        leave-from-class="opacity-100"
+        leave-to-class="opacity-0"
+      >
+        <div
+          v-if="showVehicleSelector"
+          class="fixed inset-0 z-50 flex items-center justify-center p-4"
+        >
+          <div
+            class="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            @click="showVehicleSelector = false"
+          />
+          <div
+            class="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col"
+          >
             <!-- Header -->
             <div class="px-6 py-4 border-b border-gray-100 shrink-0">
               <h3 class="text-lg font-bold text-gray-900">Seleccionar Vehículo</h3>
@@ -550,12 +784,25 @@ enter-active-class="transition duration-200" enter-from-class="opacity-0" enter-
             <!-- Search -->
             <div class="px-6 py-3 border-b border-gray-100 shrink-0">
               <div class="relative">
-                <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                <svg
+                  class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                  />
                 </svg>
                 <input
-v-model="vehicleSearch" type="text" placeholder="Buscar por VIN, placa, marca..."
-                  class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent" />
+                  v-model="vehicleSearch"
+                  type="text"
+                  placeholder="Buscar por VIN, placa, marca..."
+                  class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                />
               </div>
             </div>
             <!-- List -->
@@ -564,34 +811,61 @@ v-model="vehicleSearch" type="text" placeholder="Buscar por VIN, placa, marca...
                 <p class="text-gray-400 text-sm">No hay vehículos disponibles</p>
               </div>
               <button
-v-for="v in vehiculosDisponibles" :key="v.id" class="w-full flex items-center gap-4 p-3 rounded-xl text-left transition"
-                :class="vehiculoActual.vin === v.vin ? 'bg-primary-50 border-2 border-primary-300' : 'hover:bg-gray-50 border-2 border-transparent'"
-                @click="seleccionarVehiculo(v)">
+                v-for="v in vehiculosDisponibles"
+                :key="v.id"
+                class="w-full flex items-center gap-4 p-3 rounded-xl text-left transition"
+                :class="
+                  vehiculoActual.vin === v.vin
+                    ? 'bg-primary-50 border-2 border-primary-300'
+                    : 'hover:bg-gray-50 border-2 border-transparent'
+                "
+                @click="seleccionarVehiculo(v)"
+              >
                 <div
-class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
-                  :class="vehiculoActual.vin === v.vin ? 'bg-primary-500 text-white' : 'bg-gray-100 text-gray-500'">
+                  class="w-10 h-10 rounded-lg flex items-center justify-center shrink-0"
+                  :class="
+                    vehiculoActual.vin === v.vin
+                      ? 'bg-primary-500 text-white'
+                      : 'bg-gray-100 text-gray-500'
+                  "
+                >
                   <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z"
+                    />
                   </svg>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="text-sm font-semibold text-gray-900">{{ v.marca }} {{ v.modelo }} {{ v.anio }}</p>
-                  <p class="text-xs text-gray-500 font-mono">{{ v.placa || 'Sin placa' }} · {{ v.vin ? v.vin.slice(-8) : 'S/N' }}</p>
+                  <p class="text-sm font-semibold text-gray-900">
+                    {{ v.marca }} {{ v.modelo }} {{ v.anio }}
+                  </p>
+                  <p class="text-xs text-gray-500 font-mono">
+                    {{ v.placa || 'Sin placa' }} · {{ v.vin ? v.vin.slice(-8) : 'S/N' }}
+                  </p>
                 </div>
                 <div class="text-right shrink-0">
                   <p class="text-xs text-gray-400">{{ v.improntaFolio || '' }}</p>
                   <p class="text-xs text-gray-500">{{ v.cliente || '—' }}</p>
                 </div>
-                <svg v-if="vehiculoActual.vin === v.vin" class="w-5 h-5 text-primary-600 shrink-0" fill="currentColor" viewBox="0 0 24 24">
-                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/>
+                <svg
+                  v-if="vehiculoActual.vin === v.vin"
+                  class="w-5 h-5 text-primary-600 shrink-0"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
                 </svg>
               </button>
             </div>
             <!-- Footer -->
             <div class="px-6 py-3 border-t border-gray-100 shrink-0 flex justify-end">
               <button
-class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition text-sm"
-                @click="showVehicleSelector = false">
+                class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gray-200 transition text-sm"
+                @click="showVehicleSelector = false"
+              >
                 Cerrar
               </button>
             </div>
@@ -602,11 +876,25 @@ class="px-4 py-2 bg-gray-100 text-gray-700 font-semibold rounded-xl hover:bg-gra
 
     <!-- Toast -->
     <div
-v-if="showToast" class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white animate-bounce-in"
-      :class="tipoToast === 'ok' ? 'bg-success-600' : 'bg-danger-600'">
+      v-if="showToast"
+      class="fixed bottom-6 right-6 z-50 flex items-center gap-3 px-5 py-4 rounded-2xl shadow-2xl text-white animate-bounce-in"
+      :class="tipoToast === 'ok' ? 'bg-success-600' : 'bg-danger-600'"
+    >
       <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path v-if="tipoToast === 'ok'" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-        <path v-else stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        <path
+          v-if="tipoToast === 'ok'"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+        />
+        <path
+          v-else
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M6 18L18 6M6 6l12 12"
+        />
       </svg>
       <span class="font-semibold">{{ mensajeToast }}</span>
     </div>

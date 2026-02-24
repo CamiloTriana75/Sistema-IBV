@@ -203,7 +203,11 @@ function loadImprontas(): Impronta[] {
   if (typeof window === 'undefined') return INITIAL_IMPRONTAS
   const stored = localStorage.getItem(STORAGE_KEY)
   if (stored) {
-    try { return JSON.parse(stored) } catch { /* fallback */ }
+    try {
+      return JSON.parse(stored)
+    } catch {
+      /* fallback */
+    }
   }
   // Inicializar folio sequence
   localStorage.setItem(FOLIO_KEY, '5')
@@ -224,27 +228,31 @@ export const useImprontaStore = defineStore('impronta', () => {
 
   // Computados
   const totalImprontas = computed(() => improntas.value.length)
-  const completadas = computed(() => improntas.value.filter(i => i.estado === 'completada').length)
-  const borradores = computed(() => improntas.value.filter(i => i.estado === 'borrador').length)
-  const revisadas = computed(() => improntas.value.filter(i => i.estado === 'revisada').length)
+  const completadas = computed(
+    () => improntas.value.filter((i) => i.estado === 'completada').length
+  )
+  const borradores = computed(() => improntas.value.filter((i) => i.estado === 'borrador').length)
+  const revisadas = computed(() => improntas.value.filter((i) => i.estado === 'revisada').length)
   const hoy = computed(() => {
     const today = new Date().toISOString().split('T')[0]
-    return improntas.value.filter(i => i.fechaCreacion === today).length
+    return improntas.value.filter((i) => i.fechaCreacion === today).length
   })
 
   const getById = (id: string): Impronta | undefined => {
-    return improntas.value.find(i => i.id === id)
+    return improntas.value.find((i) => i.id === id)
   }
 
   const getByFolio = (folio: string): Impronta | undefined => {
-    return improntas.value.find(i => i.folio === folio)
+    return improntas.value.find((i) => i.folio === folio)
   }
 
-  const crear = async (data: Omit<Impronta, 'id' | 'folio' | 'fechaCreacion' | 'horaCreacion' | 'fechaActualizacion'>): Promise<Impronta> => {
+  const crear = async (
+    data: Omit<Impronta, 'id' | 'folio' | 'fechaCreacion' | 'horaCreacion' | 'fechaActualizacion'>
+  ): Promise<Impronta> => {
     loading.value = true
     error.value = null
     try {
-      await new Promise(r => setTimeout(r, 400))
+      await new Promise((r) => setTimeout(r, 400))
       const now = new Date()
       const nueva: Impronta = {
         ...data,
@@ -269,13 +277,13 @@ export const useImprontaStore = defineStore('impronta', () => {
     loading.value = true
     error.value = null
     try {
-      await new Promise(r => setTimeout(r, 300))
-      const idx = improntas.value.findIndex(i => i.id === id)
+      await new Promise((r) => setTimeout(r, 300))
+      const idx = improntas.value.findIndex((i) => i.id === id)
       if (idx === -1) throw new Error('Impronta no encontrada')
       improntas.value[idx] = {
         ...improntas.value[idx],
         ...data,
-        fechaActualizacion: new Date().toISOString().split('T')[0]
+        fechaActualizacion: new Date().toISOString().split('T')[0],
       }
       persistImprontas(improntas.value)
       return improntas.value[idx]
@@ -290,8 +298,8 @@ export const useImprontaStore = defineStore('impronta', () => {
   const eliminar = async (id: string) => {
     loading.value = true
     try {
-      await new Promise(r => setTimeout(r, 300))
-      improntas.value = improntas.value.filter(i => i.id !== id)
+      await new Promise((r) => setTimeout(r, 300))
+      improntas.value = improntas.value.filter((i) => i.id !== id)
       persistImprontas(improntas.value)
     } catch (err: unknown) {
       error.value = (err as Error).message || 'Error al eliminar'
