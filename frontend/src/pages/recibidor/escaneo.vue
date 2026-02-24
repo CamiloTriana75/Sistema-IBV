@@ -117,6 +117,11 @@ const nuevaRecepcion = () => {
   observaciones.value = ''
   paso.value = 1
 }
+
+const resetSeleccionContenedor = () => {
+  paso.value = 1
+  contenedorActual.value = null
+}
 </script>
 
 <template>
@@ -368,10 +373,7 @@ const nuevaRecepcion = () => {
           </div>
           <button
             class="px-3 py-1.5 text-xs text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition font-semibold"
-            @click="
-              paso = 1
-              contenedorActual = null
-            "
+            @click="resetSeleccionContenedor"
           >
             Cambiar
           </button>
@@ -614,10 +616,7 @@ const nuevaRecepcion = () => {
             </button>
             <button
               class="w-full px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition"
-              @click="
-                paso = 1
-                contenedorActual = null
-              "
+              @click="resetSeleccionContenedor"
             >
               Cancelar
             </button>
