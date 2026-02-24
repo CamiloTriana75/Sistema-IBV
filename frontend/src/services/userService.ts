@@ -1,6 +1,6 @@
 import { getApiClient } from './api'
-import { formatters } from '~/utils/helpers'
-import type { ApiUser, User } from '~/types/index'
+import { formatters } from '../utils/helpers'
+import type { ApiUser, User } from '../types/index'
 
 const mapApiUserToUi = (apiUser: ApiUser): User => {
   const nameParts = [apiUser.first_name, apiUser.last_name].filter(Boolean)
@@ -52,9 +52,9 @@ export const userService = {
         email: data.email,
         first_name: nameParts.first_name,
         last_name: nameParts.last_name,
-        role: data.role || 'cliente',
+        role: data.role || 'admin',
         is_active: data.status ? data.status === 'active' : true,
-        password: data.password || undefined,
+        password: data.password,
       }
       const response = await apiClient.post<ApiUser>('/users/', payload)
       return mapApiUserToUi(response.data)
@@ -67,15 +67,18 @@ export const userService = {
   async updateUser(id: string, data: Partial<User>): Promise<User> {
     try {
       const apiClient = getApiClient()
-      const nameParts = data.name ? splitName(data.name) : { first_name: '', last_name: '' }
-      const payload = {
-        email: data.email,
-        first_name: data.name ? nameParts.first_name : undefined,
-        last_name: data.name ? nameParts.last_name : undefined,
-        role: data.role,
-        is_active: data.status ? data.status === 'active' : undefined,
-        password: data.password || undefined,
+      const nameParts = data.name ? splitName(data.name) : null
+      const payload: Record<string, string | boolean | undefined> = {}
+
+      if (data.email) payload.email = data.email
+      if (nameParts) {
+        payload.first_name = nameParts.first_name
+        payload.last_name = nameParts.last_name
       }
+      if (data.role) payload.role = data.role
+      if (data.status !== undefined) payload.is_active = data.status === 'active'
+      if (data.password) payload.password = data.password
+
       const response = await apiClient.put<ApiUser>(`/users/${id}`, payload)
       return mapApiUserToUi(response.data)
     } catch (error) {
