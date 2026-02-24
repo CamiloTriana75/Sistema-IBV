@@ -10,7 +10,7 @@ export const formatters = {
   dateTime: (date: string | Date) => new Date(date).toLocaleString('es-ES'),
 }
 
-export const downloadFile = (content: any, fileName: string, type: string = 'application/json') => {
+export const downloadFile = (content: string | Blob, fileName: string, type: string = 'application/json') => {
   const blob = new Blob([content], { type })
   const url = window.URL.createObjectURL(blob)
   const link = document.createElement('a')

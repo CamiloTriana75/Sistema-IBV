@@ -41,8 +41,8 @@ const handleLogin = async () => {
   try {
     const redirect = await authStore.login(form.value.email, form.value.password)
     await router.push(redirect)
-  } catch (e: any) {
-    error.value = e.message || 'Credenciales inválidas'
+  } catch (e: unknown) {
+    error.value = (e as Error).message || 'Credenciales inválidas'
   } finally {
     loading.value = false
   }

@@ -9,9 +9,18 @@ const MOCK_USERS: Record<string, { name: string; role: string; roleLabel: string
   'porteria@ibv.com': { name: 'Ana Portería', role: 'porteria', roleLabel: 'Portería', redirect: '/porteria', avatar: 'AP' },
 }
 
+interface AuthUser {
+  email: string
+  name: string
+  role: string
+  roleLabel: string
+  redirect: string
+  avatar: string
+}
+
 export const useAuthStore = defineStore('auth', () => {
   const isClient = typeof window !== 'undefined'
-  const user = ref<any>(isClient ? JSON.parse(localStorage.getItem('auth_user') || 'null') : null)
+  const user = ref<AuthUser | null>(isClient ? JSON.parse(localStorage.getItem('auth_user') || 'null') : null)
   const token = ref(isClient ? (localStorage.getItem('auth_token') || '') : '')
   const isAuthenticated = computed(() => !!token.value)
 

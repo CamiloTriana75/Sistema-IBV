@@ -118,8 +118,8 @@ const saveUser = async () => {
       showToast(`Usuario "${form.value.name}" creado exitosamente`)
     }
     closeModal()
-  } catch (err: any) {
-    formError.value = err.message || 'Error al guardar'
+  } catch (err: unknown) {
+    formError.value = (err as Error).message || 'Error al guardar'
   } finally {
     saving.value = false
   }

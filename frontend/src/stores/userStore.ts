@@ -92,8 +92,8 @@ export const useUserStore = defineStore('user', () => {
       users.value.push(newUser)
       persistUsers(users.value)
       return newUser
-    } catch (err: any) {
-      error.value = err.message || 'Error al crear usuario'
+    } catch (err: unknown) {
+      error.value = (err as Error).message || 'Error al crear usuario'
       throw err
     } finally {
       loading.value = false
@@ -115,8 +115,8 @@ export const useUserStore = defineStore('user', () => {
       users.value[index] = { ...users.value[index], ...userData }
       persistUsers(users.value)
       return users.value[index]
-    } catch (err: any) {
-      error.value = err.message || 'Error al actualizar usuario'
+    } catch (err: unknown) {
+      error.value = (err as Error).message || 'Error al actualizar usuario'
       throw err
     } finally {
       loading.value = false
@@ -130,8 +130,8 @@ export const useUserStore = defineStore('user', () => {
       await new Promise(resolve => setTimeout(resolve, 300))
       users.value = users.value.filter(u => u.id !== id)
       persistUsers(users.value)
-    } catch (err: any) {
-      error.value = err.message || 'Error al eliminar usuario'
+    } catch (err: unknown) {
+      error.value = (err as Error).message || 'Error al eliminar usuario'
       throw err
     } finally {
       loading.value = false

@@ -80,6 +80,7 @@ const roles = ref([
       <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
         <div class="flex items-center justify-between mb-3">
           <div :class="['w-11 h-11 rounded-lg flex items-center justify-center', stat.bgColor]">
+            <!-- eslint-disable-next-line vue/no-v-html -->
             <span :class="['w-5 h-5', stat.iconColor]" v-html="stat.icon" />
           </div>
           <span :class="['text-xs font-semibold px-2 py-1 rounded-full', stat.trendUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600']">
@@ -104,6 +105,7 @@ const roles = ref([
             class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group"
           >
             <div :class="['w-10 h-10 rounded-lg flex items-center justify-center shrink-0', link.bgColor]">
+              <!-- eslint-disable-next-line vue/no-v-html -->
               <span :class="['w-5 h-5', link.iconColor]" v-html="link.icon" />
             </div>
             <div class="flex-1 min-w-0">

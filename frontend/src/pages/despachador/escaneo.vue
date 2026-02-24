@@ -11,7 +11,7 @@ const router = useRouter()
 const vinManual = ref('')
 const filtroEstado = ref<'todos' | 'pendiente'>('todos')
 const errorMsg = ref('')
-const vehiculoActual = ref<{ vin: string; ok: boolean; razon?: string; vehiculo?: any } | null>(null)
+const vehiculoActual = ref<{ vin: string; ok: boolean; razon?: string; vehiculo?: { vin: string; marca: string; modelo: string; anio: string; color: string; cliente: string } } | null>(null)
 
 // Lot number auto-generated
 const loteActual = `LT-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`

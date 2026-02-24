@@ -234,8 +234,8 @@ const guardarImpronta = async () => {
         router.push(`/recibidor`)
       }, 1500)
     }
-  } catch (err: any) {
-    showToast(err.message || 'Error al guardar', 'error')
+  } catch (err: unknown) {
+    showToast((err as Error).message || 'Error al guardar', 'error')
   } finally {
     saving.value = false
   }
@@ -405,27 +405,27 @@ v-model="form.condicion"
 x="95" y="65" width="130" height="70" rx="10" :fill="zonasDañadas.includes('frontal') ? '#fca5a5' : 'transparent'"
                     :stroke="zonasDañadas.includes('frontal') ? '#ef4444' : 'transparent'"
                     stroke-width="2"
-                    @click="toggleZona('frontal')" class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7"/>
+                    class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7" @click="toggleZona('frontal')"/>
                   <rect
 x="95" y="360" width="130" height="70" rx="10" :fill="zonasDañadas.includes('trasero') ? '#fca5a5' : 'transparent'"
                     :stroke="zonasDañadas.includes('trasero') ? '#ef4444' : 'transparent'"
                     stroke-width="2"
-                    @click="toggleZona('trasero')" class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7"/>
+                    class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7" @click="toggleZona('trasero')"/>
                   <rect
 x="60" y="150" width="30" height="200" rx="8" :fill="zonasDañadas.includes('lateral_izq') ? '#fca5a5' : 'transparent'"
                     :stroke="zonasDañadas.includes('lateral_izq') ? '#ef4444' : 'transparent'"
                     stroke-width="2"
-                    @click="toggleZona('lateral_izq')" class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7"/>
+                    class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7" @click="toggleZona('lateral_izq')"/>
                   <rect
 x="230" y="150" width="30" height="200" rx="8" :fill="zonasDañadas.includes('lateral_der') ? '#fca5a5' : 'transparent'"
                     :stroke="zonasDañadas.includes('lateral_der') ? '#ef4444' : 'transparent'"
                     stroke-width="2"
-                    @click="toggleZona('lateral_der')" class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7"/>
+                    class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7" @click="toggleZona('lateral_der')"/>
                   <rect
 x="95" y="155" width="130" height="115" rx="8" :fill="zonasDañadas.includes('techo') ? '#fca5a5' : 'transparent'"
                     :stroke="zonasDañadas.includes('techo') ? '#ef4444' : 'transparent'"
                     stroke-width="2"
-                    @click="toggleZona('techo')" class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7"/>
+                    class="cursor-pointer hover:fill-red-100 transition-colors" opacity="0.7" @click="toggleZona('techo')"/>
 
                   <text x="160" y="108" text-anchor="middle" fill="#64748b" font-size="11" font-weight="600">FRONTAL</text>
                   <text x="160" y="400" text-anchor="middle" fill="#64748b" font-size="11" font-weight="600">TRASERO</text>

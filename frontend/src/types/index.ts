@@ -17,7 +17,7 @@ export interface User {
   id: string
   name: string
   email: string
-  role: 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador'
+  role: 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador' | 'cliente'
   status: 'active' | 'inactive'
   createdAt?: string
   password?: string
@@ -37,7 +37,7 @@ export interface Imprint {
   id: string
   vehicleId: string
   photoUrl: string
-  data: Record<string, any>
+  data: Record<string, unknown>
   createdAt: string
   status: 'completed' | 'pending'
 }

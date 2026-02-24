@@ -257,8 +257,8 @@ export const useImprontaStore = defineStore('impronta', () => {
       improntas.value.unshift(nueva)
       persistImprontas(improntas.value)
       return nueva
-    } catch (err: any) {
-      error.value = err.message || 'Error al crear impronta'
+    } catch (err: unknown) {
+      error.value = (err as Error).message || 'Error al crear impronta'
       throw err
     } finally {
       loading.value = false
@@ -279,8 +279,8 @@ export const useImprontaStore = defineStore('impronta', () => {
       }
       persistImprontas(improntas.value)
       return improntas.value[idx]
-    } catch (err: any) {
-      error.value = err.message || 'Error al actualizar'
+    } catch (err: unknown) {
+      error.value = (err as Error).message || 'Error al actualizar'
       throw err
     } finally {
       loading.value = false
@@ -293,8 +293,8 @@ export const useImprontaStore = defineStore('impronta', () => {
       await new Promise(r => setTimeout(r, 300))
       improntas.value = improntas.value.filter(i => i.id !== id)
       persistImprontas(improntas.value)
-    } catch (err: any) {
-      error.value = err.message || 'Error al eliminar'
+    } catch (err: unknown) {
+      error.value = (err as Error).message || 'Error al eliminar'
       throw err
     } finally {
       loading.value = false

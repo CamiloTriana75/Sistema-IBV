@@ -5,8 +5,17 @@ definePageMeta({
   layout: 'admin'
 })
 
+interface Role {
+  name: string
+  icon: string
+  iconBg: string
+  headerBg: string
+  usersCount: number
+  permissions: Array<{ key: string; label: string; allowed: boolean }>
+}
+
 const showModal = ref(false)
-const editingRole = ref<any>(null)
+const editingRole = ref<Role | null>(null)
 
 const roleForm = reactive({
   name: '',
@@ -179,24 +188,24 @@ const openCreateRole = () => {
   showModal.value = true
 }
 
-const editRole = (role: any) => {
+const editRole = (role: Role) => {
   editingRole.value = role
   roleForm.name = role.name
   roleForm.description = ''
-  roleForm.permissions = role.permissions.filter((p: any) => p.allowed).map((p: any) => p.key)
+  roleForm.permissions = role.permissions.filter(p => p.allowed).map(p => p.key)
   showModal.value = true
 }
 
 const toggleModule = (module: string, event: Event) => {
   const checked = (event.target as HTMLInputElement).checked
-  const perms = (editablePermissions as any)[module]
+  const perms = (editablePermissions as Record<string, Array<{ key: string; label: string }>>)[module]
   if (checked) {
-    perms.forEach((p: any) => {
+    perms.forEach(p => {
       if (!roleForm.permissions.includes(p.key)) roleForm.permissions.push(p.key)
     })
   } else {
     roleForm.permissions = roleForm.permissions.filter(
-      (k: string) => !perms.some((p: any) => p.key === k)
+      k => !perms.some(p => p.key === k)
     )
   }
 }
@@ -238,6 +247,7 @@ const saveRole = () => {
           <div class="flex items-center justify-between">
             <div class="flex items-center gap-3">
               <div :class="['w-10 h-10 rounded-lg flex items-center justify-center', role.iconBg]">
+                <!-- eslint-disable-next-line vue/no-v-html -->
                 <span class="w-5 h-5" v-html="role.icon" />
               </div>
               <div>

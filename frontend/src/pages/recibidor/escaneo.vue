@@ -13,8 +13,8 @@ const contenedorActual = ref<Contenedor | null>(null)
 const observaciones = ref('')
 const resumenFinal = reactive({ codigo: '', escaneados: 0, total: 0 })
 
-const scannerContenedor = ref<any>(null)
-const scannerVehiculo = ref<any>(null)
+const scannerContenedor = ref<{ startScan: () => void; stopScan: () => void } | null>(null)
+const scannerVehiculo = ref<{ startScan: () => void; stopScan: () => void } | null>(null)
 
 const toast = reactive({ show: false, msg: '', type: 'ok' as 'ok' | 'warn' | 'error' })
 const mostrarToast = (type: 'ok' | 'warn' | 'error', msg: string) => {
