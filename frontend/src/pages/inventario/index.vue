@@ -1,3 +1,13 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import { useVehiculoStore } from '~/stores/vehiculoStore'
+
+definePageMeta({ layout: 'admin' })
+
+const vehiculoStore = useVehiculoStore()
+const tab = ref<'pendientes' | 'completados'>('pendientes')
+</script>
+
 <template>
   <div>
     <div class="mb-8">
@@ -27,14 +37,16 @@
 
     <!-- Tabs -->
     <div class="flex gap-2 mb-4">
-      <button @click="tab = 'pendientes'"
-        class="px-4 py-2 text-sm font-semibold rounded-xl transition"
-        :class="tab === 'pendientes' ? 'bg-warning-100 text-warning-700' : 'text-gray-500 hover:bg-gray-100'">
+      <button
+class="px-4 py-2 text-sm font-semibold rounded-xl transition"
+        :class="tab === 'pendientes' ? 'bg-warning-100 text-warning-700' : 'text-gray-500 hover:bg-gray-100'"
+        @click="tab = 'pendientes'">
         Pendientes ({{ vehiculoStore.getPendientesInventario.length }})
       </button>
-      <button @click="tab = 'completados'"
-        class="px-4 py-2 text-sm font-semibold rounded-xl transition"
-        :class="tab === 'completados' ? 'bg-success-100 text-success-700' : 'text-gray-500 hover:bg-gray-100'">
+      <button
+class="px-4 py-2 text-sm font-semibold rounded-xl transition"
+        :class="tab === 'completados' ? 'bg-success-100 text-success-700' : 'text-gray-500 hover:bg-gray-100'"
+        @click="tab = 'completados'">
         Inventario Completo ({{ vehiculoStore.getListosParaDespacho.length }})
       </button>
     </div>
@@ -53,7 +65,8 @@
         <p class="text-gray-300 text-sm mt-1">Todos los vehículos con impronta ya tienen inventario aprobado</p>
       </div>
       <div v-else class="divide-y divide-gray-50">
-        <div v-for="v in vehiculoStore.getPendientesInventario" :key="v.id"
+        <div
+v-for="v in vehiculoStore.getPendientesInventario" :key="v.id"
           class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition">
           <div class="flex items-center gap-4">
             <div class="w-10 h-10 bg-warning-500/10 text-warning-600 rounded-lg flex items-center justify-center">
@@ -70,7 +83,8 @@
               <p class="text-xs text-gray-400 mt-0.5">Cliente: {{ v.cliente || '—' }} · Recibido {{ v.fechaRecepcion }}</p>
             </div>
           </div>
-          <NuxtLink :to="`/inventario/checklist?vin=${v.vin}`"
+          <NuxtLink
+:to="`/inventario/checklist?vin=${v.vin}`"
             class="px-4 py-2 text-sm font-semibold text-white bg-primary-600 rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-500/20">
             Iniciar Checklist
           </NuxtLink>
@@ -87,7 +101,8 @@
         <p class="text-gray-400 font-medium">No hay vehículos con inventario aprobado aún</p>
       </div>
       <div v-else class="divide-y divide-gray-50">
-        <div v-for="v in vehiculoStore.getListosParaDespacho" :key="v.id"
+        <div
+v-for="v in vehiculoStore.getListosParaDespacho" :key="v.id"
           class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition">
           <div class="flex items-center gap-4">
             <div class="w-10 h-10 bg-success-500/10 text-success-600 rounded-lg flex items-center justify-center">
@@ -114,13 +129,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { useVehiculoStore } from '~/stores/vehiculoStore'
-
-definePageMeta({ layout: 'admin' })
-
-const vehiculoStore = useVehiculoStore()
-const tab = ref<'pendientes' | 'completados'>('pendientes')
-</script>

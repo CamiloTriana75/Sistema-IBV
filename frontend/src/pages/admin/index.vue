@@ -1,95 +1,3 @@
-<template>
-  <div>
-    <!-- Header -->
-    <div class="mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Administrativo</h1>
-      <p class="text-gray-500 mt-1">Resumen general del sistema</p>
-    </div>
-
-    <!-- Estadísticas principales -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
-      <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
-        <div class="flex items-center justify-between mb-3">
-          <div :class="['w-11 h-11 rounded-lg flex items-center justify-center', stat.bgColor]">
-            <span v-html="stat.icon" :class="['w-5 h-5', stat.iconColor]" />
-          </div>
-          <span :class="['text-xs font-semibold px-2 py-1 rounded-full', stat.trendUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600']">
-            {{ stat.trend }}
-          </span>
-        </div>
-        <p class="text-3xl font-bold text-gray-900">{{ stat.value }}</p>
-        <p class="text-sm text-gray-500 mt-1">{{ stat.label }}</p>
-      </div>
-    </div>
-
-    <!-- Grid principal -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
-      <!-- Acceso rápido -->
-      <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <h3 class="text-lg font-semibold text-gray-900 mb-4">Acceso Rápido</h3>
-        <div class="space-y-3">
-          <NuxtLink
-            v-for="link in quickLinks"
-            :key="link.to"
-            :to="link.to"
-            class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group"
-          >
-            <div :class="['w-10 h-10 rounded-lg flex items-center justify-center shrink-0', link.bgColor]">
-              <span v-html="link.icon" :class="['w-5 h-5', link.iconColor]" />
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition">{{ link.label }}</p>
-              <p class="text-xs text-gray-500">{{ link.desc }}</p>
-            </div>
-            <svg class="w-4 h-4 text-gray-400 group-hover:text-primary-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-            </svg>
-          </NuxtLink>
-        </div>
-      </div>
-
-      <!-- Actividad reciente -->
-      <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-gray-900">Actividad Reciente</h3>
-          <span class="text-xs text-gray-400">Últimas 24 horas</span>
-        </div>
-        <div class="space-y-4">
-          <div v-for="(activity, i) in activities" :key="i" class="flex items-start gap-3">
-            <div :class="['w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white', activity.color]">
-              {{ activity.avatar }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm text-gray-800">
-                <span class="font-medium">{{ activity.user }}</span>
-                {{ activity.action }}
-              </p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ activity.time }}</p>
-            </div>
-            <span :class="['text-xs px-2 py-1 rounded-full font-medium', activity.badgeClass]">
-              {{ activity.badge }}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Usuarios por rol -->
-    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
-      <h3 class="text-lg font-semibold text-gray-900 mb-4">Distribución por Rol</h3>
-      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <div v-for="role in roles" :key="role.name" class="text-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition">
-          <div :class="['w-12 h-12 rounded-full mx-auto flex items-center justify-center mb-2 text-white font-bold', role.color]">
-            {{ role.count }}
-          </div>
-          <p class="text-sm font-medium text-gray-700">{{ role.name }}</p>
-          <p class="text-xs text-gray-400">{{ role.desc }}</p>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
-
 <script setup lang="ts">
 import { ref } from 'vue'
 
@@ -158,3 +66,95 @@ const roles = ref([
   { name: 'Portería', count: 7, color: 'bg-purple-500', desc: 'Control' },
 ])
 </script>
+
+<template>
+  <div>
+    <!-- Header -->
+    <div class="mb-8">
+      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Administrativo</h1>
+      <p class="text-gray-500 mt-1">Resumen general del sistema</p>
+    </div>
+
+    <!-- Estadísticas principales -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mb-8">
+      <div v-for="stat in stats" :key="stat.label" class="bg-white rounded-xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition">
+        <div class="flex items-center justify-between mb-3">
+          <div :class="['w-11 h-11 rounded-lg flex items-center justify-center', stat.bgColor]">
+            <span :class="['w-5 h-5', stat.iconColor]" v-html="stat.icon" />
+          </div>
+          <span :class="['text-xs font-semibold px-2 py-1 rounded-full', stat.trendUp ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600']">
+            {{ stat.trend }}
+          </span>
+        </div>
+        <p class="text-3xl font-bold text-gray-900">{{ stat.value }}</p>
+        <p class="text-sm text-gray-500 mt-1">{{ stat.label }}</p>
+      </div>
+    </div>
+
+    <!-- Grid principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+      <!-- Acceso rápido -->
+      <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">Acceso Rápido</h3>
+        <div class="space-y-3">
+          <NuxtLink
+            v-for="link in quickLinks"
+            :key="link.to"
+            :to="link.to"
+            class="flex items-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition group"
+          >
+            <div :class="['w-10 h-10 rounded-lg flex items-center justify-center shrink-0', link.bgColor]">
+              <span :class="['w-5 h-5', link.iconColor]" v-html="link.icon" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-medium text-gray-900 group-hover:text-primary-600 transition">{{ link.label }}</p>
+              <p class="text-xs text-gray-500">{{ link.desc }}</p>
+            </div>
+            <svg class="w-4 h-4 text-gray-400 group-hover:text-primary-500 transition" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </NuxtLink>
+        </div>
+      </div>
+
+      <!-- Actividad reciente -->
+      <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="flex items-center justify-between mb-4">
+          <h3 class="text-lg font-semibold text-gray-900">Actividad Reciente</h3>
+          <span class="text-xs text-gray-400">Últimas 24 horas</span>
+        </div>
+        <div class="space-y-4">
+          <div v-for="(activity, i) in activities" :key="i" class="flex items-start gap-3">
+            <div :class="['w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white', activity.color]">
+              {{ activity.avatar }}
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-gray-800">
+                <span class="font-medium">{{ activity.user }}</span>
+                {{ activity.action }}
+              </p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ activity.time }}</p>
+            </div>
+            <span :class="['text-xs px-2 py-1 rounded-full font-medium', activity.badgeClass]">
+              {{ activity.badge }}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Usuarios por rol -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+      <h3 class="text-lg font-semibold text-gray-900 mb-4">Distribución por Rol</h3>
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
+        <div v-for="role in roles" :key="role.name" class="text-center p-4 rounded-xl bg-gray-50 hover:bg-gray-100 transition">
+          <div :class="['w-12 h-12 rounded-full mx-auto flex items-center justify-center mb-2 text-white font-bold', role.color]">
+            {{ role.count }}
+          </div>
+          <p class="text-sm font-medium text-gray-700">{{ role.name }}</p>
+          <p class="text-xs text-gray-400">{{ role.desc }}</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>

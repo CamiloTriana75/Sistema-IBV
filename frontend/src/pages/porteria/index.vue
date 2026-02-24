@@ -1,3 +1,15 @@
+<script setup lang="ts">
+definePageMeta({ layout: 'admin' })
+
+const movements = [
+  { id: 1, vehicle: 'Toyota Corolla', bin: 'VH-2024-0156', type: 'entrada', driver: 'Juan Martínez', time: 'Hace 10 min' },
+  { id: 2, vehicle: 'Nissan Versa', bin: 'VH-2024-0140', type: 'salida', driver: 'Pedro López', time: 'Hace 25 min' },
+  { id: 3, vehicle: 'Chevrolet Onix', bin: 'VH-2024-0142', type: 'salida', driver: 'María García', time: 'Hace 45 min' },
+  { id: 4, vehicle: 'Kia Rio', bin: 'VH-2024-0160', type: 'entrada', driver: 'Carlos Díaz', time: 'Hace 1h' },
+  { id: 5, vehicle: 'Hyundai Accent', bin: 'VH-2024-0161', type: 'entrada', driver: 'Ana Torres', time: 'Hace 2h' },
+]
+</script>
+
 <template>
   <div>
     <div class="mb-8">
@@ -70,15 +82,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-definePageMeta({ layout: 'admin' })
-
-const movements = [
-  { id: 1, vehicle: 'Toyota Corolla', bin: 'VH-2024-0156', type: 'entrada', driver: 'Juan Martínez', time: 'Hace 10 min' },
-  { id: 2, vehicle: 'Nissan Versa', bin: 'VH-2024-0140', type: 'salida', driver: 'Pedro López', time: 'Hace 25 min' },
-  { id: 3, vehicle: 'Chevrolet Onix', bin: 'VH-2024-0142', type: 'salida', driver: 'María García', time: 'Hace 45 min' },
-  { id: 4, vehicle: 'Kia Rio', bin: 'VH-2024-0160', type: 'entrada', driver: 'Carlos Díaz', time: 'Hace 1h' },
-  { id: 5, vehicle: 'Hyundai Accent', bin: 'VH-2024-0161', type: 'entrada', driver: 'Ana Torres', time: 'Hace 2h' },
-]
-</script>

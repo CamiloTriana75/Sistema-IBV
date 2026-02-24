@@ -1,3 +1,17 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useVehiculoStore } from '~/stores/vehiculoStore'
+
+definePageMeta({ layout: 'admin' })
+
+const vehiculoStore = useVehiculoStore()
+
+// Vehicles that are in the system but NOT ready to dispatch (missing impronta or inventory)
+const vehiculosBloqueados = computed(() =>
+  vehiculoStore.vehiculos.filter(v => !v.despachado && !(v.improntaCompletada && v.inventarioAprobado))
+)
+</script>
+
 <template>
   <div>
     <div class="mb-8">
@@ -36,7 +50,8 @@
         <p class="text-sm font-bold text-success-800">{{ vehiculoStore.listosDespacho }} vehículo(s) listo(s) para despacho</p>
         <p class="text-xs text-success-600 mt-0.5">Impronta completada + Inventario aprobado</p>
       </div>
-      <NuxtLink to="/despachador/escaneo"
+      <NuxtLink
+to="/despachador/escaneo"
         class="inline-flex items-center gap-2 px-5 py-2.5 bg-success-600 text-white text-sm font-semibold rounded-xl hover:bg-success-700 transition shadow-lg shadow-success-500/20">
         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12v.01M12 4h.01M4 4h4v4H4V4zm12 0h4v4h-4V4zM4 16h4v4H4v-4z" />
@@ -101,7 +116,8 @@
         <p class="text-xs text-gray-400 mt-0.5">Requieren completar impronta y/o inventario</p>
       </div>
       <div class="divide-y divide-gray-50">
-        <div v-for="v in vehiculosBloqueados" :key="v.id"
+        <div
+v-for="v in vehiculosBloqueados" :key="v.id"
           class="px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition">
           <div class="flex items-center gap-4">
             <div class="w-10 h-10 bg-danger-500/10 text-danger-600 rounded-lg flex items-center justify-center">
@@ -115,11 +131,13 @@
             </div>
           </div>
           <div class="flex items-center gap-2">
-            <span class="px-2 py-1 text-[10px] font-bold rounded-full"
+            <span
+class="px-2 py-1 text-[10px] font-bold rounded-full"
               :class="v.improntaCompletada ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700'">
               Impronta {{ v.improntaCompletada ? '✓' : '✗' }}
             </span>
-            <span class="px-2 py-1 text-[10px] font-bold rounded-full"
+            <span
+class="px-2 py-1 text-[10px] font-bold rounded-full"
               :class="v.inventarioAprobado ? 'bg-success-100 text-success-700' : 'bg-danger-100 text-danger-700'">
               Inventario {{ v.inventarioAprobado ? '✓' : '✗' }}
             </span>
@@ -129,17 +147,3 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed } from 'vue'
-import { useVehiculoStore } from '~/stores/vehiculoStore'
-
-definePageMeta({ layout: 'admin' })
-
-const vehiculoStore = useVehiculoStore()
-
-// Vehicles that are in the system but NOT ready to dispatch (missing impronta or inventory)
-const vehiculosBloqueados = computed(() =>
-  vehiculoStore.vehiculos.filter(v => !v.despachado && !(v.improntaCompletada && v.inventarioAprobado))
-)
-</script>

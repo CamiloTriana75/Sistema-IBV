@@ -1,9 +1,45 @@
+<script setup lang="ts">
+import { computed } from 'vue'
+import { useVehiculoStore } from '~/stores/vehiculoStore'
+import { useAuthStore } from '~/stores/auth'
+
+definePageMeta({ layout: 'blank' })
+
+const route = useRoute()
+const vehiculoStore = useVehiculoStore()
+const authStore = useAuthStore()
+
+const loteNumero = (route.query.lote as string) || `LT-${new Date().getFullYear()}-0000`
+const fechaHoy = new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' })
+const horaActual = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
+const despachadorNombre = authStore.user?.name || 'Despachador'
+
+// Get vehicles dispatched in this lot (or all dispatched if no specific lot)
+const vehiculosDespachados = computed(() =>
+  vehiculoStore.vehiculos.filter(v => v.despachado && (v.lotDespacho === loteNumero || !route.query.lote))
+)
+
+const clientesUnicos = computed(() => {
+  const clientes = new Set(vehiculosDespachados.value.map(v => v.cliente).filter(Boolean))
+  return clientes.size
+})
+
+const firmas = [
+  { nombre: despachadorNombre, rol: 'Despachador', firmado: true },
+  { nombre: '___________________', rol: 'Conductor / Transportista', firmado: false },
+  { nombre: '___________________', rol: 'Supervisor de Despacho', firmado: false }
+]
+
+const imprimir = () => window.print()
+</script>
+
 <template>
   <div class="min-h-screen bg-white">
     <!-- Controles (no se imprimen) -->
     <div class="print:hidden flex items-center justify-between px-8 py-4 bg-gray-50 border-b border-gray-200 sticky top-0 z-10">
       <div class="flex items-center gap-3">
-        <NuxtLink to="/despachador/escaneo"
+        <NuxtLink
+to="/despachador/escaneo"
           class="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
@@ -14,15 +50,17 @@
         <span class="px-3 py-1 bg-success-100 text-success-700 text-xs font-bold rounded-full">Lote completado</span>
       </div>
       <div class="flex gap-3">
-        <NuxtLink to="/despachador"
+        <NuxtLink
+to="/despachador"
           class="inline-flex items-center gap-2 px-4 py-2.5 border border-gray-200 bg-white text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-50 transition">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
           </svg>
           Ir al panel
         </NuxtLink>
-        <button @click="imprimir"
-          class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-500/25">
+        <button
+class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-500/25"
+          @click="imprimir">
           <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
           </svg>
@@ -196,41 +234,6 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
-import { computed } from 'vue'
-import { useVehiculoStore } from '~/stores/vehiculoStore'
-import { useAuthStore } from '~/stores/auth'
-
-definePageMeta({ layout: 'blank' })
-
-const route = useRoute()
-const vehiculoStore = useVehiculoStore()
-const authStore = useAuthStore()
-
-const loteNumero = (route.query.lote as string) || `LT-${new Date().getFullYear()}-0000`
-const fechaHoy = new Date().toLocaleDateString('es-VE', { day: '2-digit', month: 'long', year: 'numeric' })
-const horaActual = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
-const despachadorNombre = authStore.user?.name || 'Despachador'
-
-// Get vehicles dispatched in this lot (or all dispatched if no specific lot)
-const vehiculosDespachados = computed(() =>
-  vehiculoStore.vehiculos.filter(v => v.despachado && (v.lotDespacho === loteNumero || !route.query.lote))
-)
-
-const clientesUnicos = computed(() => {
-  const clientes = new Set(vehiculosDespachados.value.map(v => v.cliente).filter(Boolean))
-  return clientes.size
-})
-
-const firmas = [
-  { nombre: despachadorNombre, rol: 'Despachador', firmado: true },
-  { nombre: '___________________', rol: 'Conductor / Transportista', firmado: false },
-  { nombre: '___________________', rol: 'Supervisor de Despacho', firmado: false }
-]
-
-const imprimir = () => window.print()
-</script>
 
 <style>
 @page {
