@@ -88,9 +88,7 @@ const {
 
 const isCameraActive = computed(() => cameraState.value === 'active')
 const isCameraStarting = computed(() => cameraState.value === 'starting')
-const facingModeLabel = computed(() =>
-  facingMode.value === 'environment' ? 'Trasera' : 'Frontal',
-)
+const facingModeLabel = computed(() => (facingMode.value === 'environment' ? 'Trasera' : 'Frontal'))
 
 // ─── State config (visual) ─────────────────────────────
 const frameColorClass = computed(() => {
@@ -354,12 +352,7 @@ defineExpose({ focus, reset, setError, setSuccess, startCamera, stopCamera, swit
           <div
             class="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center shadow-xl shadow-green-500/40 animate-success-pop"
           >
-            <svg
-              class="w-9 h-9 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -389,12 +382,7 @@ defineExpose({ focus, reset, setError, setSuccess, startCamera, stopCamera, swit
           <div
             class="w-16 h-16 rounded-full bg-red-500 flex items-center justify-center shadow-xl shadow-red-500/40 animate-error-shake"
           >
-            <svg
-              class="w-9 h-9 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
+            <svg class="w-9 h-9 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
                 stroke-linejoin="round"
@@ -491,12 +479,7 @@ defineExpose({ focus, reset, setError, setSuccess, startCamera, stopCamera, swit
         @click="handleToggleCamera"
       >
         <!-- Ícono de cámara / cerrar / spinner -->
-        <svg
-          v-if="isCameraStarting"
-          class="w-5 h-5 animate-spin"
-          fill="none"
-          viewBox="0 0 24 24"
-        >
+        <svg v-if="isCameraStarting" class="w-5 h-5 animate-spin" fill="none" viewBox="0 0 24 24">
           <circle
             class="opacity-25"
             cx="12"
@@ -534,9 +517,7 @@ defineExpose({ focus, reset, setError, setSuccess, startCamera, stopCamera, swit
             d="M6 18L18 6M6 6l12 12"
           />
         </svg>
-        {{
-          isCameraStarting ? 'Iniciando...' : isCameraActive ? 'Cerrar Cámara' : 'Abrir Cámara'
-        }}
+        {{ isCameraStarting ? 'Iniciando...' : isCameraActive ? 'Cerrar Cámara' : 'Abrir Cámara' }}
       </button>
 
       <!-- Botón cambiar cámara (solo cuando cámara activa y hay múltiples) -->

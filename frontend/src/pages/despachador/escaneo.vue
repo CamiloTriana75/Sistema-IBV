@@ -8,7 +8,12 @@ definePageMeta({ layout: 'admin' })
 const vehiculoStore = useVehiculoStore()
 const authStore = useAuthStore()
 const router = useRouter()
-const scannerRef = ref<{ setError: (msg: string) => void; setSuccess: (msg?: string) => void; reset: () => void; focus: () => void } | null>(null)
+const scannerRef = ref<{
+  setError: (msg: string) => void
+  setSuccess: (msg?: string) => void
+  reset: () => void
+  focus: () => void
+} | null>(null)
 const filtroEstado = ref<'todos' | 'pendiente'>('todos')
 
 // Lot number auto-generated
@@ -237,9 +242,7 @@ const finalizarLote = () => {
             </div>
             <div>
               <h2 class="text-lg font-bold text-gray-900">Escanear Vehículo</h2>
-              <p class="text-sm text-gray-500">
-                Escanea el QR o VIN de cada vehículo del lote
-              </p>
+              <p class="text-sm text-gray-500">Escanea el QR o VIN de cada vehículo del lote</p>
             </div>
           </div>
 
@@ -348,5 +351,3 @@ const finalizarLote = () => {
     </div>
   </div>
 </template>
-
-

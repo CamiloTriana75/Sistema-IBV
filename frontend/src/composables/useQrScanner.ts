@@ -120,8 +120,16 @@ export function useQrScanner(elementId: string, options: QrScannerOptions) {
 
       // Limpiar instancia previa si existe
       if (scannerInstance) {
-        try { await scannerInstance.stop() } catch { /* ya detenido */ }
-        try { scannerInstance.clear() } catch { /* nada que limpiar */ }
+        try {
+          await scannerInstance.stop()
+        } catch {
+          /* ya detenido */
+        }
+        try {
+          scannerInstance.clear()
+        } catch {
+          /* nada que limpiar */
+        }
         scannerInstance = null
       }
 
@@ -167,7 +175,11 @@ export function useQrScanner(elementId: string, options: QrScannerOptions) {
    */
   const stop = async () => {
     if (scannerInstance) {
-      try { await scannerInstance.stop() } catch { /* ya detenido */ }
+      try {
+        await scannerInstance.stop()
+      } catch {
+        /* ya detenido */
+      }
     }
     cameraState.value = 'idle'
   }
@@ -212,7 +224,11 @@ export function useQrScanner(elementId: string, options: QrScannerOptions) {
   const destroy = async () => {
     await stop()
     if (scannerInstance) {
-      try { scannerInstance.clear() } catch { /* nada que limpiar */ }
+      try {
+        scannerInstance.clear()
+      } catch {
+        /* nada que limpiar */
+      }
       scannerInstance = null
     }
   }

@@ -5,13 +5,11 @@ definePageMeta({ layout: 'admin' })
 
 const showScanner = ref(false)
 const lastScan = ref('')
-const scannerRef = ref<
-  {
-    setError: (msg: string) => void
-    setSuccess: (msg?: string) => void
-    reset: () => void
-  } | null
->(null)
+const scannerRef = ref<{
+  setError: (msg: string) => void
+  setSuccess: (msg?: string) => void
+  reset: () => void
+} | null>(null)
 
 const onScan = (value: string) => {
   const code = value.trim()
@@ -115,7 +113,10 @@ const movements = [
       leave-from-class="opacity-100 translate-y-0"
       leave-to-class="opacity-0 translate-y-1"
     >
-      <div v-if="showScanner" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8">
+      <div
+        v-if="showScanner"
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8"
+      >
         <div class="flex items-center gap-3 mb-4">
           <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
             <svg
@@ -145,7 +146,8 @@ const movements = [
         />
 
         <div v-if="lastScan" class="mt-4 text-sm text-gray-600">
-          Ultimo codigo: <span class="font-mono font-semibold text-gray-900">{{ lastScan }}</span>
+          Ultimo codigo:
+          <span class="font-mono font-semibold text-gray-900">{{ lastScan }}</span>
         </div>
       </div>
     </Transition>
