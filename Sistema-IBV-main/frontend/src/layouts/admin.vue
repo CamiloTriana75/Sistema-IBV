@@ -44,21 +44,9 @@ const pageTitle = computed(() => {
   return titles[route.path] || 'Dashboard'
 })
 
-// Detectar módulo actual basado en la ruta (no en el rol del usuario)
-const currentModule = computed(() => {
-  const path = route.path
-  if (path.startsWith('/admin')) return 'admin'
-  if (path.startsWith('/recibidor')) return 'recibidor'
-  if (path.startsWith('/inventario')) return 'inventario'
-  if (path.startsWith('/despachador')) return 'despachador'
-  if (path.startsWith('/porteria')) return 'porteria'
-  // Fallback al rol del usuario si la ruta no coincide con ningún módulo
-  return currentUser.value.role
-})
-
-// Menú basado en la ruta actual (independiente del rol)
+// Menú basado en rol
 const menuItems = computed(() => {
-  const module = currentModule.value
+  const role = currentUser.value.role
   const allMenus: Record<
     string,
     Array<{ to: string; label: string; icon: string; badge?: number }>
@@ -131,7 +119,7 @@ const menuItems = computed(() => {
       },
     ],
   }
-  return allMenus[module] || allMenus.admin
+  return allMenus[role] || allMenus.admin
 })
 
 const isActive = (path: string) => {

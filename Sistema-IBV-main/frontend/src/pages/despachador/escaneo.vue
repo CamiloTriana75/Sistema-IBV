@@ -8,13 +8,22 @@ definePageMeta({ layout: 'admin' })
 const vehiculoStore = useVehiculoStore()
 const authStore = useAuthStore()
 const router = useRouter()
-const scannerRef = ref<{
-  setError: (msg: string) => void
-  setSuccess: (msg?: string) => void
-  reset: () => void
-  focus: () => void
-} | null>(null)
+const vinManual = ref('')
 const filtroEstado = ref<'todos' | 'pendiente'>('todos')
+const errorMsg = ref('')
+const vehiculoActual = ref<{
+  vin: string
+  ok: boolean
+  razon?: string
+  vehiculo?: {
+    vin: string
+    marca: string
+    modelo: string
+    anio: string
+    color: string
+    cliente: string
+  }
+} | null>(null)
 
 // Lot number auto-generated
 const loteActual = `LT-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
@@ -61,43 +70,64 @@ const vehiculosFiltrados = computed(() => {
   return vehiculosLote.value
 })
 
-/**
- * Procesa un VIN escaneado (ya sea por cámara QR o entrada manual).
- * Usa el componente QrScanner reutilizable para el feedback visual.
- */
-const onScan = (vin: string) => {
+const procesarEscaneo = (vin: string) => {
+  errorMsg.value = ''
+
   // 1. Check dispatch eligibility via vehiculoStore
   const check = vehiculoStore.puedeDespachar(vin)
   if (!check.ok) {
-    scannerRef.value?.setError(check.razon || 'No se puede despachar este vehículo')
+    vehiculoActual.value = { vin, ok: false, razon: check.razon }
+    errorMsg.value = check.razon || 'No se puede despachar'
+    setTimeout(() => {
+      vehiculoActual.value = null
+    }, 3000)
     return
   }
 
   // 2. Find in lot
   const v = vehiculosLote.value.find((x) => x.vin.toLowerCase() === vin.toLowerCase())
   if (!v) {
-    scannerRef.value?.setError('Este VIN no está en el lote actual')
+    vehiculoActual.value = { vin, ok: false, razon: 'Vehículo no está en este lote' }
+    errorMsg.value = 'Este VIN no está en el lote actual'
+    setTimeout(() => {
+      vehiculoActual.value = null
+    }, 3000)
     return
   }
   if (v.escaneado) {
-    scannerRef.value?.setError('Este vehículo ya fue escaneado en este lote')
+    vehiculoActual.value = { vin, ok: false, razon: 'Ya fue escaneado' }
+    errorMsg.value = 'Este vehículo ya fue escaneado en este lote'
+    setTimeout(() => {
+      vehiculoActual.value = null
+    }, 3000)
     return
   }
 
-  // 3. Success — marcar como escaneado y dar feedback
-  v.horaEscaneo = new Date().toLocaleTimeString('es-VE', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: '2-digit',
-  })
-  v.escaneado = true
-  scannerRef.value?.setSuccess(`${v.marca} ${v.modelo} — VIN verificado`)
+  // 3. Success
+  vehiculoActual.value = { vin, ok: true, vehiculo: v }
+  setTimeout(() => {
+    v.horaEscaneo = new Date().toLocaleTimeString('es-VE', {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+    })
+    v.escaneado = true
+    setTimeout(() => {
+      vehiculoActual.value = null
+    }, 1500)
+  }, 800)
 }
 
 const simularEscaneo = () => {
   const pendientes = vehiculosPendientes.value
   if (pendientes.length === 0) return
-  onScan(pendientes[0].vin)
+  procesarEscaneo(pendientes[0].vin)
+}
+
+const escanearManual = () => {
+  if (!vinManual.value.trim()) return
+  procesarEscaneo(vinManual.value.trim())
+  vinManual.value = ''
 }
 
 const finalizarLote = () => {
@@ -221,13 +251,142 @@ const finalizarLote = () => {
     </div>
 
     <div v-else class="grid grid-cols-1 xl:grid-cols-5 gap-6">
-      <!-- Zona de escaneo QR (componente reutilizable) -->
+      <!-- Zona de escaneo QR -->
       <div class="xl:col-span-2 space-y-4">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-5">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <!-- Zona del scanner -->
+          <div class="relative bg-gray-900 aspect-square flex flex-col items-center justify-center">
+            <div v-if="!vehiculoActual" class="text-center">
+              <div class="relative w-48 h-48 mx-auto mb-6">
+                <div class="absolute inset-0 border-2 border-white/20 rounded-xl"></div>
+                <div
+                  class="absolute top-0 left-0 w-8 h-8 border-t-4 border-l-4 border-primary-400 rounded-tl-xl"
+                ></div>
+                <div
+                  class="absolute top-0 right-0 w-8 h-8 border-t-4 border-r-4 border-primary-400 rounded-tr-xl"
+                ></div>
+                <div
+                  class="absolute bottom-0 left-0 w-8 h-8 border-b-4 border-l-4 border-primary-400 rounded-bl-xl"
+                ></div>
+                <div
+                  class="absolute bottom-0 right-0 w-8 h-8 border-b-4 border-r-4 border-primary-400 rounded-br-xl"
+                ></div>
+                <div
+                  class="absolute inset-x-4 h-0.5 bg-primary-400/80 rounded-full shadow-lg shadow-primary-400/60 animate-scan-line"
+                />
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <svg
+                    class="w-16 h-16 text-white/30"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="1"
+                      d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12v.01M12 4h.01M4 4h4v4H4V4zm12 0h4v4h-4V4zM4 16h4v4H4v-4z"
+                    />
+                  </svg>
+                </div>
+              </div>
+              <p class="text-white/60 text-sm font-medium">Escanea el QR/VIN del vehículo</p>
+              <p class="text-white/40 text-xs mt-1">Solo vehículos con impronta e inventario</p>
+            </div>
+
+            <!-- Vehículo reconocido -->
+            <div v-else class="text-center px-6 py-4">
+              <div
+                class="w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 shadow-xl"
+                :class="
+                  vehiculoActual.ok
+                    ? 'bg-success-500 shadow-success-500/50'
+                    : 'bg-danger-500 shadow-danger-500/50'
+                "
+              >
+                <svg
+                  v-if="vehiculoActual.ok"
+                  class="w-9 h-9 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.5"
+                    d="M5 13l4 4L19 7"
+                  />
+                </svg>
+                <svg
+                  v-else
+                  class="w-9 h-9 text-white"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2.5"
+                    d="M6 18L18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
+              <p
+                class="text-sm font-bold uppercase tracking-widest mb-1"
+                :class="vehiculoActual.ok ? 'text-success-400' : 'text-danger-400'"
+              >
+                {{ vehiculoActual.ok ? '¡Verificado!' : '¡Bloqueado!' }}
+              </p>
+              <p class="text-white font-black text-xl">{{ vehiculoActual.vin }}</p>
+              <p v-if="vehiculoActual.vehiculo" class="text-white/70 text-sm mt-1">
+                {{ vehiculoActual.vehiculo.marca }} {{ vehiculoActual.vehiculo.modelo }}
+              </p>
+              <p v-if="!vehiculoActual.ok" class="text-danger-300 text-xs mt-2">
+                {{ vehiculoActual.razon }}
+              </p>
+            </div>
+          </div>
+
+          <!-- Controles de escaneo -->
+          <div class="p-5 space-y-3">
+            <button
+              :disabled="todosEscaneados"
+              class="w-full py-3 font-bold text-sm rounded-xl transition"
+              :class="
+                todosEscaneados
+                  ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                  : 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/25 active:scale-95'
+              "
+              @click="simularEscaneo"
+            >
+              {{ todosEscaneados ? 'Todos escaneados ✓' : '⚡ Simular Escaneo QR' }}
+            </button>
+
+            <div class="flex gap-2">
+              <input
+                v-model="vinManual"
+                type="text"
+                placeholder="Ingresar VIN manualmente..."
+                class="flex-1 px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+                @keydown.enter="escanearManual"
+              />
+              <button
+                class="px-4 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm font-semibold rounded-xl transition"
+                @click="escanearManual"
+              >
+                OK
+              </button>
+            </div>
+
+            <!-- Error message -->
+            <div
+              v-if="errorMsg"
+              class="flex items-center gap-2 p-3 bg-danger-50 border border-danger-200 rounded-xl"
+            >
               <svg
-                class="w-5 h-5 text-primary-600"
+                class="w-4 h-4 text-danger-500 shrink-0"
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -236,36 +395,12 @@ const finalizarLote = () => {
                   stroke-linecap="round"
                   stroke-linejoin="round"
                   stroke-width="2"
-                  d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                  d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
                 />
               </svg>
-            </div>
-            <div>
-              <h2 class="text-lg font-bold text-gray-900">Escanear Vehículo</h2>
-              <p class="text-sm text-gray-500">Escanea el QR o VIN de cada vehículo del lote</p>
+              <p class="text-xs text-danger-700 font-medium">{{ errorMsg }}</p>
             </div>
           </div>
-
-          <QrScanner
-            ref="scannerRef"
-            placeholder="VIN del vehículo (ej: 1HGCM82633A004352)"
-            hide-result
-            @scan="onScan"
-          />
-
-          <!-- Botón simular escaneo (solo desarrollo) -->
-          <button
-            :disabled="todosEscaneados"
-            class="w-full mt-4 py-3 font-bold text-sm rounded-xl transition"
-            :class="
-              todosEscaneados
-                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                : 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/25 active:scale-95'
-            "
-            @click="simularEscaneo"
-          >
-            {{ todosEscaneados ? 'Todos escaneados ✓' : '⚡ Simular Escaneo QR' }}
-          </button>
         </div>
       </div>
 
@@ -351,3 +486,19 @@ const finalizarLote = () => {
     </div>
   </div>
 </template>
+
+<style scoped>
+@keyframes scan-line {
+  0%,
+  100% {
+    top: 10%;
+  }
+  50% {
+    top: 85%;
+  }
+}
+.animate-scan-line {
+  animation: scan-line 2s ease-in-out infinite;
+  position: absolute;
+}
+</style>

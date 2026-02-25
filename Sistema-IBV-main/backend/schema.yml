@@ -1,0 +1,1304 @@
+openapi: 3.0.3
+info:
+  title: Sistema IBV API
+  version: 0.1.0
+  description: Contratos de la API para el sistema de inventario y despacho.
+servers:
+  - url: http://127.0.0.1:8000/api
+    description: Local
+security:
+  - BearerAuth: []
+paths:
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Login
+      description: |
+        Permisos: Publico
+        Codigos: 200, 400, 401
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout
+      description: |
+        Permisos: Autenticado
+        Codigos: 204, 401
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /auth/me:
+    get:
+      tags: [Auth]
+      summary: Perfil del usuario autenticado
+      description: |
+        Permisos: Autenticado
+        Codigos: 200, 401
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+  /users:
+    get:
+      tags: [Users]
+      summary: Listar usuarios
+      description: |
+        Permisos: Administrador
+        Codigos: 200, 401, 403
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Users]
+      summary: Crear usuario
+      description: |
+        Permisos: Administrador
+        Codigos: 201, 400, 401, 403
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreate'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /users/{id}:
+    get:
+      tags: [Users]
+      summary: Obtener usuario
+      description: |
+        Permisos: Administrador
+        Codigos: 200, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Users]
+      summary: Actualizar usuario
+      description: |
+        Permisos: Administrador
+        Codigos: 200, 400, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Users]
+      summary: Eliminar usuario
+      description: |
+        Permisos: Administrador
+        Codigos: 204, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /roles:
+    get:
+      tags: [Roles]
+      summary: Listar roles
+      description: |
+        Permisos: Administrador
+        Codigos: 200, 401, 403
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Role'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Roles]
+      summary: Crear rol
+      description: |
+        Permisos: Administrador
+        Codigos: 201, 400, 401, 403
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /roles/{id}:
+    get:
+      tags: [Roles]
+      summary: Obtener rol
+      description: |
+        Permisos: Administrador
+        Codigos: 200, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Roles]
+      summary: Actualizar rol
+      description: |
+        Permisos: Administrador
+        Codigos: 200, 400, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Role'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Role'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Roles]
+      summary: Eliminar rol
+      description: |
+        Permisos: Administrador
+        Codigos: 204, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /buques:
+    get:
+      tags: [Buques]
+      summary: Listar buques
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 401, 403
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Buque'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Buques]
+      summary: Crear buque
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 201, 400, 401, 403
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Buque'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Buque'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /buques/{id}:
+    get:
+      tags: [Buques]
+      summary: Obtener buque
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Buque'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Buques]
+      summary: Actualizar buque
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 400, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Buque'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Buque'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Buques]
+      summary: Eliminar buque
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 204, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /vehiculos:
+    get:
+      tags: [Vehiculos]
+      summary: Listar vehiculos
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 401, 403
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Vehiculo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Vehiculos]
+      summary: Crear vehiculo
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 201, 400, 401, 403
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vehiculo'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /vehiculos/{id}:
+    get:
+      tags: [Vehiculos]
+      summary: Obtener vehiculo
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Vehiculos]
+      summary: Actualizar vehiculo
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 400, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Vehiculo'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Vehiculo'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Vehiculos]
+      summary: Eliminar vehiculo
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 204, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /modelos-vehiculo:
+    get:
+      tags: [Modelos]
+      summary: Listar modelos de vehiculo
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 401, 403
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ModeloVehiculo'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /improntas:
+    get:
+      tags: [Improntas]
+      summary: Listar improntas
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 401, 403
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Impronta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Improntas]
+      summary: Crear impronta
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 201, 400, 401, 403
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Impronta'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Impronta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /improntas/{id}:
+    get:
+      tags: [Improntas]
+      summary: Obtener impronta
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Impronta'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Improntas]
+      summary: Actualizar impronta
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 200, 400, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Impronta'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Impronta'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Improntas]
+      summary: Eliminar impronta
+      description: |
+        Permisos: Administrador, Recibidor
+        Codigos: 204, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /inventarios:
+    get:
+      tags: [Inventarios]
+      summary: Listar inventarios
+      description: |
+        Permisos: Administrador, Inventario
+        Codigos: 200, 401, 403
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Inventario'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Inventarios]
+      summary: Crear inventario
+      description: |
+        Permisos: Administrador, Inventario
+        Codigos: 201, 400, 401, 403
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Inventario'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventario'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /inventarios/{id}:
+    get:
+      tags: [Inventarios]
+      summary: Obtener inventario
+      description: |
+        Permisos: Administrador, Inventario
+        Codigos: 200, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventario'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Inventarios]
+      summary: Actualizar inventario
+      description: |
+        Permisos: Administrador, Inventario
+        Codigos: 200, 400, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Inventario'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Inventario'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Inventarios]
+      summary: Eliminar inventario
+      description: |
+        Permisos: Administrador, Inventario
+        Codigos: 204, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /despachos:
+    get:
+      tags: [Despachos]
+      summary: Listar despachos
+      description: |
+        Permisos: Administrador, Despachador
+        Codigos: 200, 401, 403
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Despacho'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+    post:
+      tags: [Despachos]
+      summary: Crear despacho
+      description: |
+        Permisos: Administrador, Despachador
+        Codigos: 201, 400, 401, 403
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Despacho'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Despacho'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /despachos/{id}:
+    get:
+      tags: [Despachos]
+      summary: Obtener despacho
+      description: |
+        Permisos: Administrador, Despachador
+        Codigos: 200, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Despacho'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    put:
+      tags: [Despachos]
+      summary: Actualizar despacho
+      description: |
+        Permisos: Administrador, Despachador
+        Codigos: 200, 400, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Despacho'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Despacho'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Despachos]
+      summary: Eliminar despacho
+      description: |
+        Permisos: Administrador, Despachador
+        Codigos: 204, 401, 403, 404
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: integer
+      responses:
+        '204':
+          description: No Content
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+  /porteria/movimientos:
+    post:
+      tags: [Porteria]
+      summary: Registrar movimiento de porteria
+      description: |
+        Permisos: Administrador, Porteria
+        Codigos: 201, 400, 401, 403
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MovimientoPorteria'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MovimientoPorteria'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+  /reportes:
+    get:
+      tags: [Reportes]
+      summary: Obtener reportes
+      description: |
+        Permisos: Administrador
+        Codigos: 200, 401, 403
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Reporte'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  responses:
+    BadRequest:
+      description: Bad Request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Datos invalidos"
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Credenciales invalidas"
+    Forbidden:
+      description: Forbidden
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "No tienes permisos para esta accion"
+    NotFound:
+      description: Not Found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+          example:
+            detail: "Recurso no encontrado"
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+      example:
+        detail: "Mensaje de error"
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          format: password
+      example:
+        email: admin@correo.com
+        password: "Pass1234!"
+    TokenResponse:
+      type: object
+      properties:
+        access:
+          type: string
+        refresh:
+          type: string
+      example:
+        access: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refresh: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+        email:
+          type: string
+          format: email
+        first_name:
+          type: string
+        last_name:
+          type: string
+        role:
+          type: string
+          enum: [admin, porteria, recibidor, inventario, despachador, cliente]
+        is_active:
+          type: boolean
+      example:
+        id: 1
+        email: admin@correo.com
+        first_name: Admin
+        last_name: IBV
+        role: admin
+        is_active: true
+    UserCreate:
+      allOf:
+        - $ref: '#/components/schemas/User'
+      example:
+        email: nuevo@correo.com
+        first_name: Nuevo
+        last_name: Usuario
+        role: cliente
+        is_active: true
+    UserUpdate:
+      allOf:
+        - $ref: '#/components/schemas/User'
+      example:
+        first_name: Actualizado
+        last_name: Usuario
+        role: cliente
+    Role:
+      type: object
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+      example:
+        id: 1
+        name: Administrador
+    Buque:
+      type: object
+      properties:
+        id:
+          type: integer
+        nombre:
+          type: string
+        identificacion:
+          type: string
+        fecha_arribo:
+          type: string
+          format: date
+      example:
+        id: 10
+        nombre: Buque Pacifico
+        identificacion: BQ-2026-001
+        fecha_arribo: "2026-02-22"
+    ModeloVehiculo:
+      type: object
+      properties:
+        id:
+          type: integer
+        marca:
+          type: string
+        modelo:
+          type: string
+        anio:
+          type: integer
+        tipo:
+          type: string
+      example:
+        id: 3
+        marca: Toyota
+        modelo: Hilux
+        anio: 2025
+        tipo: Pickup
+    Vehiculo:
+      type: object
+      properties:
+        id:
+          type: integer
+        bin:
+          type: string
+        qr_code:
+          type: string
+        buque_id:
+          type: integer
+        modelo_id:
+          type: integer
+        color:
+          type: string
+        estado:
+          type: string
+        fecha_registro:
+          type: string
+          format: date-time
+      example:
+        id: 200
+        bin: JTEBR3FJ5KJ123456
+        qr_code: QR-200
+        buque_id: 10
+        modelo_id: 3
+        color: Blanco
+        estado: RECEPCIONADO
+        fecha_registro: "2026-02-22T12:00:00Z"
+    Impronta:
+      type: object
+      properties:
+        id:
+          type: integer
+        vehiculo_id:
+          type: integer
+        foto_url:
+          type: string
+        datos_impronta:
+          type: string
+        usuario_id:
+          type: integer
+        fecha:
+          type: string
+          format: date-time
+        estado:
+          type: string
+      example:
+        id: 501
+        vehiculo_id: 200
+        foto_url: https://files.example.com/improntas/200.jpg
+        datos_impronta: "VIN verificado"
+        usuario_id: 1
+        fecha: "2026-02-22T13:00:00Z"
+        estado: COMPLETA
+    Inventario:
+      type: object
+      properties:
+        id:
+          type: integer
+        vehiculo_id:
+          type: integer
+        checklist_json:
+          type: object
+        completo:
+          type: boolean
+        usuario_id:
+          type: integer
+        fecha:
+          type: string
+          format: date-time
+      example:
+        id: 700
+        vehiculo_id: 200
+        checklist_json:
+          herramientas: true
+          botiquin: true
+        completo: true
+        usuario_id: 2
+        fecha: "2026-02-22T14:00:00Z"
+    Despacho:
+      type: object
+      properties:
+        id:
+          type: integer
+        fecha:
+          type: string
+          format: date-time
+        usuario_id:
+          type: integer
+        cantidad_vehiculos:
+          type: integer
+        estado:
+          type: string
+      example:
+        id: 900
+        fecha: "2026-02-22T15:00:00Z"
+        usuario_id: 3
+        cantidad_vehiculos: 5
+        estado: EN_PROCESO
+    MovimientoPorteria:
+      type: object
+      properties:
+        id:
+          type: integer
+        tipo:
+          type: string
+        vehiculo_id:
+          type: integer
+        persona:
+          type: string
+        usuario_id:
+          type: integer
+        fecha:
+          type: string
+          format: date-time
+      example:
+        id: 1001
+        tipo: ENTRADA
+        vehiculo_id: 200
+        persona: Juan Perez
+        usuario_id: 4
+        fecha: "2026-02-22T16:00:00Z"
+    Reporte:
+      type: object
+      properties:
+        id:
+          type: integer
+        tipo:
+          type: string
+        url:
+          type: string
+        generado_en:
+          type: string
+          format: date-time
+      example:
+        id: 1
+        tipo: DESPACHOS_DIARIOS
+        url: https://files.example.com/reportes/despachos-2026-02-22.xlsx
+        generado_en: "2026-02-22T18:00:00Z"
+fecha:
+  type: string
+  format: date-time
