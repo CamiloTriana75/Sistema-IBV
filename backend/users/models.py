@@ -1,6 +1,8 @@
 from django.contrib.auth.models import (
     AbstractBaseUser,
     BaseUserManager,
+    Group,
+    Permission,
     PermissionsMixin,
 )
 from django.db import models
@@ -79,26 +81,72 @@ class UserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    email = models.EmailField(unique=True)
-    first_name = models.CharField(max_length=150, blank=True)
-    last_name = models.CharField(max_length=150, blank=True)
-    role = models.CharField(max_length=20, choices=ROLE_CHOICES, default="cliente")
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(default=timezone.now)
+    # Eliminar campo contraseña, Supabase Auth gestiona la autenticación
+    last_login = models.DateTimeField(
+        blank=True,
+        null=True,
+        verbose_name="last login",
+        db_column="ultimo_ingreso",
+    )
+    is_superuser = models.BooleanField(
+        default=False,
+        help_text=(
+            "Designates that this user has all permissions without "
+            "explicitly assigning them."
+        ),
+        verbose_name="superuser status",
+        db_column="es_superusuario",
+    )
+    email = models.EmailField(unique=True, db_column="correo")
+    first_name = models.CharField(max_length=150, blank=True, db_column="nombres")
+    last_name = models.CharField(max_length=150, blank=True, db_column="apellidos")
+    role = models.CharField(
+        max_length=20,
+        choices=ROLE_CHOICES,
+        default="cliente",
+        db_column="rol",
+    )
+    is_active = models.BooleanField(default=True, db_column="activo")
+    is_staff = models.BooleanField(default=False, db_column="es_personal")
+    date_joined = models.DateTimeField(
+        default=timezone.now,
+        db_column="fecha_registro",
+    )
+
+    groups = models.ManyToManyField(
+        Group,
+        blank=True,
+        help_text=(
+            "The groups this user belongs to. A user will get all permissions "
+            "granted to each of their groups."
+        ),
+        related_name="user_set",
+        related_query_name="user",
+        verbose_name="groups",
+        db_table="usuarios_grupos",
+    )
+    user_permissions = models.ManyToManyField(
+        Permission,
+        blank=True,
+        help_text="Specific permissions for this user.",
+        related_name="user_set",
+        related_query_name="user",
+        verbose_name="user permissions",
+        db_table="usuarios_permisos",
+    )
 
     objects = UserManager()
+
+    class Meta:
+        db_table = "users_user"
+        verbose_name = "Usuario"
+        verbose_name_plural = "Usuarios"
 
     USERNAME_FIELD = "email"
     REQUIRED_FIELDS = []
 
     def __str__(self):
         return self.email
-
-    class Meta:
-        db_table = "users_user"
-        verbose_name = "Usuario"
-        verbose_name_plural = "Usuarios"
 
 
 class Role(models.Model):

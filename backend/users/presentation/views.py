@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from rest_framework import status, viewsets
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
+from users.presentation.permissions import SupabaseJWTAuthenticationPermission
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -16,14 +17,25 @@ from users.presentation.serializers import (
 
 
 class UserViewSet(viewsets.ViewSet):
-    permission_classes = [IsAdminUser]
+    def get_permissions(self):
+        # Permitir GET por email con JWT de Supabase, el resto solo admin
+        if (
+            self.action == "list"
+            and self.request.method == "GET"
+            and self.request.query_params.get("email")
+        ):
+            return [SupabaseJWTAuthenticationPermission()]
+        return [IsAdminUser()]
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self._service = UserService(DjangoUserRepository())
 
     def list(self, request):
+        email = request.query_params.get("email")
         users = self._service.list_users()
+        if email:
+            users = [u for u in users if u.email == email]
         return Response(UserSerializer(users, many=True).data)
 
     def retrieve(self, request, pk=None):

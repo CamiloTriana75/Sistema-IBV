@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useImprontaStore, type DañoZona } from '~/stores/improntaStore'
+import { validators, utils } from '~/utils/helpers'
 
 definePageMeta({ layout: 'admin' })
 
@@ -154,6 +155,16 @@ const agregarFotoAdicional = () => {
 const onFileChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
+
+  // Validar tamaño (10MB)
+  if (!validators.fileSize(file.size, 10)) {
+    showToast(
+      `El archivo es muy pesado (${utils.formatBytes(file.size)}). El límite es 10MB.`,
+      'error'
+    )
+    if (fileInput.value) fileInput.value.value = ''
+    return
+  }
 
   const reader = new FileReader()
   reader.onload = () => {

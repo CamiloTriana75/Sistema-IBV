@@ -1,7 +1,18 @@
 export const validators = {
   email: (email: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email),
-  bin: (bin: string) => /^[A-Z0-9]{17}$/.test(bin),
+  vin: (vin: string) => /^[A-Z0-9]{17}$/.test(vin),
   qrCode: (code: string) => code.length > 0,
+  fileSize: (size: number, limitMB: number = 10) => size <= limitMB * 1024 * 1024,
+}
+
+export const utils = {
+  formatBytes: (bytes: number) => {
+    if (bytes === 0) return '0 Bytes'
+    const k = 1024
+    const sizes = ['Bytes', 'KB', 'MB', 'GB']
+    const i = Math.floor(Math.log(bytes) / Math.log(k))
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
+  },
 }
 
 export const formatters = {

@@ -30,16 +30,16 @@ const features = [
 const roles = ['Administrador', 'Recibidor', 'Inventario', 'Despachador', 'Portería']
 
 const demoCredentials = [
-  { email: 'admin@ibv.com', label: 'Administrador' },
-  { email: 'recibidor@ibv.com', label: 'Recibidor' },
-  { email: 'inventario@ibv.com', label: 'Inventario' },
-  { email: 'despachador@ibv.com', label: 'Despachador' },
-  { email: 'porteria@ibv.com', label: 'Portería' },
+  { email: 'admin1@ibv.com', label: 'Administrador' },
+  { email: 'recibidor1@ibv.com', label: 'Recibidor' },
+  { email: 'inventario1@ibv.com', label: 'Inventario' },
+  { email: 'despacho1@ibv.com', label: 'Despachador' },
+  { email: 'porteria1@ibv.com', label: 'Portería' },
 ]
 
 const fillDemo = (demo: { email: string; label: string }) => {
   form.value.email = demo.email
-  form.value.password = 'ibv2024'
+  form.value.password = 'Test1234!'
   error.value = ''
 }
 
@@ -317,7 +317,7 @@ const handleLogin = async () => {
             </div>
             <p class="text-center text-xs text-gray-400 mt-2">
               Contraseña:
-              <span class="font-bold text-gray-600">ibv2024</span>
+              <span class="font-bold text-gray-600">Test1234!</span>
             </p>
           </div>
         </div>

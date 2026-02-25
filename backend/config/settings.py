@@ -11,12 +11,21 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
-
 import dj_database_url
 from decouple import Csv, config
+from dotenv import load_dotenv
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Load root .env to ensure DATABASE_URL is available when running from backend/
+load_dotenv(BASE_DIR.parent / ".env")
+
+# Supabase Auth (opcionales en CI / entornos sin Supabase)
+# En producción se deben definir como variables de entorno reales.
+SUPABASE_URL = config("SUPABASE_URL", default="")
+SUPABASE_ANON_KEY = config("SUPABASE_ANON_KEY", default="")
+SUPABASE_SERVICE_KEY = config("SUPABASE_SERVICE_KEY", default="")
 
 
 # Quick-start development settings - unsuitable for production
@@ -40,13 +49,13 @@ CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="", cast=Csv())
 # Application definition
 
 INSTALLED_APPS = [
+    "corsheaders",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "corsheaders",
     "users",
     "rest_framework",
     "rest_framework_simplejwt",
@@ -54,14 +63,36 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
-    "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
+    "django.middleware.security.SecurityMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+]
+# Configuración CORS
+CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=False, cast=bool)
+CORS_ALLOWED_ORIGINS = config("CORS_ALLOWED_ORIGINS", default="", cast=Csv())
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_HEADERS = [
+    "authorization",
+    "content-type",
+    "accept",
+    "origin",
+    "x-requested-with",
+    "access-control-allow-origin",
+    "access-control-allow-headers",
+    "access-control-allow-methods",
+]
+CORS_ALLOW_METHODS = [
+    "GET",
+    "POST",
+    "PUT",
+    "PATCH",
+    "DELETE",
+    "OPTIONS",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -93,8 +124,20 @@ AUTH_USER_MODEL = "users.User"
 DATABASES = {
     "default": dj_database_url.config(
         default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}",
+        conn_max_age=600,  # Mantener conexiones por 10 minutos (reutilización)
+        conn_health_checks=True,  # Verificar salud de conexiones antes de usar
     )
 }
+
+# Configuración adicional para PostgreSQL/Supabase (SSL requerido siempre)
+if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+    DATABASES["default"].setdefault("OPTIONS", {})
+    DATABASES["default"]["OPTIONS"].update(
+        {
+            "sslmode": "require",  # Supabase requiere SSL siempre
+            "connect_timeout": 10,  # Timeout de conexión en segundos
+        }
+    )
 
 
 # Password validation
@@ -119,13 +162,13 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = "es-co"  # Español Colombia
 
-TIME_ZONE = "UTC"
+TIME_ZONE = config("TZ", default="America/Bogota")  # Configurable vía .env
 
 USE_I18N = True
 
-USE_TZ = True
+USE_TZ = True  # Usar timezone-aware datetimes
 
 
 # Static files (CSS, JavaScript, Images)
@@ -141,7 +184,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "users.presentation.permissions.SupabaseJWTAuthentication",
     ),
     "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
