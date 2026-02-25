@@ -1,13 +1,3 @@
-# Importaciones primero
-from pathlib import Path
-import dj_database_url
-from decouple import Csv, config
-
-# Supabase Auth
-SUPABASE_URL = config("SUPABASE_URL")
-SUPABASE_ANON_KEY = config("SUPABASE_ANON_KEY")
-SUPABASE_SERVICE_KEY = config("SUPABASE_SERVICE_KEY")
-
 """
 Django settings for config project.
 
@@ -24,16 +14,17 @@ from pathlib import Path
 import dj_database_url
 from decouple import Csv, config
 from dotenv import load_dotenv
-
-# Supabase Auth
-SUPABASE_URL = config("SUPABASE_URL")
-SUPABASE_ANON_KEY = config("SUPABASE_ANON_KEY")
-SUPABASE_SERVICE_KEY = config("SUPABASE_SERVICE_KEY")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Load root .env to ensure DATABASE_URL is available when running from backend/
 load_dotenv(BASE_DIR.parent / ".env")
+
+# Supabase Auth (opcionales en CI / entornos sin Supabase)
+# En producción se deben definir como variables de entorno reales.
+SUPABASE_URL = config("SUPABASE_URL", default="")
+SUPABASE_ANON_KEY = config("SUPABASE_ANON_KEY", default="")
+SUPABASE_SERVICE_KEY = config("SUPABASE_SERVICE_KEY", default="")
 
 
 # Quick-start development settings - unsuitable for production
