@@ -10,6 +10,7 @@ class CustomUserAdmin(UserAdmin):
     ordering = ("email",)
     list_display = ("email", "first_name", "last_name", "role", "is_staff", "is_active")
     search_fields = ("email", "first_name", "last_name")
+    filter_horizontal = ()
     fieldsets = (
         (None, {"fields": ("email", "password")}),
         ("Personal info", {"fields": ("first_name", "last_name", "role")}),
@@ -20,8 +21,6 @@ class CustomUserAdmin(UserAdmin):
                     "is_active",
                     "is_staff",
                     "is_superuser",
-                    "groups",
-                    "user_permissions",
                 )
             },
         ),

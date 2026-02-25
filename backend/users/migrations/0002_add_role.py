@@ -22,6 +22,7 @@ class Migration(migrations.Migration):
                     ("despachador", "Despachador"),
                     ("cliente", "Cliente"),
                 ],
+                db_column="rol",
                 default="cliente",
                 max_length=20,
             ),
