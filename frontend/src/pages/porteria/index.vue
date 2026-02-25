@@ -1,5 +1,25 @@
 <script setup lang="ts">
+import { ref } from 'vue'
+
 definePageMeta({ layout: 'admin' })
+
+const showScanner = ref(false)
+const lastScan = ref('')
+const scannerRef = ref<{
+  setError: (msg: string) => void
+  setSuccess: (msg?: string) => void
+  reset: () => void
+} | null>(null)
+
+const onScan = (value: string) => {
+  const code = value.trim()
+  if (!code) {
+    scannerRef.value?.setError('El codigo escaneado esta vacio')
+    return
+  }
+  lastScan.value = code
+  scannerRef.value?.setSuccess('Acceso validado')
+}
 
 const movements = [
   {
@@ -77,11 +97,60 @@ const movements = [
         </div>
         <button
           class="px-6 py-3 bg-white text-primary-600 font-semibold rounded-xl hover:bg-primary-50 transition shadow-lg"
+          @click="showScanner = !showScanner"
         >
-          Abrir Escáner
+          {{ showScanner ? 'Cerrar Escáner' : 'Abrir Escáner' }}
         </button>
       </div>
     </div>
+
+    <!-- Escaner de porteria -->
+    <Transition
+      enter-active-class="transition duration-300 ease-out"
+      enter-from-class="opacity-0 translate-y-1"
+      enter-to-class="opacity-100 translate-y-0"
+      leave-active-class="transition duration-200 ease-in"
+      leave-from-class="opacity-100 translate-y-0"
+      leave-to-class="opacity-0 translate-y-1"
+    >
+      <div
+        v-if="showScanner"
+        class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-8"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center">
+            <svg
+              class="w-5 h-5 text-primary-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+              />
+            </svg>
+          </div>
+          <div>
+            <h2 class="text-lg font-bold text-gray-900">Escaneo de Entrada/Salida</h2>
+            <p class="text-sm text-gray-500">Escanea el QR del vehiculo para validar acceso</p>
+          </div>
+        </div>
+
+        <QrScanner
+          ref="scannerRef"
+          placeholder="Codigo de vehiculo (ej: VH-2024-0156)"
+          @scan="onScan"
+        />
+
+        <div v-if="lastScan" class="mt-4 text-sm text-gray-600">
+          Ultimo codigo:
+          <span class="font-mono font-semibold text-gray-900">{{ lastScan }}</span>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Estadísticas -->
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">

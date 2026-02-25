@@ -16,11 +16,14 @@ from users.presentation.serializers import (
 )
 
 
-
 class UserViewSet(viewsets.ViewSet):
     def get_permissions(self):
         # Permitir GET por email con JWT de Supabase, el resto solo admin
-        if self.action == 'list' and self.request.method == 'GET' and self.request.query_params.get('email'):
+        if (
+            self.action == "list"
+            and self.request.method == "GET"
+            and self.request.query_params.get("email")
+        ):
             return [SupabaseJWTAuthenticationPermission()]
         return [IsAdminUser()]
 
@@ -29,7 +32,7 @@ class UserViewSet(viewsets.ViewSet):
         self._service = UserService(DjangoUserRepository())
 
     def list(self, request):
-        email = request.query_params.get('email')
+        email = request.query_params.get("email")
         users = self._service.list_users()
         if email:
             users = [u for u in users if u.email == email]

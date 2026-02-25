@@ -1,3 +1,13 @@
+# Importaciones primero
+from pathlib import Path
+import dj_database_url
+from decouple import Csv, config
+
+# Supabase Auth
+SUPABASE_URL = config("SUPABASE_URL")
+SUPABASE_ANON_KEY = config("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_KEY = config("SUPABASE_SERVICE_KEY")
+
 """
 Django settings for config project.
 
@@ -10,17 +20,15 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-
 from pathlib import Path
-
 import dj_database_url
 from decouple import Csv, config
 from dotenv import load_dotenv
 
-
-# Supabase
+# Supabase Auth
 SUPABASE_URL = config("SUPABASE_URL")
-
+SUPABASE_ANON_KEY = config("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_KEY = config("SUPABASE_SERVICE_KEY")
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -130,12 +138,14 @@ DATABASES = {
 }
 
 # Configuración adicional para PostgreSQL/Supabase (SSL requerido siempre)
-if DATABASES['default']['ENGINE'] == 'django.db.backends.postgresql':
-    DATABASES['default'].setdefault('OPTIONS', {})
-    DATABASES['default']['OPTIONS'].update({
-        'sslmode': 'require',  # Supabase requiere SSL siempre
-        'connect_timeout': 10,  # Timeout de conexión en segundos
-    })
+if DATABASES["default"]["ENGINE"] == "django.db.backends.postgresql":
+    DATABASES["default"].setdefault("OPTIONS", {})
+    DATABASES["default"]["OPTIONS"].update(
+        {
+            "sslmode": "require",  # Supabase requiere SSL siempre
+            "connect_timeout": 10,  # Timeout de conexión en segundos
+        }
+    )
 
 
 # Password validation
@@ -182,7 +192,7 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "users.presentation.permissions.SupabaseJWTAuthentication",
     ),
     "DEFAULT_RENDERER_CLASSES": ("rest_framework.renderers.JSONRenderer",),
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",

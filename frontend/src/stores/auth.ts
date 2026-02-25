@@ -1,12 +1,21 @@
-
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '~/services/supabaseClient'
-import type { User } from '~/types/index'
+import { supabase } from '../services/supabaseClient'
+
+interface AuthUser {
+  id: string
+  name: string
+  email: string
+  role: string
+  status: string
+}
 
 export const useAuthStore = defineStore('auth', () => {
-  const user = ref<User | null>(null)
-  const token = ref(process.client ? localStorage.getItem('auth_token') || '' : '')
+  const isClient = typeof window !== 'undefined'
+  const user = ref<AuthUser | null>(
+    isClient ? JSON.parse(localStorage.getItem('auth_user') || 'null') : null
+  )
+  const token = ref(isClient ? localStorage.getItem('auth_token') || '' : '')
   const isAuthenticated = computed(() => !!token.value)
 
   const login = async (email: string, password: string) => {
@@ -18,24 +27,30 @@ export const useAuthStore = defineStore('auth', () => {
       throw new Error(error.message)
     }
     token.value = data.session?.access_token || ''
-    if (process.client && token.value) {
+    if (typeof window !== 'undefined' && token.value) {
       localStorage.setItem('auth_token', token.value)
     }
     // Obtener el rol real desde el backend
     let role = 'cliente'
+    const BACKEND_URL = 'http://localhost:8000/api/users/'
     try {
-      const res = await fetch('http://localhost:8000/api/users/?email=' + encodeURIComponent(email), {
+      const res = await fetch(`${BACKEND_URL}?email=${encodeURIComponent(email)}`, {
         headers: {
-          'Authorization': 'Bearer ' + (data.session?.access_token || '')
-        }
+          Authorization: 'Bearer ' + (data.session?.access_token || ''),
+        },
       })
       if (res.ok) {
         const users = await res.json()
         if (Array.isArray(users) && users.length > 0) {
           role = users[0].role || 'cliente'
         }
+      } else {
+        const errorData = await res.text()
+        console.error('Error backend:', errorData)
       }
-    } catch (e) { }
+    } catch (e) {
+      console.error('Error obteniendo rol desde backend:', e)
+    }
     user.value = {
       id: data.user?.id || '',
       name: data.user?.email?.split('@')[0] || 'Usuario',
@@ -43,34 +58,23 @@ export const useAuthStore = defineStore('auth', () => {
       role,
       status: 'active',
     }
-    // Redirección según rol
-    if (role === 'admin') {
-      navigateTo('/admin')
-    } else if (role === 'despachador') {
-      navigateTo('/despachador')
-    } else if (role === 'inventario') {
-      navigateTo('/inventario')
-    } else if (role === 'porteria') {
-      navigateTo('/porteria')
-    } else if (role === 'recibidor') {
-      navigateTo('/recibidor')
-    } else {
-      navigateTo('/')
-    }
-  }
-
-  const loadUser = async () => {
-    return
+    // Retornar la ruta según el rol para que login.vue haga la navegación
+    if (role === 'admin') return '/admin'
+    if (role === 'despachador') return '/despachador'
+    if (role === 'inventario') return '/inventario'
+    if (role === 'porteria') return '/porteria'
+    if (role === 'recibidor') return '/recibidor'
+    return '/'
   }
 
   const logout = async () => {
     await supabase.auth.signOut()
     user.value = null
     token.value = ''
-    if (process.client) {
+    if (typeof window !== 'undefined') {
       localStorage.removeItem('auth_token')
+      localStorage.removeItem('auth_user')
     }
-    return
   }
 
   return {
@@ -79,6 +83,5 @@ export const useAuthStore = defineStore('auth', () => {
     isAuthenticated,
     login,
     logout,
-    loadUser,
   }
 })

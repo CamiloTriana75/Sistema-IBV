@@ -3,43 +3,27 @@ import { ref, computed } from 'vue'
 import { useAuthStore } from '~/stores/auth'
 
 const route = useRoute()
-const sidebarOpen = ref(false)
 const authStore = useAuthStore()
+const sidebarOpen = ref(false)
 
-const roleLabels: Record<string, string> = {
-  admin: 'Administrador',
-  porteria: 'Porteria',
-  recibidor: 'Recibidor',
-  inventario: 'Inventario',
-  despachador: 'Despachador',
-  cliente: 'Cliente',
-}
-
-const buildInitials = (fullName: string) => {
-  const parts = fullName.trim().split(/\s+/).filter(Boolean)
-  const initials = parts
-    .slice(0, 2)
-    .map((part) => part[0])
-    .join('')
-  return initials || 'U'
-}
-
+// Leer usuario actual del store de autenticación
 const currentUser = computed(() => {
-  const user = authStore.user
-  if (!user) {
-    return {
-      name: 'Usuario',
-      initials: 'U',
-      role: 'cliente',
-      roleName: roleLabels.cliente,
-    }
+  const u = authStore.user
+  if (!u) {
+    return { name: 'Usuario', initials: 'U', role: 'admin', roleName: 'Sin rol' }
   }
-
   return {
-    name: user.name,
-    initials: buildInitials(user.name || user.email),
-    role: user.role,
-    roleName: roleLabels[user.role] || user.role,
+    name: u.name || 'Usuario',
+    initials:
+      u.avatar ||
+      u.name
+        ?.split(' ')
+        .map((w: string) => w[0])
+        .join('')
+        .substring(0, 2) ||
+      'U',
+    role: u.role || 'admin',
+    roleName: u.roleLabel || u.role || 'Usuario',
   }
 })
 
@@ -49,17 +33,36 @@ const pageTitle = computed(() => {
     '/admin/usuarios': 'Gestión de Usuarios',
     '/admin/roles': 'Roles y Permisos',
     '/recibidor': 'Panel Recibidor',
+    '/recibidor/escaneo': 'Recepción de Vehículos',
+    '/recibidor/impronta': 'Registro de Impronta',
     '/inventario': 'Panel Inventario',
+    '/inventario/checklist': 'Inspección de Vehículo',
     '/despachador': 'Panel Despachador',
+    '/despachador/escaneo': 'Escaneo de Lote',
     '/porteria': 'Panel Portería',
   }
   return titles[route.path] || 'Dashboard'
 })
 
-// Menú basado en rol
+// Detectar módulo actual basado en la ruta (no en el rol del usuario)
+const currentModule = computed(() => {
+  const path = route.path
+  if (path.startsWith('/admin')) return 'admin'
+  if (path.startsWith('/recibidor')) return 'recibidor'
+  if (path.startsWith('/inventario')) return 'inventario'
+  if (path.startsWith('/despachador')) return 'despachador'
+  if (path.startsWith('/porteria')) return 'porteria'
+  // Fallback al rol del usuario si la ruta no coincide con ningún módulo
+  return currentUser.value.role
+})
+
+// Menú basado en la ruta actual (independiente del rol)
 const menuItems = computed(() => {
-  const role = currentUser.value.role
-  const allMenus: Record<string, any[]> = {
+  const module = currentModule.value
+  const allMenus: Record<
+    string,
+    Array<{ to: string; label: string; icon: string; badge?: number }>
+  > = {
     admin: [
       {
         to: '/admin',
@@ -84,10 +87,14 @@ const menuItems = computed(() => {
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>',
       },
       {
-        to: '/recibidor/vehiculos',
-        label: 'Recibir Vehículos',
+        to: '/recibidor/escaneo',
+        label: 'Escaneo',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>',
+      },
+      {
+        to: '/recibidor/impronta',
+        label: 'Nueva Impronta',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4" /></svg>',
-        badge: '5',
       },
     ],
     inventario: [
@@ -110,8 +117,8 @@ const menuItems = computed(() => {
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>',
       },
       {
-        to: '/despachador/despachos',
-        label: 'Despachar',
+        to: '/despachador/escaneo',
+        label: 'Escaneo de Lote',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>',
         badge: '2',
       },
@@ -122,24 +129,22 @@ const menuItems = computed(() => {
         label: 'Panel Portería',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>',
       },
-      {
-        to: '/porteria/escanear',
-        label: 'Escanear QR',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>',
-      },
     ],
   }
-  return allMenus[role] || allMenus.admin
+  return allMenus[module] || allMenus.admin
 })
 
 const isActive = (path: string) => {
-  if (path === '/admin' && route.path === '/admin') return true
-  if (path !== '/admin' && route.path.startsWith(path)) return true
+  if (path === route.path) return true
+  // Para sub-rutas, marcar el padre pero no si es la raíz exacta del rol
+  const rolePaths = ['/admin', '/recibidor', '/inventario', '/despachador', '/porteria']
+  if (rolePaths.includes(path) && route.path !== path) return false
+  if (route.path.startsWith(path) && path !== route.path) return true
   return false
 }
 
-const handleLogout = async () => {
-  await authStore.logout()
+const handleLogout = () => {
+  authStore.logout()
   navigateTo('/login')
 }
 </script>
@@ -206,6 +211,7 @@ const handleLogout = async () => {
             ]"
             @click="sidebarOpen = false"
           >
+            <!-- eslint-disable-next-line vue/no-v-html -->
             <span class="w-5 h-5 shrink-0" v-html="item.icon" />
             <span>{{ item.label }}</span>
             <span

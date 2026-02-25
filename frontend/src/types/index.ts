@@ -37,7 +37,7 @@ export interface Imprint {
   id: string
   vehicleId: string
   photoUrl: string
-  data: Record<string, any>
+  data: Record<string, unknown>
   createdAt: string
   status: 'completed' | 'pending'
 }

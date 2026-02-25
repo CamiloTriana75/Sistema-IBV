@@ -9,6 +9,7 @@ from rest_framework_simplejwt.views import (
 from rest_framework.routers import DefaultRouter
 
 from users.presentation.views import AuthLogoutView, AuthMeView, RolesView, UserViewSet
+from users.views import UserByEmailView
 
 router = DefaultRouter()
 router.register("users", UserViewSet, basename="users")
@@ -24,5 +25,6 @@ urlpatterns = [
     path("token/", TokenObtainPairView.as_view(), name="token_obtain_pair"),
     path("token/refresh/", TokenRefreshView.as_view(), name="token_refresh"),
     path("token/verify/", TokenVerifyView.as_view(), name="token_verify"),
+    path("users/", UserByEmailView.as_view()),
     path("", include(router.urls)),
 ]
