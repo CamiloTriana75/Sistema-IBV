@@ -1,3 +1,13 @@
+# Importaciones primero
+from pathlib import Path
+import dj_database_url
+from decouple import Csv, config
+
+# Supabase Auth
+SUPABASE_URL = config("SUPABASE_URL")
+SUPABASE_ANON_KEY = config("SUPABASE_ANON_KEY")
+SUPABASE_SERVICE_KEY = config("SUPABASE_SERVICE_KEY")
+
 """
 Django settings for config project.
 
@@ -9,11 +19,6 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
-from pathlib import Path
-
-import dj_database_url
-from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
