@@ -30,31 +30,14 @@ export const useAuthStore = defineStore('auth', () => {
     if (typeof window !== 'undefined' && token.value) {
       localStorage.setItem('auth_token', token.value)
     }
-    // Obtener el rol real desde el backend
-    let role = 'cliente'
-    const config = useRuntimeConfig()
-    const BACKEND_URL = `${config.public.apiBase || 'http://localhost:8000/api'}/users/`
-    try {
-      const res = await fetch(`${BACKEND_URL}?email=${encodeURIComponent(email)}`, {
-        headers: {
-          Authorization: 'Bearer ' + (data.session?.access_token || ''),
-        },
-      })
-      if (res.ok) {
-        const users = await res.json()
-        if (Array.isArray(users) && users.length > 0) {
-          role = users[0].role || 'cliente'
-        }
-      } else {
-        const errorData = await res.text()
-        console.error('Error backend:', errorData)
-      }
-    } catch (e) {
-      console.error('Error obteniendo rol desde backend:', e)
-    }
+    // Obtener el rol desde metadata de Supabase Auth
+    const role =
+      (data.user?.user_metadata?.role as string | undefined) ||
+      (data.user?.app_metadata?.role as string | undefined) ||
+      'cliente'
     user.value = {
       id: data.user?.id || '',
-      name: data.user?.email?.split('@')[0] || 'Usuario',
+      name: (data.user?.user_metadata?.name as string | undefined) || data.user?.email?.split('@')[0] || 'Usuario',
       email: data.user?.email || '',
       role,
       status: 'active',
