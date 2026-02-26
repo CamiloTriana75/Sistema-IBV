@@ -159,7 +159,7 @@ export const useContenedorStore = defineStore('contenedor', () => {
         persist()
       }
     } else {
-      contenedores.value = [...INITIAL_CONTENEDORES]
+      contenedores.value = JSON.parse(JSON.stringify(INITIAL_CONTENEDORES))
       persist()
     }
   }

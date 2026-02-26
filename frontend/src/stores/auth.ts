@@ -1,13 +1,54 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../services/supabaseClient'
+
+const MOCK_USERS: Record<
+  string,
+  { name: string; role: string; roleLabel: string; redirect: string; avatar: string }
+> = {
+  'admin@ibv.com': {
+    name: 'Carlos Administrador',
+    role: 'admin',
+    roleLabel: 'Administrador',
+    redirect: '/admin',
+    avatar: 'CA',
+  },
+  'recibidor@ibv.com': {
+    name: 'María Recibidora',
+    role: 'recibidor',
+    roleLabel: 'Recibidor',
+    redirect: '/recibidor',
+    avatar: 'MR',
+  },
+  'inventario@ibv.com': {
+    name: 'Juan Inventario',
+    role: 'inventario',
+    roleLabel: 'Inventario',
+    redirect: '/inventario',
+    avatar: 'JI',
+  },
+  'despachador@ibv.com': {
+    name: 'Luis Despachador',
+    role: 'despachador',
+    roleLabel: 'Despachador',
+    redirect: '/despachador',
+    avatar: 'LD',
+  },
+  'porteria@ibv.com': {
+    name: 'Ana Portería',
+    role: 'porteria',
+    roleLabel: 'Portería',
+    redirect: '/porteria',
+    avatar: 'AP',
+  },
+}
 
 interface AuthUser {
-  id: string
-  name: string
   email: string
+  name: string
   role: string
-  status: string
+  roleLabel: string
+  redirect: string
+  avatar: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -19,9 +60,11 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value)
 
   const login = async (email: string, password: string) => {
-    if (!email || !password) {
-      throw new Error('Credenciales requeridas')
+    const mockUser = MOCK_USERS[email.toLowerCase()]
+    if (!mockUser || password.length < 4) {
+      throw new Error('Credenciales inválidas')
     }
+<<<<<<< HEAD
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       throw new Error(error.message)
@@ -68,8 +111,7 @@ export const useAuthStore = defineStore('auth', () => {
     return '/'
   }
 
-  const logout = async () => {
-    await supabase.auth.signOut()
+  const logout = () => {
     user.value = null
     token.value = ''
     if (typeof window !== 'undefined') {

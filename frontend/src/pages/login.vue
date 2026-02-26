@@ -50,7 +50,7 @@ const demoCredentials = [
 const fillDemo = (demo: (typeof demoCredentials)[0], idx: number) => {
   activeDemo.value = idx
   form.value.email = demo.email
-  form.value.password = 'Test1234!'
+  form.value.password = 'ibv2024'
   error.value = ''
 
   gsap.fromTo(
