@@ -24,7 +24,9 @@ useHead({
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 overflow-x-hidden pc-zoom-110">
+  <div
+    class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 overflow-x-hidden pc-zoom-110"
+  >
     <!-- Navbar -->
     <nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-gray-100 shadow-sm">
       <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
@@ -107,12 +109,16 @@ useHead({
               </span>
             </h1>
 
-            <p class="text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto md:mx-0">
+            <p
+              class="text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto md:mx-0"
+            >
               Optimiza cada etapa del flujo logístico: desde la recepción hasta el despacho. Control
               total, trazabilidad completa y eficiencia operativa en tiempo real.
             </p>
 
-            <div class="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-5 justify-center md:justify-start">
+            <div
+              class="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-5 justify-center md:justify-start"
+            >
               <NuxtLink
                 to="/login"
                 class="inline-flex items-center justify-center sm:justify-start gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold text-base sm:text-lg rounded-2xl transition-all shadow-xl shadow-primary-500/30 hover:shadow-primary-500/50 hover:scale-[1.02] active:scale-[0.99] group focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 motion-reduce:transform-none motion-reduce:transition-none"
@@ -154,7 +160,9 @@ useHead({
           </div>
 
           <!-- Visual Hero -->
-          <div class="relative hidden md:block md:h-[420px] lg:h-[520px] xl:h-[600px] 2xl:h-[640px]">
+          <div
+            class="relative hidden md:block md:h-[420px] lg:h-[520px] xl:h-[600px] 2xl:h-[640px]"
+          >
             <div
               class="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-primary-400/5 to-transparent rounded-3xl"
             />
