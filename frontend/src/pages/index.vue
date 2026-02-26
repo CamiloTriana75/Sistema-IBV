@@ -2,13 +2,32 @@
 definePageMeta({
   layout: 'blank',
 })
+
+const currentYear = new Date().getFullYear()
+
+useHead({
+  title: 'Sistema IBV | Gestión Integral de Vehículos',
+  meta: [
+    {
+      name: 'description',
+      content:
+        'Plataforma para gestionar recepción, impronta, inventario y despacho de vehículos con trazabilidad y operación en tiempo real.',
+    },
+    { property: 'og:title', content: 'Sistema IBV | Gestión Integral de Vehículos' },
+    {
+      property: 'og:description',
+      content:
+        'Gestiona el flujo completo: recepción, impronta, inventario y despacho con trazabilidad completa.',
+    },
+  ],
+})
 </script>
 
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50">
+  <div class="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-50 overflow-x-hidden pc-zoom-110">
     <!-- Navbar -->
     <nav class="sticky top-0 z-40 bg-white/80 backdrop-blur-lg border-b border-gray-100 shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         <div class="flex justify-between items-center h-14 sm:h-16">
           <!-- Logo -->
           <div class="flex items-center gap-2 sm:gap-3">
@@ -39,7 +58,7 @@ definePageMeta({
           <div class="flex items-center gap-4">
             <NuxtLink
               to="/login"
-              class="px-4 sm:px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm sm:text-base rounded-xl sm:rounded-xl transition-all shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:scale-105"
+              class="px-4 sm:px-6 py-2 bg-primary-600 hover:bg-primary-700 text-white font-semibold text-sm sm:text-base rounded-2xl transition-all shadow-lg shadow-primary-500/25 hover:shadow-primary-500/40 hover:scale-[1.02] active:scale-[0.99] focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-white motion-reduce:transform-none motion-reduce:transition-none"
             >
               Iniciar Sesión
             </NuxtLink>
@@ -49,7 +68,7 @@ definePageMeta({
     </nav>
 
     <!-- Hero Section -->
-    <section class="relative overflow-hidden pt-16 pb-24 sm:pt-20 sm:pb-32 lg:pt-32 lg:pb-40">
+    <section class="relative overflow-hidden pt-10 pb-12 sm:pt-12 sm:pb-16 lg:py-0">
       <!-- Decorative Elements -->
       <div class="absolute inset-0 -z-10">
         <div
@@ -60,12 +79,16 @@ definePageMeta({
         />
       </div>
 
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid lg:grid-cols-2 gap-8 sm:gap-12 items-center">
+      <div
+        class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12 lg:min-h-[calc(100vh-4rem)] lg:flex lg:items-center"
+      >
+        <div
+          class="grid md:grid-cols-2 lg:grid-cols-[1.15fr_0.85fr] gap-10 sm:gap-12 lg:gap-14 xl:gap-16 items-center w-full"
+        >
           <!-- Content -->
-          <div class="space-y-6 sm:space-y-8">
+          <div class="space-y-6 sm:space-y-8 lg:py-10 text-center md:text-left">
             <div
-              class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-50 border border-primary-100 rounded-full"
+              class="inline-flex items-center gap-2 px-3 sm:px-4 py-2 bg-primary-50 border border-primary-100 rounded-full mx-auto md:mx-0"
             >
               <span class="w-2 h-2 bg-primary-500 rounded-full animate-pulse" />
               <span class="text-xs sm:text-sm font-semibold text-primary-700">
@@ -73,7 +96,9 @@ definePageMeta({
               </span>
             </div>
 
-            <h1 class="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-extrabold leading-tight">
+            <h1
+              class="text-3xl sm:text-5xl lg:text-6xl xl:text-7xl 2xl:text-[4.5rem] font-extrabold leading-tight tracking-tight"
+            >
               <span class="text-gray-900">Gestión Integral</span>
               <span
                 class="block bg-gradient-to-r from-primary-600 via-primary-500 to-primary-700 bg-clip-text text-transparent"
@@ -82,15 +107,15 @@ definePageMeta({
               </span>
             </h1>
 
-            <p class="text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-xl">
+            <p class="text-base sm:text-lg lg:text-xl text-gray-600 leading-relaxed max-w-2xl mx-auto md:mx-0">
               Optimiza cada etapa del flujo logístico: desde la recepción hasta el despacho. Control
               total, trazabilidad completa y eficiencia operativa en tiempo real.
             </p>
 
-            <div class="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-5">
+            <div class="flex flex-col sm:flex-row flex-wrap gap-4 sm:gap-5 justify-center md:justify-start">
               <NuxtLink
                 to="/login"
-                class="inline-flex items-center justify-center sm:justify-start gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold text-base sm:text-lg rounded-2xl transition-all shadow-xl shadow-primary-500/30 hover:shadow-primary-500/50 hover:scale-105 group"
+                class="inline-flex items-center justify-center sm:justify-start gap-2 px-6 sm:px-8 py-3 sm:py-4 bg-primary-600 hover:bg-primary-700 text-white font-bold text-base sm:text-lg rounded-2xl transition-all shadow-xl shadow-primary-500/30 hover:shadow-primary-500/50 hover:scale-[1.02] active:scale-[0.99] group focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-50 motion-reduce:transform-none motion-reduce:transition-none"
               >
                 Acceder al Sistema
                 <svg
@@ -110,7 +135,9 @@ definePageMeta({
             </div>
 
             <!-- Stats -->
-            <div class="grid grid-cols-3 gap-4 sm:gap-6 pt-6 sm:pt-8 border-t border-gray-200">
+            <div
+              class="grid grid-cols-3 gap-4 sm:gap-6 pt-6 sm:pt-8 border-t border-gray-200 max-w-xl mx-auto md:mx-0"
+            >
               <div>
                 <div class="text-2xl sm:text-3xl font-bold text-gray-900">100%</div>
                 <div class="text-xs sm:text-sm text-gray-500 mt-1">Trazabilidad</div>
@@ -127,13 +154,13 @@ definePageMeta({
           </div>
 
           <!-- Visual Hero -->
-          <div class="relative lg:h-[600px] hidden lg:block">
+          <div class="relative hidden md:block md:h-[420px] lg:h-[520px] xl:h-[600px] 2xl:h-[640px]">
             <div
               class="absolute inset-0 bg-gradient-to-br from-primary-500/10 via-primary-400/5 to-transparent rounded-3xl"
             />
             <!-- Floating Cards -->
             <div
-              class="absolute top-8 right-8 w-64 sm:w-72 bg-white rounded-2xl shadow-xl p-6 animate-float"
+              class="absolute top-6 right-6 lg:top-8 lg:right-8 w-60 lg:w-64 xl:w-72 bg-white rounded-2xl shadow-xl p-5 lg:p-6 animate-float"
             >
               <div class="flex items-center gap-3 mb-4">
                 <div
@@ -169,7 +196,7 @@ definePageMeta({
             </div>
 
             <div
-              class="absolute bottom-16 left-8 w-56 sm:w-64 bg-white rounded-2xl shadow-xl p-5 animate-float-delayed"
+              class="absolute bottom-10 left-6 lg:bottom-16 lg:left-8 w-52 lg:w-56 xl:w-64 bg-white rounded-2xl shadow-xl p-4 lg:p-5 animate-float-delayed"
             >
               <div class="flex items-center gap-3 mb-3">
                 <div
@@ -198,7 +225,7 @@ definePageMeta({
             </div>
 
             <div
-              class="absolute top-1/3 left-1/4 w-52 sm:w-56 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl shadow-2xl p-5 text-white"
+              class="absolute top-1/3 left-1/4 w-48 lg:w-52 xl:w-56 bg-gradient-to-br from-primary-600 to-primary-700 rounded-2xl shadow-2xl p-4 lg:p-5 text-white"
             >
               <div class="text-sm font-semibold opacity-90 mb-2">Vehículos en Bodega</div>
               <div class="text-4xl font-bold mb-3">142</div>
@@ -213,8 +240,8 @@ definePageMeta({
     </section>
 
     <!-- Features Section -->
-    <section class="py-16 sm:py-24 lg:py-32 bg-white">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <section class="py-14 sm:py-20 lg:py-24 2xl:py-28 bg-white">
+      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
         <div class="text-center max-w-3xl mx-auto mb-12 sm:mb-16">
           <h2 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-4 sm:mb-6">
             Todo lo que necesitas en una plataforma
@@ -224,7 +251,7 @@ definePageMeta({
           </p>
         </div>
 
-        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 mb-12 sm:mb-16">
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8 2xl:gap-10 mb-12 sm:mb-16">
           <!-- Recepción -->
           <div
             class="group relative bg-gradient-to-br from-blue-50 to-white rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-blue-100 hover:border-blue-300 hover:shadow-xl transition-all duration-300"
@@ -427,78 +454,145 @@ definePageMeta({
       </div>
     </section>
 
-    <!-- CTA Section -->
-    <section
-      class="py-16 sm:py-24 lg:py-32 bg-gradient-to-br from-primary-600 via-primary-700 to-primary-800 relative overflow-hidden"
-    >
-      <div class="absolute inset-0 opacity-10">
-        <div
-          class="absolute top-0 right-1/4 w-80 h-80 sm:w-96 sm:h-96 bg-white rounded-full blur-3xl"
-        />
-        <div
-          class="absolute bottom-0 left-1/4 w-80 h-80 sm:w-96 sm:h-96 bg-primary-300 rounded-full blur-3xl"
-        />
-      </div>
-
-      <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
-        <h2
-          class="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 sm:mb-6 leading-tight"
-        >
-          Listo para optimizar tu operación
-        </h2>
-        <p
-          class="text-base sm:text-lg lg:text-xl text-primary-100 mb-8 sm:mb-10 max-w-2xl mx-auto leading-relaxed"
-        >
-          Únete a las empresas que confían en Sistema IBV para gestionar sus vehículos de manera
-          eficiente
-        </p>
-        <NuxtLink
-          to="/login"
-          class="inline-flex items-center justify-center gap-2 sm:gap-3 px-8 sm:px-10 py-4 sm:py-5 bg-white hover:bg-gray-50 text-primary-700 font-bold text-base sm:text-lg rounded-2xl transition-all shadow-2xl hover:scale-105 group"
-        >
-          Acceder al Sistema
-          <svg
-            class="w-5 h-5 sm:w-6 sm:h-6 group-hover:translate-x-1 transition-transform"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M13 7l5 5m0 0l-5 5m5-5H6"
-            />
-          </svg>
-        </NuxtLink>
-      </div>
-    </section>
-
     <!-- Footer -->
-    <footer class="bg-gray-900 text-gray-400 py-10 sm:py-12">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex flex-col md:flex-row justify-between items-center gap-6 sm:gap-8">
-          <div class="flex items-center gap-3">
-            <div
-              class="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center shrink-0"
-            >
-              <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z"
-                />
-              </svg>
+    <footer class="bg-gray-950 text-gray-300">
+      <div class="max-w-screen-2xl mx-auto px-4 sm:px-6 lg:px-8 2xl:px-12">
+        <div class="py-12 sm:py-14 border-b border-white/10">
+          <div class="grid gap-10 lg:gap-12 md:grid-cols-2 lg:grid-cols-4">
+            <div class="space-y-4">
+              <div class="flex items-center gap-3">
+                <div
+                  class="w-10 h-10 bg-primary-600 rounded-xl flex items-center justify-center shrink-0"
+                >
+                  <svg
+                    class="w-6 h-6 text-white"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z"
+                    />
+                  </svg>
+                </div>
+                <div class="min-w-0">
+                  <div class="text-white font-bold text-base">Sistema IBV</div>
+                  <div class="text-sm text-gray-400">Gestión integral de vehículos</div>
+                </div>
+              </div>
+
+              <p class="text-sm text-gray-400 leading-relaxed max-w-sm">
+                Controla recepción, impronta, inventario y despacho con trazabilidad completa y
+                operación en tiempo real.
+              </p>
+
+              <div class="flex items-center gap-3">
+                <NuxtLink
+                  to="/login"
+                  class="inline-flex items-center gap-2 text-sm font-semibold text-white hover:text-primary-200 transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-lg px-1 -mx-1"
+                >
+                  Acceder al sistema
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M13 7l5 5m0 0l-5 5m5-5H6"
+                    />
+                  </svg>
+                </NuxtLink>
+              </div>
             </div>
-            <div class="min-w-0">
-              <div class="text-white font-bold text-sm sm:text-base">Sistema IBV</div>
-              <div class="text-xs sm:text-sm">Gestión Integral de Vehículos</div>
+
+            <div>
+              <h3 class="text-sm font-bold text-white tracking-wide uppercase">Producto</h3>
+              <ul class="mt-4 space-y-3 text-sm">
+                <li class="text-gray-400">Recepción</li>
+                <li class="text-gray-400">Impronta</li>
+                <li class="text-gray-400">Inventario</li>
+                <li class="text-gray-400">Despacho</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-white tracking-wide uppercase">Soporte</h3>
+              <ul class="mt-4 space-y-3 text-sm">
+                <li>
+                  <a
+                    href="#"
+                    class="text-gray-400 hover:text-white transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-lg px-1 -mx-1"
+                    @click.prevent
+                  >
+                    Centro de ayuda
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="mailto:soporte@sistemaibv.com"
+                    class="text-gray-400 hover:text-white transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-lg px-1 -mx-1"
+                  >
+                    soporte@sistemaibv.com
+                  </a>
+                </li>
+                <li class="text-gray-400">Operativo 24/7</li>
+              </ul>
+            </div>
+
+            <div>
+              <h3 class="text-sm font-bold text-white tracking-wide uppercase">Legal</h3>
+              <ul class="mt-4 space-y-3 text-sm">
+                <li>
+                  <a
+                    href="#"
+                    class="text-gray-400 hover:text-white transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-lg px-1 -mx-1"
+                    @click.prevent
+                  >
+                    Términos de uso
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    class="text-gray-400 hover:text-white transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-lg px-1 -mx-1"
+                    @click.prevent
+                  >
+                    Política de privacidad
+                  </a>
+                </li>
+                <li>
+                  <a
+                    href="#"
+                    class="text-gray-400 hover:text-white transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-lg px-1 -mx-1"
+                    @click.prevent
+                  >
+                    Seguridad
+                  </a>
+                </li>
+              </ul>
             </div>
           </div>
-          <div class="text-center md:text-right">
-            <p class="text-sm sm:text-base">© 2026 Sistema IBV. Todos los derechos reservados.</p>
-            <p class="text-xs sm:text-sm mt-1">Operativo 24/7 • Soporte técnico disponible</p>
+        </div>
+
+        <div class="py-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+          <p class="text-xs sm:text-sm text-gray-500">
+            © {{ currentYear }} Sistema IBV. Todos los derechos reservados.
+          </p>
+          <div class="flex items-center gap-4 text-xs sm:text-sm">
+            <NuxtLink
+              to="/"
+              class="text-gray-500 hover:text-gray-200 transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-lg px-1 -mx-1"
+            >
+              Inicio
+            </NuxtLink>
+            <NuxtLink
+              to="/login"
+              class="text-gray-500 hover:text-gray-200 transition focus:outline-none focus-visible:ring-4 focus-visible:ring-primary-500/30 focus-visible:ring-offset-2 focus-visible:ring-offset-gray-950 rounded-lg px-1 -mx-1"
+            >
+              Iniciar sesión
+            </NuxtLink>
           </div>
         </div>
       </div>
@@ -507,6 +601,20 @@ definePageMeta({
 </template>
 
 <style scoped>
+@media (min-width: 1024px) {
+  .pc-zoom-110 {
+    zoom: 1.1;
+  }
+}
+
+@supports not (zoom: 1) {
+  @media (min-width: 1024px) {
+    .pc-zoom-110 {
+      font-size: 110%;
+    }
+  }
+}
+
 @keyframes float {
   0%,
   100% {
