@@ -14,6 +14,7 @@ const showPass = ref(false)
 const loading = ref(false)
 const error = ref('')
 const activeDemo = ref(-1)
+const selectedPassword = ref('')
 const form = ref({ email: '', password: '' })
 
 const features = [
@@ -40,17 +41,18 @@ const features = [
 const roles = ['Administrador', 'Recibidor', 'Inventario', 'Despachador', 'Portería']
 
 const demoCredentials = [
-  { email: 'admin1@ibv.com', label: 'Administrador', color: 'from-violet-500 to-purple-600' },
-  { email: 'recibidor1@ibv.com', label: 'Recibidor', color: 'from-cyan-500 to-blue-600' },
-  { email: 'inventario1@ibv.com', label: 'Inventario', color: 'from-emerald-500 to-green-600' },
-  { email: 'despacho1@ibv.com', label: 'Despachador', color: 'from-amber-500 to-orange-600' },
-  { email: 'porteria1@ibv.com', label: 'Portería', color: 'from-rose-500 to-red-600' },
+  { email: 'admin1@ibv.com', label: 'Administrador', color: 'from-violet-500 to-purple-600', password: 'Admin@2026Secure' },
+  { email: 'recibidor1@ibv.com', label: 'Recibidor', color: 'from-cyan-500 to-blue-600', password: 'Recibidor@2026Secure' },
+  { email: 'inventario1@ibv.com', label: 'Inventario', color: 'from-emerald-500 to-green-600', password: 'Inventario@2026Secure' },
+  { email: 'despacho1@ibv.com', label: 'Despachador', color: 'from-amber-500 to-orange-600', password: 'Despachador@2026Secure' },
+  { email: 'porteria1@ibv.com', label: 'Portería', color: 'from-rose-500 to-red-600', password: 'Porteria@2026Secure' },
 ]
 
 const fillDemo = (demo: (typeof demoCredentials)[0], idx: number) => {
   activeDemo.value = idx
   form.value.email = demo.email
-  form.value.password = 'ibv2024'
+  form.value.password = demo.password
+  selectedPassword.value = demo.password
   error.value = ''
 
   gsap.fromTo(
@@ -438,7 +440,9 @@ onUnmounted(() => {
           </div>
           <p class="text-center text-[10px] text-gray-400 mt-3 font-medium">
             Contraseña:
-            <code class="px-1.5 py-0.5 bg-gray-100 rounded text-[11px] text-gray-600 font-bold">Test1234!</code>
+            <code class="px-1.5 py-0.5 bg-gray-100 rounded text-[11px] text-gray-600 font-bold">
+              {{ selectedPassword || 'Selecciona un rol' }}
+            </code>
           </p>
         </div>
       </div>
