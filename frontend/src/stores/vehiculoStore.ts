@@ -233,7 +233,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
         persist()
       }
     } else {
-      vehiculos.value = [...INITIAL_VEHICULOS]
+      vehiculos.value = JSON.parse(JSON.stringify(INITIAL_VEHICULOS))
       persist()
     }
   }

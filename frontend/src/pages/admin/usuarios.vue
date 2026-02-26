@@ -28,7 +28,7 @@ const form = ref({
   name: '',
   email: '',
   password: '',
-  role: 'recibidor' as User['role'],
+  role: 'recibidor' as 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador',
   status: 'active' as User['status'],
 })
 
@@ -94,7 +94,7 @@ const editUser = (user: User) => {
     name: user.name,
     email: user.email,
     password: '',
-    role: user.role,
+    role: user.role === 'cliente' ? 'recibidor' : user.role,
     status: user.status,
   }
   showModal.value = true
