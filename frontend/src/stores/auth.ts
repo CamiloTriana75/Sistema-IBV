@@ -1,54 +1,13 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-
-const MOCK_USERS: Record<
-  string,
-  { name: string; role: string; roleLabel: string; redirect: string; avatar: string }
-> = {
-  'admin@ibv.com': {
-    name: 'Carlos Administrador',
-    role: 'admin',
-    roleLabel: 'Administrador',
-    redirect: '/admin',
-    avatar: 'CA',
-  },
-  'recibidor@ibv.com': {
-    name: 'María Recibidora',
-    role: 'recibidor',
-    roleLabel: 'Recibidor',
-    redirect: '/recibidor',
-    avatar: 'MR',
-  },
-  'inventario@ibv.com': {
-    name: 'Juan Inventario',
-    role: 'inventario',
-    roleLabel: 'Inventario',
-    redirect: '/inventario',
-    avatar: 'JI',
-  },
-  'despachador@ibv.com': {
-    name: 'Luis Despachador',
-    role: 'despachador',
-    roleLabel: 'Despachador',
-    redirect: '/despachador',
-    avatar: 'LD',
-  },
-  'porteria@ibv.com': {
-    name: 'Ana Portería',
-    role: 'porteria',
-    roleLabel: 'Portería',
-    redirect: '/porteria',
-    avatar: 'AP',
-  },
-}
+import { supabase } from '../services/supabaseClient'
 
 interface AuthUser {
-  email: string
+  id: string
   name: string
+  email: string
   role: string
-  roleLabel: string
-  redirect: string
-  avatar: string
+  status: string
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -60,11 +19,9 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value)
 
   const login = async (email: string, password: string) => {
-    const mockUser = MOCK_USERS[email.toLowerCase()]
-    if (!mockUser || password.length < 4) {
-      throw new Error('Credenciales inválidas')
+    if (!email || !password) {
+      throw new Error('Credenciales requeridas')
     }
-<<<<<<< HEAD
     const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       throw new Error(error.message)
@@ -102,6 +59,9 @@ export const useAuthStore = defineStore('auth', () => {
       role,
       status: 'active',
     }
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('auth_user', JSON.stringify(user.value))
+    }
     // Retornar la ruta según el rol para que login.vue haga la navegación
     if (role === 'admin') return '/admin'
     if (role === 'despachador') return '/despachador'
@@ -111,7 +71,8 @@ export const useAuthStore = defineStore('auth', () => {
     return '/'
   }
 
-  const logout = () => {
+  const logout = async () => {
+    await supabase.auth.signOut()
     user.value = null
     token.value = ''
     if (typeof window !== 'undefined') {
