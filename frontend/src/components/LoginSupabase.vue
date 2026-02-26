@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { supabase } from '../services/supabaseClient'
+
+const { $supabase } = useNuxtApp()
 
 const email = ref('')
 const password = ref('')
@@ -8,7 +9,7 @@ const error = ref('')
 
 const login = async () => {
   error.value = ''
-  const { error: loginError } = await supabase.auth.signInWithPassword({
+  const { error: loginError } = await $supabase.auth.signInWithPassword({
     email: email.value,
     password: password.value,
   })
