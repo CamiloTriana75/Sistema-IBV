@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '../services/supabaseClient'
 
 interface AuthUser {
   id: string
@@ -11,6 +10,7 @@ interface AuthUser {
 }
 
 export const useAuthStore = defineStore('auth', () => {
+  const { $supabase } = useNuxtApp()
   const isClient = typeof window !== 'undefined'
   const user = ref<AuthUser | null>(
     isClient ? JSON.parse(localStorage.getItem('auth_user') || 'null') : null
@@ -22,7 +22,7 @@ export const useAuthStore = defineStore('auth', () => {
     if (!email || !password) {
       throw new Error('Credenciales requeridas')
     }
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await $supabase.auth.signInWithPassword({ email, password })
     if (error) {
       throw new Error(error.message)
     }
@@ -72,7 +72,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = async () => {
-    await supabase.auth.signOut()
+    await $supabase.auth.signOut()
     user.value = null
     token.value = ''
     if (typeof window !== 'undefined') {
