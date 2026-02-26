@@ -32,7 +32,8 @@ export const useAuthStore = defineStore('auth', () => {
     }
     // Obtener el rol real desde el backend
     let role = 'cliente'
-    const BACKEND_URL = 'http://localhost:8000/api/users/'
+    const config = useRuntimeConfig()
+    const BACKEND_URL = `${config.public.apiBase || 'http://localhost:8000/api'}/users/`
     try {
       const res = await fetch(`${BACKEND_URL}?email=${encodeURIComponent(email)}`, {
         headers: {

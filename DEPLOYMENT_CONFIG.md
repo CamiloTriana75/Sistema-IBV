@@ -49,20 +49,114 @@ NUXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzd
 
 ## Verificación de Deployment
 
-### Backend (Render)
+### 1. Backend (Render) - Verificar que está activo
+
 ```bash
 # Prueba la API
 curl https://sistema-ibv-backend.onrender.com/api/users/
 
 # Verifica el admin
 curl https://sistema-ibv-backend.onrender.com/admin/
+
+# Verifica el health check (si tienes uno)
+curl https://sistema-ibv-backend.onrender.com/api/
 ```
 
-### Frontend (Vercel)
+**Resultado esperado**: Respuesta JSON o HTML (no error 404/500)
+
+### 2. Frontend (Vercel) - Verificar que carga
+
 Abre en navegador:
 ```
 https://sistema-drindeyfs-camilos-projects-9cf6fda2.vercel.app
 ```
+
+**Resultado esperado**: La página de login debe cargar con animaciones GSAP
+
+### 3. Verificar Conexión Frontend ↔ Backend
+
+#### En el Navegador (Método más fácil):
+
+1. **Abre el frontend en el navegador**
+2. **Presiona F12** para abrir DevTools
+3. **Ve a la pestaña "Network"** (Red)
+4. **Intenta hacer login o cualquier acción que llame al API**
+5. **Busca peticiones a** `sistema-ibv-backend.onrender.com`
+
+**✅ Conexión exitosa:**
+- Status: 200, 201, etc.
+- Headers: `access-control-allow-origin` presente
+- Response: Datos JSON del backend
+
+**❌ Si hay problemas:**
+
+```
+CORS Error en Console:
+"Access to fetch at 'https://sistema-ibv-backend.onrender.com/api/...' 
+from origin 'https://sistema-drindeyfs-camilos-projects-9cf6fda2.vercel.app' 
+has been blocked by CORS policy"
+```
+**Solución**: Verifica que `CORS_ALLOWED_ORIGINS` en Render incluya la URL exacta de Vercel
+
+```
+404 Not Found:
+"GET https://sistema-ibv-backend.onrender.com/api/users/ 404"
+```
+**Solución**: Backend no está deployado correctamente o ruta incorrecta
+
+```
+500 Internal Server Error:
+```
+**Solución**: Ve a Render Dashboard > Logs para ver el error de Django
+
+#### Desde Terminal (Verificación técnica):
+
+```bash
+# Prueba una petición específica del login
+curl -X POST https://sistema-ibv-backend.onrender.com/api/auth/login/ \
+  -H "Content-Type: application/json" \
+  -H "Origin: https://sistema-drindeyfs-camilos-projects-9cf6fda2.vercel.app" \
+  -d '{"email":"test@test.com","password":"test123"}' \
+  -v
+
+# Verifica headers CORS
+curl -I -X OPTIONS https://sistema-ibv-backend.onrender.com/api/users/ \
+  -H "Origin: https://sistema-drindeyfs-camilos-projects-9cf6fda2.vercel.app" \
+  -H "Access-Control-Request-Method: GET"
+```
+
+**Busca en la respuesta:**
+- `access-control-allow-origin: https://sistema-drindeyfs-camilos-projects-9cf6fda2.vercel.app`
+- `access-control-allow-credentials: true`
+
+### 4. Ver Logs en Producción
+
+#### Logs de Render (Backend):
+1. Ve a https://dashboard.render.com
+2. Selecciona tu servicio **sistema-ibv-backend**
+3. Click en **"Logs"** en el menú lateral
+4. Busca errores 500, excepciones de Django, o problemas de CORS
+
+#### Logs de Vercel (Frontend):
+1. Ve a https://vercel.com
+2. Selecciona tu proyecto
+3. Click en **"Deployments"** > Latest deployment
+4. Click en **"View Function Logs"** (si tienes funciones serverless)
+5. O revisa **Runtime Logs**
+
+### 5. Prueba Local para Comparar
+
+```bash
+# Terminal 1: Backend local
+cd backend
+python manage.py runserver
+
+# Terminal 2: Frontend local
+cd frontend
+npm run dev
+```
+
+Si funciona en local pero no en producción, probablemente es un problema de variables de entorno o CORS.
 
 ## Re-deploy después de configurar variables
 
