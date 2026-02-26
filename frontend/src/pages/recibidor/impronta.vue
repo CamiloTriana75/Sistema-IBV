@@ -1,7 +1,6 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useImprontaStore, type DañoZona } from '~/stores/improntaStore'
-import { validators, utils } from '~/utils/helpers'
 
 definePageMeta({ layout: 'admin' })
 
@@ -14,6 +13,61 @@ const currentVista = ref<string | null>(null)
 const saving = ref(false)
 const toastMsg = ref('')
 const toastType = ref<'success' | 'error'>('success')
+
+// Modelos pre-establecidos
+const modelosPreestablecidos: Record<string, { modelos: string[]; anio?: string }> = {
+  Toyota: {
+    modelos: ['Corolla', 'Hilux', 'Yaris', 'Rav4', 'Camry', 'Fortuner', 'Land Cruiser', 'Prado'],
+  },
+  Chevrolet: {
+    modelos: ['Spark', 'Aveo', 'Cruze', 'Tracker', 'Onix', 'Captiva', 'Tahoe', 'Silverado'],
+  },
+  Kia: { modelos: ['Rio', 'Sportage', 'Seltos', 'Sorento', 'Cerato', 'Carnival', 'Picanto'] },
+  Hyundai: { modelos: ['Accent', 'Tucson', 'Santa Fe', 'Elantra', 'Creta', 'Venue', 'Palisade'] },
+  Ford: { modelos: ['Explorer', 'Escape', 'Ranger', 'Bronco', 'Edge', 'Maverick', 'F-150'] },
+  Nissan: { modelos: ['Versa', 'Sentra', 'Kicks', 'X-Trail', 'Frontier', 'Pathfinder', 'March'] },
+  Mazda: { modelos: ['Mazda3', 'CX-5', 'CX-30', 'CX-50', 'Mazda6', 'CX-9', 'MX-5'] },
+  Honda: { modelos: ['Civic', 'CR-V', 'HR-V', 'Accord', 'Pilot', 'City', 'Fit'] },
+  Volkswagen: { modelos: ['Jetta', 'Tiguan', 'T-Cross', 'Taos', 'Golf', 'Polo', 'Amarok'] },
+  Mitsubishi: { modelos: ['Outlander', 'L200', 'Eclipse Cross', 'ASX', 'Montero', 'Lancer'] },
+  Suzuki: { modelos: ['Swift', 'Vitara', 'Jimny', 'S-Cross', 'Baleno', 'Ertiga'] },
+  Renault: { modelos: ['Duster', 'Logan', 'Sandero', 'Koleos', 'Captur', 'Kwid'] },
+}
+
+const marcasDisponibles = Object.keys(modelosPreestablecidos)
+const modelosFiltrados = computed(() =>
+  form.marca && modelosPreestablecidos[form.marca] ? modelosPreestablecidos[form.marca].modelos : []
+)
+const showMarcaDropdown = ref(false)
+const showModeloDropdown = ref(false)
+const marcaSearch = ref('')
+const marcasFiltradas = computed(() => {
+  const q = marcaSearch.value.toLowerCase()
+  return q ? marcasDisponibles.filter((m) => m.toLowerCase().includes(q)) : marcasDisponibles
+})
+
+const seleccionarMarca = (marca: string) => {
+  form.marca = marca
+  form.modelo = ''
+  showMarcaDropdown.value = false
+  marcaSearch.value = ''
+}
+
+const seleccionarModelo = (modelo: string) => {
+  form.modelo = modelo
+  showModeloDropdown.value = false
+}
+
+// Close dropdowns on click outside
+if (import.meta.client) {
+  document.addEventListener('click', (e: MouseEvent) => {
+    const target = e.target as HTMLElement
+    if (!target.closest('.relative')) {
+      showMarcaDropdown.value = false
+      showModeloDropdown.value = false
+    }
+  })
+}
 
 // Edit mode
 const editingId = ref<string | null>(null)
@@ -155,16 +209,6 @@ const agregarFotoAdicional = () => {
 const onFileChange = (e: Event) => {
   const file = (e.target as HTMLInputElement).files?.[0]
   if (!file) return
-
-  // Validar tamaño (10MB)
-  if (!validators.fileSize(file.size, 10)) {
-    showToast(
-      `El archivo es muy pesado (${utils.formatBytes(file.size)}). El límite es 10MB.`,
-      'error'
-    )
-    if (fileInput.value) fileInput.value.value = ''
-    return
-  }
 
   const reader = new FileReader()
   reader.onload = () => {
@@ -396,36 +440,146 @@ const guardarImpronta = async () => {
                 class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
               />
             </div>
-            <div>
+            <div class="relative">
               <label
                 class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5"
               >
                 Marca
                 <span class="text-red-500">*</span>
               </label>
-              <input
-                v-model="form.marca"
-                type="text"
-                placeholder="Toyota"
-                class="w-full px-3 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
-                :class="errors.marca ? 'border-red-400' : 'border-gray-200'"
-              />
+              <div class="relative">
+                <input
+                  v-model="form.marca"
+                  type="text"
+                  placeholder="Seleccionar o escribir marca"
+                  class="w-full px-3 py-2.5 pr-9 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+                  :class="errors.marca ? 'border-red-400' : 'border-gray-200'"
+                  @focus="showMarcaDropdown = true"
+                  @input="
+                    () => {
+                      showMarcaDropdown = true
+                      marcaSearch = form.marca
+                    }
+                  "
+                />
+                <button
+                  type="button"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  @click="showMarcaDropdown = !showMarcaDropdown"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div
+                v-if="showMarcaDropdown"
+                class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto"
+              >
+                <button
+                  v-for="m in marcasFiltradas"
+                  :key="m"
+                  type="button"
+                  class="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-700 transition flex items-center gap-2"
+                  :class="
+                    form.marca === m
+                      ? 'bg-primary-50 text-primary-700 font-semibold'
+                      : 'text-gray-700'
+                  "
+                  @click="seleccionarMarca(m)"
+                >
+                  <svg
+                    v-if="form.marca === m"
+                    class="w-4 h-4 text-primary-500 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span>{{ m }}</span>
+                </button>
+                <div v-if="marcasFiltradas.length === 0" class="px-3 py-2 text-xs text-gray-400">
+                  Escribe para buscar o usa una marca personalizada
+                </div>
+              </div>
               <p v-if="errors.marca" class="text-xs text-red-500 mt-1">{{ errors.marca }}</p>
             </div>
-            <div>
+            <div class="relative">
               <label
                 class="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5"
               >
                 Modelo
                 <span class="text-red-500">*</span>
               </label>
-              <input
-                v-model="form.modelo"
-                type="text"
-                placeholder="Corolla"
-                class="w-full px-3 py-2.5 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
-                :class="errors.modelo ? 'border-red-400' : 'border-gray-200'"
-              />
+              <div class="relative">
+                <input
+                  v-model="form.modelo"
+                  type="text"
+                  placeholder="Seleccionar o escribir modelo"
+                  class="w-full px-3 py-2.5 pr-9 border rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+                  :class="errors.modelo ? 'border-red-400' : 'border-gray-200'"
+                  @focus="modelosFiltrados.length > 0 && (showModeloDropdown = true)"
+                />
+                <button
+                  v-if="modelosFiltrados.length > 0"
+                  type="button"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                  @click="showModeloDropdown = !showModeloDropdown"
+                >
+                  <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M19 9l-7 7-7-7"
+                    />
+                  </svg>
+                </button>
+              </div>
+              <div
+                v-if="showModeloDropdown && modelosFiltrados.length > 0"
+                class="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-xl shadow-lg max-h-48 overflow-y-auto"
+              >
+                <button
+                  v-for="mod in modelosFiltrados"
+                  :key="mod"
+                  type="button"
+                  class="w-full text-left px-3 py-2 text-sm hover:bg-primary-50 hover:text-primary-700 transition flex items-center gap-2"
+                  :class="
+                    form.modelo === mod
+                      ? 'bg-primary-50 text-primary-700 font-semibold'
+                      : 'text-gray-700'
+                  "
+                  @click="seleccionarModelo(mod)"
+                >
+                  <svg
+                    v-if="form.modelo === mod"
+                    class="w-4 h-4 text-primary-500 shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M5 13l4 4L19 7"
+                    />
+                  </svg>
+                  <span>{{ mod }}</span>
+                </button>
+              </div>
               <p v-if="errors.modelo" class="text-xs text-red-500 mt-1">{{ errors.modelo }}</p>
             </div>
             <div>

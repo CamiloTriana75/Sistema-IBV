@@ -51,6 +51,8 @@ jobs:
         run: npm run build
         env:
           NUXT_PUBLIC_API_BASE: "http://localhost:8000/api"
+          VITE_SUPABASE_URL: "https://placeholder.supabase.co"
+          VITE_SUPABASE_ANON_KEY: "placeholder-anon-key"
 
       - name: Run tests (if available)
         working-directory: ./frontend

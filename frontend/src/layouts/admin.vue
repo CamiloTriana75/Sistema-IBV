@@ -30,11 +30,13 @@ const currentUser = computed(() => {
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
     '/admin': 'Dashboard',
+    '/admin/estadisticas': 'Estadísticas y Reportes',
     '/admin/usuarios': 'Gestión de Usuarios',
     '/admin/roles': 'Roles y Permisos',
     '/recibidor': 'Panel Recibidor',
     '/recibidor/escaneo': 'Recepción de Vehículos',
     '/recibidor/impronta': 'Registro de Impronta',
+    '/recibidor/recepciones': 'Recepciones Realizadas',
     '/inventario': 'Panel Inventario',
     '/inventario/checklist': 'Inspección de Vehículo',
     '/despachador': 'Panel Despachador',
@@ -70,6 +72,11 @@ const menuItems = computed(() => {
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>',
       },
       {
+        to: '/admin/estadisticas',
+        label: 'Estadísticas',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>',
+      },
+      {
         to: '/admin/usuarios',
         label: 'Usuarios',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" /></svg>',
@@ -92,6 +99,11 @@ const menuItems = computed(() => {
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" /></svg>',
       },
       {
+        to: '/recibidor/recepciones',
+        label: 'Recepciones',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" /></svg>',
+      },
+      {
         to: '/recibidor/impronta',
         label: 'Nueva Impronta',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 4v16m8-8H4" /></svg>',
@@ -107,7 +119,7 @@ const menuItems = computed(() => {
         to: '/inventario/checklist',
         label: 'Inspecciones',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>',
-        badge: '3',
+        badge: 3,
       },
     ],
     despachador: [
@@ -120,7 +132,7 @@ const menuItems = computed(() => {
         to: '/despachador/escaneo',
         label: 'Escaneo de Lote',
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>',
-        badge: '2',
+        badge: 2,
       },
     ],
     porteria: [
