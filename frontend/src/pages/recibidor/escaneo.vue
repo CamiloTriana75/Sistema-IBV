@@ -13,8 +13,16 @@ const contenedorActual = ref<Contenedor | null>(null)
 const observaciones = ref('')
 const resumenFinal = reactive({ codigo: '', escaneados: 0, total: 0 })
 
-const scannerContenedor = ref<{ startScan: () => void; stopScan: () => void } | null>(null)
-const scannerVehiculo = ref<{ startScan: () => void; stopScan: () => void } | null>(null)
+type QrScannerRef = {
+  startScan: () => void
+  stopScan: () => void
+  setError: (msg: string) => void
+  setSuccess: (msg: string) => void
+  reset: () => void
+} | null
+
+const scannerContenedor = ref<QrScannerRef>(null)
+const scannerVehiculo = ref<QrScannerRef>(null)
 
 const toast = reactive({ show: false, msg: '', type: 'ok' as 'ok' | 'warn' | 'error' })
 const mostrarToast = (type: 'ok' | 'warn' | 'error', msg: string) => {
@@ -121,6 +129,153 @@ const nuevaRecepcion = () => {
 const resetSeleccionContenedor = () => {
   paso.value = 1
   contenedorActual.value = null
+}
+
+// ===== Imprimir resumen de recepción =====
+const imprimirResumen = () => {
+  if (!contenedorActual.value) return
+  const cont = contenedorActual.value
+  const fecha = new Date().toLocaleDateString('es-VE', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+  const hora = new Date().toLocaleTimeString('es-VE', {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+  const vehiculosHTML = cont.vehiculos
+    .map(
+      (v, i) => `
+      <tr style="border-bottom:1px solid #e5e7eb;">
+        <td style="padding:8px 12px;text-align:center;font-weight:600;">${i + 1}</td>
+        <td style="padding:8px 12px;font-family:monospace;font-size:11px;">${v.vin}</td>
+        <td style="padding:8px 12px;font-weight:600;">${v.marca} ${v.modelo}</td>
+        <td style="padding:8px 12px;text-align:center;">${v.anio}</td>
+        <td style="padding:8px 12px;">${v.color}</td>
+        <td style="padding:8px 12px;text-align:center;font-family:monospace;font-size:11px;">${v.codigoImpronta}</td>
+        <td style="padding:8px 12px;text-align:center;">
+          <span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;${v.escaneado ? 'background:#dcfce7;color:#15803d;' : 'background:#fef9c3;color:#a16207;'}">
+            ${v.escaneado ? '✓ Escaneado' : 'Pendiente'}
+          </span>
+        </td>
+      </tr>`
+    )
+    .join('')
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="es">
+    <head>
+      <meta charset="utf-8"/>
+      <title>Resumen Recepción - ${cont.codigo}</title>
+      <style>
+        @media print { body { -webkit-print-color-adjust: exact; print-color-adjust: exact; } }
+        body { font-family: 'Segoe UI', sans-serif; margin: 0; padding: 24px; color: #1f2937; }
+        .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 3px solid #0ea5e9; padding-bottom: 16px; margin-bottom: 20px; }
+        .logo { font-size: 22px; font-weight: 800; color: #0ea5e9; }
+        .logo span { color: #64748b; font-weight: 400; font-size: 13px; display: block; }
+        .badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 12px; font-weight: 700; }
+        .info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+        .info-box { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 12px; }
+        .info-box .label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px; color: #94a3b8; font-weight: 700; }
+        .info-box .value { font-size: 15px; font-weight: 700; color: #1e293b; margin-top: 2px; }
+        table { width: 100%; border-collapse: collapse; font-size: 13px; }
+        thead { background: #f1f5f9; }
+        th { padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: #64748b; font-weight: 700; }
+        .summary-bar { display: flex; justify-content: space-between; align-items: center; background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 10px; padding: 12px 16px; margin-top: 16px; }
+        .obs { margin-top: 16px; background: #fffbeb; border: 1px solid #fde68a; border-radius: 10px; padding: 12px 16px; }
+        .footer { margin-top: 32px; padding-top: 16px; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; font-size: 11px; color: #94a3b8; }
+        .sign-line { margin-top: 48px; display: flex; gap: 64px; }
+        .sign-line div { flex: 1; border-top: 1px solid #94a3b8; padding-top: 6px; font-size: 12px; color: #64748b; text-align: center; }
+      </style>
+    </head>
+    <body>
+      <div class="header">
+        <div>
+          <div class="logo">Sistema IBV <span>Gestión de Vehículos</span></div>
+        </div>
+        <div style="text-align:right;">
+          <div style="font-size:18px;font-weight:800;">RESUMEN DE RECEPCIÓN</div>
+          <div style="font-size:12px;color:#64748b;margin-top:2px;">${fecha} — ${hora}</div>
+        </div>
+      </div>
+
+      <div class="info-grid">
+        <div class="info-box">
+          <div class="label">Contenedor</div>
+          <div class="value" style="font-family:monospace;">${cont.codigo}</div>
+        </div>
+        <div class="info-box">
+          <div class="label">Origen</div>
+          <div class="value" style="font-size:13px;">${cont.origen}</div>
+        </div>
+        <div class="info-box">
+          <div class="label">Transportista</div>
+          <div class="value" style="font-size:13px;">${cont.transportista}</div>
+        </div>
+        <div class="info-box">
+          <div class="label">Placa Camión</div>
+          <div class="value" style="font-family:monospace;">${cont.placaCamion}</div>
+        </div>
+        <div class="info-box">
+          <div class="label">Fecha Llegada</div>
+          <div class="value">${cont.fechaLlegada}</div>
+        </div>
+        <div class="info-box">
+          <div class="label">Hora Llegada</div>
+          <div class="value">${cont.horaLlegada}</div>
+        </div>
+        <div class="info-box">
+          <div class="label">Vehículos Esperados</div>
+          <div class="value">${cont.vehiculosEsperados}</div>
+        </div>
+        <div class="info-box">
+          <div class="label">Recibido Por</div>
+          <div class="value" style="font-size:13px;">${cont.recibidoPor || authStore.user?.name || '—'}</div>
+        </div>
+      </div>
+
+      <h3 style="font-size:14px;margin:0 0 8px;color:#334155;">Detalle de Vehículos</h3>
+      <table>
+        <thead>
+          <tr><th>#</th><th>VIN</th><th>Vehículo</th><th>Año</th><th>Color</th><th>Código Impronta</th><th>Estado</th></tr>
+        </thead>
+        <tbody>${vehiculosHTML}</tbody>
+      </table>
+
+      <div class="summary-bar">
+        <div>
+          <strong>${resumenFinal.escaneados}</strong> de <strong>${resumenFinal.total}</strong> vehículos escaneados
+        </div>
+        <span class="badge" style="${resumenFinal.escaneados === resumenFinal.total ? 'background:#dcfce7;color:#15803d;' : 'background:#fef9c3;color:#a16207;'}">
+          ${resumenFinal.escaneados === resumenFinal.total ? 'RECEPCIÓN COMPLETA' : 'RECEPCIÓN PARCIAL'}
+        </span>
+      </div>
+
+      ${observaciones.value ? `<div class="obs"><strong style="font-size:12px;color:#92400e;">Observaciones:</strong><p style="margin:4px 0 0;font-size:13px;">${observaciones.value}</p></div>` : ''}
+
+      <div class="sign-line">
+        <div>Firma Recibidor</div>
+        <div>Firma Transportista</div>
+        <div>Firma Supervisor</div>
+      </div>
+
+      <div class="footer">
+        <span>Sistema IBV — Documento generado automáticamente</span>
+        <span>${fecha} ${hora}</span>
+      </div>
+
+      ${'<scr' + 'ipt>window.onload = function() { window.print(); }<' + '/script>'}
+    </body>
+    </html>
+  `
+
+  const win = window.open('', '_blank')
+  if (win) {
+    win.document.write(html)
+    win.document.close()
+  }
 }
 </script>
 
@@ -655,19 +810,35 @@ const resetSeleccionContenedor = () => {
           <span class="font-bold text-success-600">{{ resumenFinal.escaneados }}</span>
           de {{ resumenFinal.total }} vehículos
         </p>
-        <div class="flex gap-3">
+        <div class="space-y-3">
           <button
-            class="flex-1 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-500/25"
-            @click="nuevaRecepcion"
+            class="w-full px-5 py-2.5 bg-gray-800 text-white text-sm font-semibold rounded-xl hover:bg-gray-900 transition shadow-lg flex items-center justify-center gap-2"
+            @click="imprimirResumen"
           >
-            Nueva Recepción
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
+              />
+            </svg>
+            Imprimir Resumen de Recepción
           </button>
-          <NuxtLink
-            to="/recibidor"
-            class="flex-1 px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition text-center"
-          >
-            Ir al Panel
-          </NuxtLink>
+          <div class="flex gap-3">
+            <button
+              class="flex-1 px-5 py-2.5 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-500/25"
+              @click="nuevaRecepcion"
+            >
+              Nueva Recepción
+            </button>
+            <NuxtLink
+              to="/recibidor"
+              class="flex-1 px-5 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition text-center"
+            >
+              Ir al Panel
+            </NuxtLink>
+          </div>
         </div>
       </div>
     </div>
