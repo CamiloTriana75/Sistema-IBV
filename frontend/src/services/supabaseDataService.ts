@@ -42,6 +42,16 @@ export interface ActivityItem {
   type: string
 }
 
+export interface WeeklyTrendItem {
+  label: string
+  values: [number, number]
+}
+
+export interface WeeklyTrends {
+  days: WeeklyTrendItem[]
+  series: { label: string; color: string }[]
+}
+
 export const supabaseDataService = {
   /**
    * Obtiene todos los vehÃ­culos con sus relaciones
@@ -71,14 +81,15 @@ export const supabaseDataService = {
    */
   async getDashboardStats(): Promise<DashboardStats> {
     const $supabase = getSupabase()
+    console.log('[getDashboardStats] Iniciando query...')
 
     // Obtener conteos por estado
     const { data: vehiculos, error } = await $supabase
       .from('vehiculos')
-      .select('estado')
+      .select('estado, id')
 
-    if (error || !vehiculos) {
-      console.error('Error obteniendo stats:', error)
+    if (error) {
+      console.error('[getDashboardStats] Error from Supabase:', error)
       return {
         total_vehiculos: 0,
         en_impronta: 0,
@@ -88,6 +99,20 @@ export const supabaseDataService = {
         problemas_encontrados: 0,
       }
     }
+
+    if (!vehiculos) {
+      console.warn('[getDashboardStats] No data returned from query')
+      return {
+        total_vehiculos: 0,
+        en_impronta: 0,
+        en_inventario: 0,
+        listos_despacho: 0,
+        despachados: 0,
+        problemas_encontrados: 0,
+      }
+    }
+
+    console.log('[getDashboardStats] Vehículos encontrados:', vehiculos.length, vehiculos.map(v => v.estado))
 
     const total = vehiculos.length
     const counts: Record<string, number> = {}
@@ -116,7 +141,7 @@ export const supabaseDataService = {
     // Obtener improntas recientes
     const { data: improntas } = await $supabase
       .from('improntas')
-      .select('id, fecha, estado, usuario:users_user!improntas_usuario_id_fkey(nombres, apellidos)')
+      .select('id, fecha, estado, usuario:usuarios(id, nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
 
@@ -137,7 +162,7 @@ export const supabaseDataService = {
     // Obtener inventarios recientes
     const { data: inventarios } = await $supabase
       .from('inventarios')
-      .select('id, fecha, completo, usuario:users_user!inventarios_usuario_id_fkey(nombres, apellidos)')
+      .select('id, fecha, completo, usuario:usuarios(id, nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
 
@@ -158,7 +183,7 @@ export const supabaseDataService = {
     // Obtener despachos recientes
     const { data: despachos } = await $supabase
       .from('despachos')
-      .select('id, fecha, estado, cantidad_vehiculos, usuario:users_user!despachos_usuario_id_fkey(nombres, apellidos)')
+      .select('id, fecha, estado, cantidad_vehiculos, usuario:usuarios(id, nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
 
@@ -179,7 +204,7 @@ export const supabaseDataService = {
     // Obtener movimientos de porterÃ­a recientes
     const { data: movimientos } = await $supabase
       .from('movimientos_porteria')
-      .select('id, tipo, persona, fecha, observacion, usuario:users_user!movimientos_porteria_usuario_id_fkey(nombres, apellidos)')
+      .select('id, tipo, persona, fecha, observacion, usuario:usuarios(id, nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
 
@@ -203,6 +228,61 @@ export const supabaseDataService = {
   },
 
   /**
+   * Obtiene tendencia semanal de recibidos vs. despachados (ultimos N dias)
+   */
+  async getWeeklyTrends(days: number = 7): Promise<WeeklyTrends> {
+    const $supabase = getSupabase()
+    const endDate = new Date()
+    const startDate = new Date()
+    startDate.setDate(endDate.getDate() - (days - 1))
+
+    const startIso = startDate.toISOString()
+
+    const [vehiculosRes, despachosRes] = await Promise.all([
+      $supabase.from('vehiculos').select('fecha_registro').gte('fecha_registro', startIso),
+      $supabase.from('despachos').select('fecha, cantidad_vehiculos').gte('fecha', startIso),
+    ])
+
+    const receivedCounts = new Map<string, number>()
+    const dispatchedCounts = new Map<string, number>()
+
+    if (vehiculosRes.data) {
+      for (const v of vehiculosRes.data as Array<{ fecha_registro: string }>) {
+        const key = new Date(v.fecha_registro).toISOString().slice(0, 10)
+        receivedCounts.set(key, (receivedCounts.get(key) || 0) + 1)
+      }
+    }
+
+    if (despachosRes.data) {
+      for (const d of despachosRes.data as Array<{ fecha: string; cantidad_vehiculos: number }>) {
+        const key = new Date(d.fecha).toISOString().slice(0, 10)
+        dispatchedCounts.set(key, (dispatchedCounts.get(key) || 0) + (d.cantidad_vehiculos || 0))
+      }
+    }
+
+    const dayLabels = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
+    const dayList: WeeklyTrendItem[] = []
+    for (let i = 0; i < days; i += 1) {
+      const d = new Date(startDate)
+      d.setDate(startDate.getDate() + i)
+      const key = d.toISOString().slice(0, 10)
+      const label = dayLabels[d.getDay()]
+      dayList.push({
+        label,
+        values: [receivedCounts.get(key) || 0, dispatchedCounts.get(key) || 0],
+      })
+    }
+
+    return {
+      days: dayList,
+      series: [
+        { label: 'Recibidos', color: '#38bdf8' },
+        { label: 'Despachados', color: '#34d399' },
+      ],
+    }
+  },
+
+  /**
    * Obtiene los buques
    */
   async getBuques() {
@@ -219,6 +299,46 @@ export const supabaseDataService = {
     }
 
     return data || []
+  },
+
+  /**
+   * Diagnóstico: Verifica si hay datos en la BD
+   */
+  async checkDatabaseHealth() {
+    const $supabase = getSupabase()
+    console.log('[checkDatabaseHealth] Iniciando diagnóstico...')
+
+    try {
+      // Verificar usuarios
+      const { data: usuarios, error: usersError } = await $supabase
+        .from('usuarios')
+        .select('count', { count: 'exact' })
+
+      console.log('[checkDatabaseHealth] Usuarios:', usuarios, 'Error:', usersError)
+
+      // Verificar vehiculos
+      const { data: vehiculos, error: vehiclesError } = await $supabase
+        .from('vehiculos')
+        .select('count', { count: 'exact' })
+
+      console.log('[checkDatabaseHealth] Vehículos:', vehiculos, 'Error:', vehiclesError)
+
+      // Verificar roles
+      const { data: roles, error: rolesError } = await $supabase
+        .from('roles')
+        .select('count', { count: 'exact' })
+
+      console.log('[checkDatabaseHealth] Roles:', roles, 'Error:', rolesError)
+
+      return {
+        usuarios: usuarios?.length || 0,
+        vehiculos: vehiculos?.length || 0,
+        roles: roles?.length || 0,
+      }
+    } catch (error) {
+      console.error('[checkDatabaseHealth] Excepción:', error)
+      return { usuarios: 0, vehiculos: 0, roles: 0 }
+    }
   },
 }
 

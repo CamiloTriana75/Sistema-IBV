@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useStatsStore } from '~/stores/statsStore'
 import { supabaseDataService } from '~/services/supabaseDataService'
 import { supabaseUserService } from '~/services/supabaseUserService'
-import type { VehicleData, DashboardStats, ActivityItem } from '~/services/supabaseDataService'
+import type {
+  VehicleData,
+  DashboardStats,
+  ActivityItem,
+  WeeklyTrends,
+} from '~/services/supabaseDataService'
 import type { SupabaseUser } from '~/services/supabaseUserService'
 
 definePageMeta({ layout: 'admin', middleware: ['auth', 'admin'] })
 
-const stats = useStatsStore()
 const periodo = ref<'hoy' | 'semana' | 'mes'>('semana')
 
 // States
@@ -18,6 +21,7 @@ const dashboardStats = ref<DashboardStats | null>(null)
 const vehicles = ref<VehicleData[]>([])
 const users = ref<SupabaseUser[]>([])
 const activities = ref<ActivityItem[]>([])
+const weeklyTrends = ref<WeeklyTrends | null>(null)
 
 // Computed stats for KPIs
 const kpiData = computed(() => {
@@ -107,26 +111,90 @@ const pipelineData = computed(() => {
   ]
 })
 
+const donutSegments = computed(() => {
+  if (!dashboardStats.value) return []
+  const stats = dashboardStats.value
+  return [
+    { label: 'Recibidos', value: stats.total_vehiculos, color: '#38bdf8' },
+    { label: 'Impronta', value: stats.en_impronta, color: '#60a5fa' },
+    { label: 'Inventario', value: stats.en_inventario, color: '#fbbf24' },
+    { label: 'Listos', value: stats.listos_despacho, color: '#34d399' },
+    { label: 'Despachados', value: stats.despachados, color: '#9ca3af' },
+  ]
+})
+
+const weekDays = computed(() => weeklyTrends.value?.days || [])
+const weekSeries = computed(
+  () => weeklyTrends.value?.series || [
+    { label: 'Recibidos', color: '#38bdf8' },
+    { label: 'Despachados', color: '#34d399' },
+  ]
+)
+
+const moduleEfficiency = computed(() => {
+  if (!dashboardStats.value) return []
+  const stats = dashboardStats.value
+  const total = stats.total_vehiculos || 1
+  return [
+    {
+      label: 'Recepción',
+      sublabel: 'VINs escaneados',
+      pct: stats.total_vehiculos ? 100 : 0,
+      color: 'bg-primary-500',
+      value: stats.total_vehiculos,
+    },
+    {
+      label: 'Impronta',
+      sublabel: 'Completadas',
+      pct: Math.round((stats.en_impronta / total) * 100),
+      color: 'bg-blue-500',
+      value: stats.en_impronta,
+    },
+    {
+      label: 'Inventario',
+      sublabel: 'Aprobados',
+      pct: Math.round((stats.en_inventario / total) * 100),
+      color: 'bg-amber-500',
+      value: stats.en_inventario,
+    },
+    {
+      label: 'Despacho',
+      sublabel: 'Despachados',
+      pct: Math.round((stats.despachados / total) * 100),
+      color: 'bg-success-500',
+      value: stats.despachados,
+    },
+  ]
+})
+
 // Load data
 const loadDashboard = async () => {
   try {
     loading.value = true
     error.value = ''
     
+    // Diagnostico de base de datos
+    console.log('[loadDashboard] Llamando diagnóstico...')
+    await supabaseDataService.checkDatabaseHealth()
+    
     // Asegurar que los usuarios seed existan
     await supabaseUserService.seedAllUsers()
     
-    const [statsData, vehiclesData, usersData, activitiesData] = await Promise.all([
+    const [statsData, vehiclesData, usersData, activitiesData, weeklyData] = await Promise.all([
       supabaseDataService.getDashboardStats(),
       supabaseDataService.getVehicles(),
       supabaseUserService.getAllUsers(),
       supabaseDataService.getActivities(5),
+      supabaseDataService.getWeeklyTrends(7),
     ])
+    
+    console.log('[loadDashboard] Datos cargados:', { statsData, vehiclesCount: vehiclesData.length })
     
     dashboardStats.value = statsData
     vehicles.value = vehiclesData
     users.value = usersData
     activities.value = activitiesData || []
+    weeklyTrends.value = weeklyData
   } catch (e: any) {
     error.value = e.message || 'Error al cargar datos del dashboard'
     console.error('Error loading dashboard:', e)
@@ -151,8 +219,9 @@ const iconMap: Record<string, string> = {
 </script>
 
 <template>
-  <div class="space-y-8">
-    <!-- ── Header ── -->
+  <ClientOnly>
+    <div class="space-y-8">
+      <!-- ── Header ── -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Administrativo</h1>
@@ -283,7 +352,7 @@ const iconMap: Record<string, string> = {
           <p class="text-xs text-gray-400 mt-0.5">Por etapa del ciclo</p>
         </div>
         <div class="flex-1 flex items-center justify-center">
-          <ChartsDonutChart :segments="stats.donutSegments" :size="190" :thickness="36" />
+          <ChartsDonutChart :segments="donutSegments" :size="190" :thickness="36" />
         </div>
       </div>
     </div>
@@ -296,7 +365,7 @@ const iconMap: Record<string, string> = {
           <h3 class="text-base font-semibold text-gray-900">Tendencia Semanal</h3>
           <p class="text-xs text-gray-400 mt-0.5">Vehículos recibidos vs. despachados</p>
         </div>
-        <ChartsBarChart :bars="stats.weekDays" :series="stats.weekSeries" :height="160" />
+        <ChartsBarChart :bars="weekDays" :series="weekSeries" :height="160" />
       </div>
 
       <!-- Eficiencia por módulo -->
@@ -306,7 +375,7 @@ const iconMap: Record<string, string> = {
           <p class="text-xs text-gray-400 mt-0.5">Porcentaje de completado sobre el total</p>
         </div>
         <div class="space-y-5">
-          <div v-for="mod in stats.moduleEfficiency" :key="mod.label">
+          <div v-for="mod in moduleEfficiency" :key="mod.label">
             <div class="flex items-center justify-between mb-2">
               <div>
                 <span class="text-sm font-medium text-gray-800">{{ mod.label }}</span>
@@ -380,4 +449,5 @@ const iconMap: Record<string, string> = {
       </div>
     </div>
   </div>
+  </ClientOnly>
 </template>

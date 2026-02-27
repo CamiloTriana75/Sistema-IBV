@@ -1,26 +1,16 @@
 -- ============================================
--- SISTEMA IBV - DATABASE SETUP (CLEAN)
--- Only production tables - NO confusions
--- ============================================
---
--- Tables: roles, usuarios, buques, modelos_vehiculo,
---         vehiculos, improntas, inventarios, despachos,
---         despacho_vehiculos, movimientos_porteria, recibos,
---         auth_group, auth_permission, auth_group_permissions
---
--- VERSION: 2.0.0 (CLEAN)
--- DATE: 2026-02-27
--- ============================================BEGIN;
-
--- ============================================
--- EXTENSIONS
+-- SISTEMA IBV - SETUP LIMPIO Y CLARO
+-- Solo tablas reales del proyecto
 -- ============================================
 
+BEGIN;
+
+-- Extensions
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ============================================
--- AUTH TABLES (Django compatibl, but no content_type FK)
+-- 1. AUTH TABLES (Django Auth)
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS auth_permission (
@@ -43,13 +33,8 @@ CREATE TABLE IF NOT EXISTS auth_group_permissions (
     UNIQUE (group_id, permission_id)
 );
 
-CREATE INDEX IF NOT EXISTS auth_group_permissions_group_id_idx
-    ON auth_group_permissions(group_id);
-CREATE INDEX IF NOT EXISTS auth_group_permissions_permission_id_idx
-    ON auth_group_permissions(permission_id);
-
 -- ============================================
--- 1. ROLES
+-- 2. CORE TABLES - Roles & Usuarios
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS roles (
@@ -64,10 +49,6 @@ CREATE TABLE IF NOT EXISTS roles (
 
 CREATE INDEX IF NOT EXISTS roles_nombre_idx ON roles(nombre);
 CREATE INDEX IF NOT EXISTS roles_activo_idx ON roles(activo);
-
--- ============================================
--- 2. USUARIOS
--- ============================================
 
 CREATE TABLE IF NOT EXISTS usuarios (
     id BIGSERIAL PRIMARY KEY,
@@ -89,7 +70,7 @@ CREATE INDEX IF NOT EXISTS usuarios_rol_id_idx ON usuarios(rol_id);
 CREATE INDEX IF NOT EXISTS usuarios_activo_idx ON usuarios(activo);
 
 -- ============================================
--- 3. BUQUES
+-- 3. INVENTORY TABLES - Buques & Modelos
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS buques (
@@ -102,10 +83,6 @@ CREATE TABLE IF NOT EXISTS buques (
 );
 
 CREATE INDEX IF NOT EXISTS buques_identificacion_idx ON buques(identificacion);
-
--- ============================================
--- 4. MODELOS DE VEHICULO
--- ============================================
 
 CREATE TABLE IF NOT EXISTS modelos_vehiculo (
     id BIGSERIAL PRIMARY KEY,
@@ -123,7 +100,7 @@ CREATE INDEX IF NOT EXISTS modelos_vehiculo_marca_idx ON modelos_vehiculo(marca)
 CREATE INDEX IF NOT EXISTS modelos_vehiculo_activo_idx ON modelos_vehiculo(activo);
 
 -- ============================================
--- 5. VEHICULOS
+-- 4. VEHICLES & MAIN WORKFLOW
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS vehiculos (
@@ -147,7 +124,7 @@ CREATE INDEX IF NOT EXISTS vehiculos_buque_id_idx ON vehiculos(buque_id);
 CREATE INDEX IF NOT EXISTS vehiculos_modelo_id_idx ON vehiculos(modelo_id);
 
 -- ============================================
--- 6. IMPRONTAS
+-- 5. OPERATIONS - Improntas
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS improntas (
@@ -166,7 +143,7 @@ CREATE INDEX IF NOT EXISTS improntas_vehiculo_id_idx ON improntas(vehiculo_id);
 CREATE INDEX IF NOT EXISTS improntas_usuario_id_idx ON improntas(usuario_id);
 
 -- ============================================
--- 7. INVENTARIOS
+-- 6. OPERATIONS - Inventarios
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS inventarios (
@@ -185,7 +162,7 @@ CREATE INDEX IF NOT EXISTS inventarios_usuario_id_idx ON inventarios(usuario_id)
 CREATE INDEX IF NOT EXISTS inventarios_completo_idx ON inventarios(completo);
 
 -- ============================================
--- 8. DESPACHOS
+-- 7. OPERATIONS - Despachos
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS despachos (
@@ -201,10 +178,6 @@ CREATE TABLE IF NOT EXISTS despachos (
 CREATE INDEX IF NOT EXISTS despachos_usuario_id_idx ON despachos(usuario_id);
 CREATE INDEX IF NOT EXISTS despachos_estado_idx ON despachos(estado);
 
--- ============================================
--- 9. DESPACHO VEHICULOS
--- ============================================
-
 CREATE TABLE IF NOT EXISTS despacho_vehiculos (
     id BIGSERIAL PRIMARY KEY,
     despacho_id BIGINT NOT NULL REFERENCES despachos(id) ON DELETE CASCADE,
@@ -218,7 +191,7 @@ CREATE INDEX IF NOT EXISTS despacho_vehiculos_despacho_id_idx ON despacho_vehicu
 CREATE INDEX IF NOT EXISTS despacho_vehiculos_vehiculo_id_idx ON despacho_vehiculos(vehiculo_id);
 
 -- ============================================
--- 10. MOVIMIENTOS PORTERIA
+-- 8. OPERATIONS - Movimientos Portería
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS movimientos_porteria (
@@ -238,7 +211,7 @@ CREATE INDEX IF NOT EXISTS movimientos_porteria_usuario_id_idx ON movimientos_po
 CREATE INDEX IF NOT EXISTS movimientos_porteria_tipo_idx ON movimientos_porteria(tipo);
 
 -- ============================================
--- 11. RECIBOS
+-- 9. OPERATIONS - Recibos
 -- ============================================
 
 CREATE TABLE IF NOT EXISTS recibos (
@@ -255,7 +228,7 @@ CREATE INDEX IF NOT EXISTS recibos_vehiculo_id_idx ON recibos(vehiculo_id);
 CREATE INDEX IF NOT EXISTS recibos_despacho_id_idx ON recibos(despacho_id);
 
 -- ============================================
--- 12. INITIAL DATA - Roles
+-- 10. INITIAL DATA - Roles
 -- ============================================
 
 INSERT INTO roles (nombre, descripcion, permisos, activo)
@@ -272,3 +245,4 @@ COMMIT;
 
 -- ============================================
 -- DONE - Database setup complete
+-- ============================================

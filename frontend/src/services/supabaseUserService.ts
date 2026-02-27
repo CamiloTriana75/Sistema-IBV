@@ -1,6 +1,6 @@
 ﻿/**
  * Servicio para gestionar usuarios desde Supabase
- * Tabla: users_user (columnas: correo, nombres, apellidos, rol, activo, etc.)
+ * Tabla: usuarios (columnas: correo, nombres, apellidos, rol, activo, etc.)
  */
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -34,20 +34,20 @@ const USER_SEED_MAP: Record<string, { nombres: string; apellidos: string; rol: s
 
 export const supabaseUserService = {
   /**
-   * Obtiene el rol de un usuario por su correo desde la tabla users_user
+   * Obtiene el rol de un usuario por su correo desde la tabla usuarios
    */
   async getUserRole(email: string): Promise<string | null> {
     const $supabase = getSupabase()
 
     try {
       const { data, error } = await $supabase
-        .from('users_user')
+        .from('usuarios')
         .select('rol')
         .eq('correo', email)
         .single()
 
       if (error || !data) {
-        console.log('Usuario no encontrado en users_user, intentando seed:', email)
+        console.log('Usuario no encontrado en usuarios, intentando seed:', email)
         // Intentar crear el usuario si estÃ¡ en el mapa de seed
         const seeded = await supabaseUserService.ensureUserExists(email)
         return seeded ? seeded.rol : null
@@ -55,7 +55,7 @@ export const supabaseUserService = {
 
       return data.rol
     } catch (err) {
-      console.log('Error consultando users_user:', err)
+      console.log('Error consultando usuarios:', err)
       return null
     }
   },
@@ -68,7 +68,7 @@ export const supabaseUserService = {
 
     try {
       const { data, error } = await $supabase
-        .from('users_user')
+        .from('usuarios')
         .select('*')
         .eq('correo', email)
         .single()
@@ -91,7 +91,7 @@ export const supabaseUserService = {
     const $supabase = getSupabase()
 
     const { data, error } = await $supabase
-      .from('users_user')
+      .from('usuarios')
       .select('*')
       .order('fecha_registro', { ascending: false })
 
@@ -104,7 +104,7 @@ export const supabaseUserService = {
   },
 
   /**
-   * Crea un nuevo usuario en users_user
+   * Crea un nuevo usuario en usuarios
    */
   async createUser(userData: {
     correo: string
@@ -116,7 +116,7 @@ export const supabaseUserService = {
     const $supabase = getSupabase()
 
     const { data, error } = await $supabase
-      .from('users_user')
+      .from('usuarios')
       .insert({
         correo: userData.correo,
         nombres: userData.nombres,
@@ -150,7 +150,7 @@ export const supabaseUserService = {
     const $supabase = getSupabase()
 
     const { data, error } = await $supabase
-      .from('users_user')
+      .from('usuarios')
       .update(updates)
       .eq('id', id)
       .select()
@@ -171,7 +171,7 @@ export const supabaseUserService = {
     const $supabase = getSupabase()
 
     const { error } = await $supabase
-      .from('users_user')
+      .from('usuarios')
       .delete()
       .eq('id', id)
 
@@ -182,7 +182,7 @@ export const supabaseUserService = {
   },
 
   /**
-   * Asegura que un usuario de Supabase Auth exista en la tabla users_user
+   * Asegura que un usuario de Supabase Auth exista en la tabla usuarios
    * Si no existe y estÃ¡ en el mapa de seed, lo crea automÃ¡ticamente
    */
   async ensureUserExists(email: string): Promise<SupabaseUser | null> {
@@ -190,7 +190,7 @@ export const supabaseUserService = {
 
     // Verificar si ya existe
     const { data: existing } = await $supabase
-      .from('users_user')
+      .from('usuarios')
       .select('*')
       .eq('correo', email)
       .single()
@@ -203,7 +203,7 @@ export const supabaseUserService = {
 
     // Crear el usuario
     const { data: created, error } = await $supabase
-      .from('users_user')
+      .from('usuarios')
       .insert({
         correo: email,
         nombres: seedInfo.nombres,
