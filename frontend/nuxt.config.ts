@@ -4,6 +4,12 @@ export default defineNuxtConfig({
   devtools: { enabled: true },
   modules: ['@nuxtjs/tailwindcss', '@pinia/nuxt'],
 
+  nitro: {
+    prerender: {
+      crawlLinks: true,
+    },
+  },
+
   app: {
     head: {
       title: 'Sistema IBV - Inventario y Despacho de Vehículos',

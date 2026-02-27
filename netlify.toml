@@ -1,7 +1,7 @@
 [build]
   base = "frontend"
-  command = "npm run build"
-  publish = ".output/public"
+  command = "npm run build:netlify"
+  publish = "dist"
 
 [build.environment]
   NODE_VERSION = "20"
