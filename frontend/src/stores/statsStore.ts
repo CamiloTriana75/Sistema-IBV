@@ -132,23 +132,45 @@ export const useStatsStore = defineStore('stats', () => {
   ])
 
   // ──────────────────────────────────────────────
-  // Tendencia semanal (mock últimos 7 días)
+  // Tendencia semanal (últimos 7 días)
   // ──────────────────────────────────────────────
-  const weekDays = computed(() => {
-    const days = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']
-    const today = new Date().getDay()
-    // Rotar para que HOY sea el último
-    const rotated = [...days.slice(today), ...days.slice(0, today)]
-    return rotated.map((label, i) => ({
-      label,
-      values: [
-        // Recibidos (mock creciente)
-        Math.floor(3 + Math.random() * 12 + i * 0.5),
-        // Despachados (mock algo menor)
-        Math.floor(2 + Math.random() * 8 + i * 0.3),
-      ],
-    }))
-  })
+  const buildTrend = (days: number) => {
+    const endDate = new Date()
+    endDate.setHours(0, 0, 0, 0)
+    const startDate = new Date(endDate)
+    startDate.setDate(endDate.getDate() - (days - 1))
+
+    const receivedCounts = new Map<string, number>()
+    const dispatchedCounts = new Map<string, number>()
+
+    vehiculoStore.vehiculos.forEach((v) => {
+      if (v.fechaRecepcion) {
+        const key = new Date(v.fechaRecepcion).toISOString().slice(0, 10)
+        receivedCounts.set(key, (receivedCounts.get(key) || 0) + 1)
+      }
+      if (v.fechaDespacho) {
+        const key = new Date(v.fechaDespacho).toISOString().slice(0, 10)
+        dispatchedCounts.set(key, (dispatchedCounts.get(key) || 0) + 1)
+      }
+    })
+
+    const dayLabels = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
+    const list = [] as { label: string; values: [number, number] }[]
+
+    for (let i = 0; i < days; i += 1) {
+      const d = new Date(startDate)
+      d.setDate(startDate.getDate() + i)
+      const key = d.toISOString().slice(0, 10)
+      list.push({
+        label: dayLabels[d.getDay()],
+        values: [receivedCounts.get(key) || 0, dispatchedCounts.get(key) || 0],
+      })
+    }
+
+    return list
+  }
+
+  const weekDays = computed(() => buildTrend(7))
 
   const weekSeries = [
     { label: 'Recibidos', color: '#38bdf8' },
@@ -247,25 +269,15 @@ export const useStatsStore = defineStore('stats', () => {
   // Tendencia diaria (últimos 14 días)
   // ──────────────────────────────────────────────
   const dailyTrend = computed(() => {
-    const result = []
-    const baseRec = Math.max(2, Math.floor(vehiculoStore.total / 5))
-    const baseDesp = Math.max(1, Math.floor(vehiculoStore.despachados / 3))
-    for (let i = 13; i >= 0; i--) {
+    const rows = buildTrend(14)
+    return rows.map((row, index) => {
       const date = new Date()
-      date.setDate(date.getDate() - i)
-      const seed = Math.sin(i * 12.9898 + 78.233) * 43758.5453
-      const r1 = seed - Math.floor(seed)
-      const seed2 = Math.sin((i + 5) * 12.9898 + 78.233) * 43758.5453
-      const r2 = seed2 - Math.floor(seed2)
-      result.push({
+      date.setDate(date.getDate() - (rows.length - 1 - index))
+      return {
         label: date.toLocaleDateString('es-VE', { day: '2-digit', month: 'short' }),
-        values: [
-          Math.max(0, Math.floor(baseRec + Math.sin(i * 0.8) * 3 + r1 * 2)),
-          Math.max(0, Math.floor(baseDesp + Math.cos(i * 0.6) * 2 + r2 * 1.5)),
-        ],
-      })
-    }
-    return result
+        values: row.values,
+      }
+    })
   })
 
   const dailySeries = [

@@ -23,11 +23,20 @@ export const useAuthStore = defineStore('auth', () => {
   const { $supabase } = useNuxtApp()
   const supabase = $supabase as SupabaseClient
   const isClient = typeof window !== 'undefined'
+  
+  // Limpiar tokens antiguos si existen
+  if (isClient) {
+    const oldToken = localStorage.getItem('auth_token')
+    if (oldToken) {
+      localStorage.removeItem('auth_token')
+      console.log('[auth] Limpiando token antiguo del localStorage')
+    }
+  }
+  
   const user = ref<AuthUser | null>(
     isClient ? JSON.parse(localStorage.getItem('auth_user') || 'null') : null
   )
-  const token = ref(isClient ? localStorage.getItem('auth_token') || '' : '')
-  const isAuthenticated = computed(() => !!token.value)
+  const isAuthenticated = computed(() => !!user.value)
 
   /**
    * Obtiene el rol del usuario desde múltiples fuentes:
@@ -74,10 +83,7 @@ export const useAuthStore = defineStore('auth', () => {
       throw new Error(error.message)
     }
 
-    token.value = data.session?.access_token || ''
-    if (typeof window !== 'undefined' && token.value) {
-      localStorage.setItem('auth_token', token.value)
-    }
+    // Supabase guarda automáticamente la sesión (access_token + refresh_token) en localStorage
 
     // Obtener el rol usando múltiples fuentes
     const role = await getRoleForUser(email, data.user)
@@ -107,10 +113,9 @@ export const useAuthStore = defineStore('auth', () => {
   const logout = async () => {
     await supabase.auth.signOut()
     user.value = null
-    token.value = ''
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('auth_token')
       localStorage.removeItem('auth_user')
+      // Supabase limpia automáticamente sus tokens
     }
   }
 
@@ -124,12 +129,46 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const restoreSession = async () => {
+    try {
+      const { data } = await $supabase.auth.getSession()
+      const session = data?.session
+      if (!session) return false
+
+      // Supabase maneja automáticamente la persistencia de tokens
+
+      const email = session.user?.email || ''
+      const role = email ? await getRoleForUser(email, session.user) : 'cliente'
+      const profile = email ? await supabaseUserService.getUserProfile(email) : null
+
+      user.value = {
+        id: session.user?.id || '',
+        name:
+          profile ? `${profile.nombres} ${profile.apellidos}`.trim() :
+          (session.user?.user_metadata?.name as string | undefined) ||
+          email.split('@')[0] ||
+          'Usuario',
+        email,
+        role,
+      }
+
+      if (isClient) {
+        localStorage.setItem('auth_user', JSON.stringify(user.value))
+      }
+
+      return true
+    } catch (err) {
+      console.error('[restoreSession] Error:', err)
+      return false
+    }
+  }
+
   return {
     user,
-    token,
     isAuthenticated,
     login,
     logout,
     loadUser,
+    restoreSession,
   }
 })

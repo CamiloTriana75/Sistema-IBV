@@ -2,6 +2,16 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
+/**
+ * Store central del ciclo de vida de cada vehículo en el sistema IBV.
+ *
+ * Flujo: Recepción (VIN escaneado) → Impronta → Inventario → Despacho
+ *
+ * Un vehículo NO puede despacharse si:
+ * - No tiene impronta completada
+ * - No tiene inventario aprobado
+ */
+
 export type EstadoVehiculo =
   | 'recibido'
   | 'impronta_pendiente'
@@ -13,6 +23,7 @@ export type EstadoVehiculo =
 
 export interface VehiculoPipeline {
   id: string
+  bin?: string
   vin: string
   placa: string
   marca: string
@@ -22,12 +33,15 @@ export interface VehiculoPipeline {
   cliente: string
   contenedorId?: string
   contenedorCodigo?: string
+  // Etapas del pipeline
   fechaRecepcion: string
   horaRecepcion: string
+  // Impronta
   improntaId?: string
   improntaFolio?: string
   improntaCompletada: boolean
   fechaImpronta?: string
+  // Inventario
   inventarioCompletado: boolean
   inventarioAprobado: boolean
   inventarioFecha?: string
@@ -39,107 +53,196 @@ export interface VehiculoPipeline {
     na: number
     nota?: string
   }
+  // Despacho
   despachado: boolean
   fechaDespacho?: string
   horaDespacho?: string
   lotDespacho?: string
   despachador?: string
+  // Estado calculado
   estado: EstadoVehiculo
 }
 
-function mapEstadoVehiculos(estadoDB: string): EstadoVehiculo {
-  const map: Record<string, EstadoVehiculo> = {
-    recibido: 'recibido',
-    en_impronta: 'impronta_pendiente',
-    impronta_completada: 'impronta_completada',
-    en_inventario: 'inventario_pendiente',
-    inventario_aprobado: 'inventario_aprobado',
-    listo_despacho: 'listo_despacho',
-    despachado: 'despachado',
-  }
-  return map[estadoDB] || 'recibido'
-}
+const STORAGE_KEY = 'ibv_vehiculos_pipeline'
 
-interface VehiculoRow {
-  id: number
-  bin: string
-  qr_codigo: string
-  color: string | null
-  estado: string
-  fecha_registro: string | null
-  created_at: string | null
-  placa?: string
-  cliente?: string
-  modelo_vehiculo?: { marca: string; modelo: string; anio: number | null } | null
-  modelo?: { marca: string; modelo: string; anio: number | null } | null
-}
+// Datos iniciales: vehículos que ya pasaron por distintas etapas
+const INITIAL_VEHICULOS: VehiculoPipeline[] = [
+  {
+    id: 'vp-1',
+    vin: '1HGBH41JXMN109186',
+    placa: 'ABC-1234',
+    marca: 'Toyota',
+    modelo: 'Corolla',
+    anio: '2024',
+    color: 'Blanco Perla',
+    cliente: 'Distribuidora Caracas',
+    contenedorId: '3',
+    contenedorCodigo: 'CONT-2026-0003',
+    fechaRecepcion: '2026-02-22',
+    horaRecepcion: '09:15',
+    improntaId: '1',
+    improntaFolio: 'IMP-0001',
+    improntaCompletada: true,
+    fechaImpronta: '2026-02-22',
+    inventarioCompletado: true,
+    inventarioAprobado: true,
+    inventarioFecha: '2026-02-22',
+    inventarioInspector: 'Carlos Inspector',
+    inventarioResultado: { totalItems: 30, aprobados: 28, fallas: 0, na: 2 },
+    despachado: false,
+    estado: 'listo_despacho',
+  },
+  {
+    id: 'vp-2',
+    vin: '3VWDX7AJ5BM123456',
+    placa: 'XYZ-5678',
+    marca: 'Chevrolet',
+    modelo: 'Spark',
+    anio: '2023',
+    color: 'Rojo',
+    cliente: 'AutoVentas Norte',
+    contenedorId: '3',
+    contenedorCodigo: 'CONT-2026-0003',
+    fechaRecepcion: '2026-02-22',
+    horaRecepcion: '09:20',
+    improntaId: '2',
+    improntaFolio: 'IMP-0002',
+    improntaCompletada: true,
+    fechaImpronta: '2026-02-22',
+    inventarioCompletado: true,
+    inventarioAprobado: true,
+    inventarioFecha: '2026-02-22',
+    inventarioInspector: 'Carlos Inspector',
+    inventarioResultado: {
+      totalItems: 30,
+      aprobados: 26,
+      fallas: 2,
+      na: 2,
+      nota: 'Rayón en lateral derecho',
+    },
+    despachado: false,
+    estado: 'listo_despacho',
+  },
+  {
+    id: 'vp-3',
+    vin: 'WVWZZZ3CZWE123789',
+    placa: 'DEF-9012',
+    marca: 'Nissan',
+    modelo: 'Versa',
+    anio: '2025',
+    color: 'Plata',
+    cliente: 'Distribuidora Valencia',
+    fechaRecepcion: '2026-02-23',
+    horaRecepcion: '08:00',
+    improntaId: '3',
+    improntaFolio: 'IMP-0003',
+    improntaCompletada: false,
+    inventarioCompletado: false,
+    inventarioAprobado: false,
+    despachado: false,
+    estado: 'impronta_pendiente',
+  },
+  {
+    id: 'vp-4',
+    vin: 'KNDJP3A53H7654321',
+    placa: 'GHI-3456',
+    marca: 'Kia',
+    modelo: 'Rio',
+    anio: '2024',
+    color: 'Negro',
+    cliente: 'Importadora Maracaibo',
+    fechaRecepcion: '2026-02-21',
+    horaRecepcion: '16:45',
+    improntaId: '4',
+    improntaFolio: 'IMP-0004',
+    improntaCompletada: true,
+    fechaImpronta: '2026-02-21',
+    inventarioCompletado: false,
+    inventarioAprobado: false,
+    despachado: false,
+    estado: 'inventario_pendiente',
+  },
+  {
+    id: 'vp-5',
+    vin: 'KMHDN46D09U987654',
+    placa: 'JKL-7890',
+    marca: 'Hyundai',
+    modelo: 'Accent',
+    anio: '2023',
+    color: 'Azul',
+    cliente: 'AutoCenter Barquisimeto',
+    fechaRecepcion: '2026-02-23',
+    horaRecepcion: '10:20',
+    improntaId: '5',
+    improntaFolio: 'IMP-0005',
+    improntaCompletada: true,
+    fechaImpronta: '2026-02-23',
+    inventarioCompletado: false,
+    inventarioAprobado: false,
+    despachado: false,
+    estado: 'inventario_pendiente',
+  },
+  // Vehículo ya despachado
+  {
+    id: 'vp-6',
+    vin: '1FADP3F29JL234567',
+    placa: 'MNO-4567',
+    marca: 'Ford',
+    modelo: 'Explorer',
+    anio: '2025',
+    color: 'Blanco Oxford',
+    cliente: 'Concesionaria Capital',
+    contenedorId: '3',
+    contenedorCodigo: 'CONT-2026-0003',
+    fechaRecepcion: '2026-02-20',
+    horaRecepcion: '14:00',
+    improntaCompletada: true,
+    fechaImpronta: '2026-02-20',
+    inventarioCompletado: true,
+    inventarioAprobado: true,
+    inventarioFecha: '2026-02-21',
+    inventarioInspector: 'Carlos Inspector',
+    inventarioResultado: { totalItems: 30, aprobados: 30, fallas: 0, na: 0 },
+    despachado: true,
+    fechaDespacho: '2026-02-22',
+    horaDespacho: '15:30',
+    lotDespacho: 'LT-2026-0001',
+    despachador: 'Luis Despachador',
+    estado: 'despachado',
+  },
+]
 
-function mapRowToVehiculo(row: VehiculoRow): VehiculoPipeline {
-  const modelo = row.modelo_vehiculo || row.modelo || null
-  return {
-    id: String(row.id),
-    vin: row.bin,
-    placa: row.placa || '',
-    marca: modelo?.marca || '',
-    modelo: modelo?.modelo || '',
-    anio: modelo?.anio ? String(modelo.anio) : '',
-    color: row.color || '',
-    cliente: row.cliente || '',
-    contenedorId: undefined,
-    contenedorCodigo: undefined,
-    fechaRecepcion: row.fecha_registro?.split('T')[0] || '',
-    horaRecepcion: '',
-    improntaId: undefined,
-    improntaFolio: undefined,
-    improntaCompletada:
-      row.estado === 'impronta_completada' ||
-      row.estado === 'listo_despacho' ||
-      row.estado === 'despachado',
-    fechaImpronta: undefined,
-    inventarioCompletado:
-      row.estado === 'inventario_aprobado' ||
-      row.estado === 'listo_despacho' ||
-      row.estado === 'despachado',
-    inventarioAprobado: row.estado === 'listo_despacho' || row.estado === 'despachado',
-    inventarioFecha: undefined,
-    inventarioInspector: undefined,
-    inventarioResultado: undefined,
-    despachado: row.estado === 'despachado',
-    fechaDespacho: undefined,
-    horaDespacho: undefined,
-    lotDespacho: undefined,
-    despachador: undefined,
-    estado: mapEstadoVehiculos(row.estado),
-  }
+function calcularEstado(v: Omit<VehiculoPipeline, 'estado'>): EstadoVehiculo {
+  if (v.despachado) return 'despachado'
+  if (v.inventarioAprobado && v.improntaCompletada) return 'listo_despacho'
+  if (v.inventarioCompletado) return 'inventario_aprobado'
+  if (v.improntaCompletada) return 'inventario_pendiente'
+  if (v.improntaId) return 'impronta_pendiente'
+  return 'recibido'
 }
 
 export const useVehiculoStore = defineStore('vehiculo', () => {
-  const { $supabase } = useNuxtApp()
-  const supabase = $supabase as SupabaseClient
-
   const vehiculos = ref<VehiculoPipeline[]>([])
-  const loading = ref(false)
-  const error = ref<string | null>(null)
 
-  // ===== Fetch =====
-  const fetchVehiculos = async () => {
-    loading.value = true
-    error.value = null
-    try {
-      const { data, error: err } = await supabase
-        .from('vehiculos')
-        .select('*, modelo_vehiculo:modelos_vehiculo(marca, modelo, anio)')
-        .order('created_at', { ascending: false })
-
-      if (err) throw err
-      vehiculos.value = ((data || []) as VehiculoRow[]).map(mapRowToVehiculo)
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : 'Error al cargar vehículos'
-      error.value = message
-      console.error('Error fetchVehiculos:', err)
-    } finally {
-      loading.value = false
+  const init = () => {
+    if (typeof window === 'undefined') return
+    const stored = localStorage.getItem(STORAGE_KEY)
+    if (stored) {
+      try {
+        vehiculos.value = JSON.parse(stored)
+      } catch {
+        vehiculos.value = [...INITIAL_VEHICULOS]
+        persist()
+      }
+    } else {
+      vehiculos.value = JSON.parse(JSON.stringify(INITIAL_VEHICULOS))
+      persist()
     }
+  }
+
+  const persist = () => {
+    if (typeof window === 'undefined') return
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(vehiculos.value))
   }
 
   // === Computados ===
@@ -188,7 +291,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
   }
 
   // === Actions ===
-  const registrarRecepcion = async (data: {
+  const registrarRecepcion = (data: {
     vin: string
     placa?: string
     marca: string
@@ -198,160 +301,346 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     cliente?: string
     contenedorId?: string
     contenedorCodigo?: string
-  }): Promise<VehiculoPipeline> => {
+  }): VehiculoPipeline => {
+    // Check if already registered
     const existing = getByVin(data.vin)
     if (existing) return existing
 
-    const insertData = {
-      bin: data.vin,
-      qr_codigo: data.vin,
-      color: data.color || null,
+    const now = new Date()
+    const v: VehiculoPipeline = {
+      id: `vp-${Date.now()}`,
+      vin: data.vin,
+      placa: data.placa || '',
+      marca: data.marca,
+      modelo: data.modelo,
+      anio: data.anio,
+      color: data.color,
+      cliente: data.cliente || '',
+      contenedorId: data.contenedorId,
+      contenedorCodigo: data.contenedorCodigo,
+      fechaRecepcion: now.toISOString().split('T')[0],
+      horaRecepcion: now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }),
+      improntaCompletada: false,
+      inventarioCompletado: false,
+      inventarioAprobado: false,
+      despachado: false,
       estado: 'recibido',
     }
-
-    const { data: rows, error: err } = await supabase
-      .from('vehiculos')
-      .insert(insertData)
-      .select('*, modelo_vehiculo:modelos_vehiculo(marca, modelo, anio)')
-
-    if (err) throw err
-    if (!rows || rows.length === 0) throw new Error('No se pudo registrar el vehículo')
-
-    const v = mapRowToVehiculo(rows[0] as VehiculoRow)
     vehiculos.value.push(v)
+    persist()
     return v
   }
 
-  const vincularImpronta = async (vin: string, improntaId: string, improntaFolio: string) => {
+  const vincularImpronta = (vin: string, improntaId: string, improntaFolio: string) => {
     const v = getByVin(vin)
-    if (!v) return
-
-    const { error: err } = await supabase
-      .from('vehiculos')
-      .update({ estado: 'en_impronta' })
-      .eq('id', v.id)
-
-    if (err) {
-      console.error('Error vincularImpronta:', err)
-      return
+    if (v) {
+      v.improntaId = improntaId
+      v.improntaFolio = improntaFolio
+      v.estado = calcularEstado(v)
+      persist()
     }
-
-    v.improntaId = improntaId
-    v.improntaFolio = improntaFolio
-    v.estado = 'impronta_pendiente'
   }
 
-  const completarImpronta = async (vin: string) => {
+  const completarImpronta = (vin: string) => {
     const v = getByVin(vin)
-    if (!v) return
-
-    const fechaImpronta = new Date().toISOString().split('T')[0]
-
-    const { error: err } = await supabase
-      .from('vehiculos')
-      .update({ estado: 'impronta_completada' })
-      .eq('id', v.id)
-
-    if (err) {
-      console.error('Error completarImpronta:', err)
-      return
+    if (v) {
+      v.improntaCompletada = true
+      v.fechaImpronta = new Date().toISOString().split('T')[0]
+      v.estado = calcularEstado(v)
+      persist()
     }
-
-    v.improntaCompletada = true
-    v.fechaImpronta = fechaImpronta
-    v.estado = 'impronta_completada'
   }
 
-  const aprobarInventario = async (
+  const aprobarInventario = (
     vin: string,
     resultado: VehiculoPipeline['inventarioResultado'],
     inspector: string
   ) => {
     const v = getByVin(vin)
-    if (!v) return
-
-    const inventarioFecha = new Date().toISOString().split('T')[0]
-
-    const { error: err } = await supabase
-      .from('vehiculos')
-      .update({ estado: 'listo_despacho' })
-      .eq('id', v.id)
-
-    if (err) {
-      console.error('Error aprobarInventario:', err)
-      return
+    if (v) {
+      v.inventarioCompletado = true
+      v.inventarioAprobado = true
+      v.inventarioFecha = new Date().toISOString().split('T')[0]
+      v.inventarioInspector = inspector
+      v.inventarioResultado = resultado
+      v.estado = calcularEstado(v)
+      persist()
     }
-
-    v.inventarioCompletado = true
-    v.inventarioAprobado = true
-    v.inventarioFecha = inventarioFecha
-    v.inventarioInspector = inspector
-    v.inventarioResultado = resultado
-    v.estado = 'listo_despacho'
   }
 
-  const rechazarInventario = async (vin: string, motivo: string) => {
+  const rechazarInventario = (vin: string, motivo: string) => {
     const v = getByVin(vin)
-    if (!v) return
-
-    const inventarioFecha = new Date().toISOString().split('T')[0]
-    const resultado = { totalItems: 0, aprobados: 0, fallas: 0, na: 0, nota: motivo }
-
-    const { error: err } = await supabase
-      .from('vehiculos')
-      .update({ estado: 'en_inventario' })
-      .eq('id', v.id)
-
-    if (err) {
-      console.error('Error rechazarInventario:', err)
-      return
+    if (v) {
+      v.inventarioCompletado = true
+      v.inventarioAprobado = false
+      v.inventarioFecha = new Date().toISOString().split('T')[0]
+      v.inventarioResultado = { totalItems: 0, aprobados: 0, fallas: 0, na: 0, nota: motivo }
+      v.estado = calcularEstado(v)
+      persist()
     }
-
-    v.inventarioCompletado = true
-    v.inventarioAprobado = false
-    v.inventarioFecha = inventarioFecha
-    v.inventarioResultado = resultado
-    v.estado = 'inventario_pendiente'
   }
 
-  const despachar = async (vin: string, lote: string, despachador: string): Promise<boolean> => {
+  const despachar = (vin: string, lote: string, despachador: string): boolean => {
     const check = puedeDespachar(vin)
     if (!check.ok) return false
     const v = getByVin(vin)!
     const now = new Date()
-    const fechaDespacho = now.toISOString().split('T')[0]
-    const horaDespacho = now.toLocaleTimeString('es-VE', {
+    v.despachado = true
+    v.fechaDespacho = now.toISOString().split('T')[0]
+    v.horaDespacho = now.toLocaleTimeString('es-VE', {
       hour: '2-digit',
       minute: '2-digit',
       second: '2-digit',
     })
-
-    const { error: err } = await supabase
-      .from('vehiculos')
-      .update({ estado: 'despachado' })
-      .eq('id', v.id)
-
-    if (err) {
-      console.error('Error despachar:', err)
-      return false
-    }
-
-    v.despachado = true
-    v.fechaDespacho = fechaDespacho
-    v.horaDespacho = horaDespacho
     v.lotDespacho = lote
     v.despachador = despachador
     v.estado = 'despachado'
+    persist()
     return true
   }
 
-  // Init
-  fetchVehiculos()
+  /**
+   * Carga vehículos desde Supabase
+   * Si la carga falla, mantiene los datos locales
+   */
+  const loadFromSupabase = async () => {
+    interface SbUsuario {
+      id: number
+      nombres: string
+      apellidos: string
+    }
+    interface SbImpronta {
+      id: number
+      vehiculo_id: number
+      fecha: string
+      estado: string
+      usuario: SbUsuario[] | SbUsuario | null
+    }
+    interface SbInventario {
+      id: number
+      vehiculo_id: number
+      fecha: string
+      completo: boolean
+      usuario: SbUsuario[] | SbUsuario | null
+    }
+    interface SbDespachoVeh {
+      vehiculo_id: number
+      despacho_id: number
+      fecha_escaneo: string
+    }
+    interface SbDespacho {
+      id: number
+      fecha: string
+      estado: string
+      usuario: SbUsuario[] | SbUsuario | null
+    }
+    interface SbVehiculo {
+      id: number
+      bin: string
+      qr_codigo: string
+      placa: string | null
+      color: string | null
+      estado: string | null
+      fecha_registro: string | null
+      created_at: string | null
+      modelo: { marca: string; modelo: string; anio: number | null; tipo: string | null } | null
+      buque: { nombre: string; identificacion: string } | null
+      usuario_recibe: { id: number; nombres: string; apellidos: string } | null
+    }
+
+    try {
+      const { $supabase } = useNuxtApp()
+      if (!$supabase) {
+        console.warn('[loadFromSupabase] Supabase no disponible')
+        return false
+      }
+
+      const sb = $supabase as SupabaseClient
+
+      const vehiculosQuery = sb
+        .from('vehiculos')
+        .select(
+          `id, bin, qr_codigo, placa, color, estado, fecha_registro, created_at,
+          modelo:modelos_vehiculo(marca, modelo, anio, tipo),
+          buque:buques(nombre, identificacion),
+          usuario_recibe:usuarios(id, nombres, apellidos)`
+        )
+        .order('created_at', { ascending: false })
+
+      const [vehiculosRes, improntasRes, inventariosRes, despachoVehRes, despachosRes] =
+        await Promise.all([
+          vehiculosQuery,
+          sb
+            .from('improntas')
+            .select('id, vehiculo_id, fecha, estado, usuario:usuarios(id, nombres, apellidos)'),
+          sb
+            .from('inventarios')
+            .select('id, vehiculo_id, fecha, completo, usuario:usuarios(id, nombres, apellidos)'),
+          sb.from('despacho_vehiculos').select('vehiculo_id, despacho_id, fecha_escaneo'),
+          sb
+            .from('despachos')
+            .select('id, fecha, estado, usuario:usuarios(id, nombres, apellidos)'),
+        ])
+
+      const { data, error } = vehiculosRes
+
+      if (error) {
+        console.error('[loadFromSupabase] Error from Supabase:', error)
+        return false
+      }
+
+      if (!data || data.length === 0) {
+        console.log('[loadFromSupabase] No vehículos encontrados en BD, usando datos locales')
+        return false
+      }
+
+      const latestByVehiculo = <T extends { vehiculo_id: number; fecha?: string }>(items: T[]) => {
+        const map = new Map<number, T>()
+        for (const item of items) {
+          const current = map.get(item.vehiculo_id)
+          if (!current) {
+            map.set(item.vehiculo_id, item)
+            continue
+          }
+          const currDate = current.fecha ? new Date(current.fecha).getTime() : 0
+          const nextDate = item.fecha ? new Date(item.fecha).getTime() : 0
+          if (nextDate >= currDate) {
+            map.set(item.vehiculo_id, item)
+          }
+        }
+        return map
+      }
+
+      const improntasMap = latestByVehiculo((improntasRes.data || []) as SbImpronta[])
+      const inventariosMap = latestByVehiculo((inventariosRes.data || []) as SbInventario[])
+
+      const despachoVehMap = new Map<number, SbDespachoVeh>()
+      for (const dv of (despachoVehRes.data || []) as SbDespachoVeh[]) {
+        const current = despachoVehMap.get(dv.vehiculo_id)
+        if (!current) {
+          despachoVehMap.set(dv.vehiculo_id, dv)
+          continue
+        }
+        const currDate = new Date(current.fecha_escaneo).getTime()
+        const nextDate = new Date(dv.fecha_escaneo).getTime()
+        if (nextDate >= currDate) {
+          despachoVehMap.set(dv.vehiculo_id, dv)
+        }
+      }
+
+      const despachosMap = new Map<number, SbDespacho>()
+      for (const d of (despachosRes.data || []) as SbDespacho[]) {
+        despachosMap.set(d.id, d)
+      }
+
+      const toEstado = (
+        despachado: boolean,
+        improntaCompletada: boolean,
+        inventarioCompletado: boolean,
+        inventarioAprobado: boolean
+      ): EstadoVehiculo => {
+        if (despachado) return 'despachado'
+        if (inventarioAprobado && improntaCompletada) return 'listo_despacho'
+        if (inventarioAprobado) return 'inventario_aprobado'
+        if (inventarioCompletado || improntaCompletada) return 'inventario_pendiente'
+        if (improntaCompletada) return 'impronta_completada'
+        return 'recibido'
+      }
+
+      const resolveUsuario = (u: SbUsuario[] | SbUsuario | null | undefined): SbUsuario | null => {
+        if (!u) return null
+        return Array.isArray(u) ? (u[0] ?? null) : u
+      }
+
+      // Mapear datos de Supabase a formato local
+      vehiculos.value = (data as unknown as SbVehiculo[]).map((v) => {
+        const impronta = improntasMap.get(v.id)
+        const inventario = inventariosMap.get(v.id)
+        const despachoVeh = despachoVehMap.get(v.id)
+        const despacho = despachoVeh ? despachosMap.get(despachoVeh.despacho_id) : null
+
+        const improntaCompletada =
+          impronta?.estado === 'completada' || impronta?.estado === 'completado'
+        const inventarioCompletado = Boolean(inventario)
+        const inventarioAprobado = inventario?.completo === true
+        const despachado = (v.estado || '').toLowerCase() === 'despachado' || Boolean(despachoVeh)
+
+        const fechaBase = v.fecha_registro || v.created_at
+        const fechaRecepcion = fechaBase ? new Date(fechaBase).toISOString().split('T')[0] : ''
+        const horaRecepcion = fechaBase ? new Date(fechaBase).toLocaleTimeString('es-VE') : ''
+
+        const modelo = v.modelo || { marca: '', modelo: '', anio: null, tipo: null }
+        const usuarioRecibe = v.usuario_recibe
+          ? `${v.usuario_recibe.nombres || ''} ${v.usuario_recibe.apellidos || ''}`.trim()
+          : ''
+
+        const invUsuario = resolveUsuario(inventario?.usuario)
+        const despUsuario = resolveUsuario(despacho?.usuario)
+
+        const estado = toEstado(
+          despachado,
+          Boolean(improntaCompletada),
+          inventarioCompletado,
+          inventarioAprobado
+        )
+
+        return {
+          id: `vp-${v.id}`,
+          bin: v.bin || undefined,
+          // En Supabase se usa bin/qr_codigo como identificador
+          vin: v.bin || v.qr_codigo || '',
+          placa: v.placa || '',
+          marca: modelo.marca || '',
+          modelo: modelo.modelo || '',
+          anio: modelo.anio ? String(modelo.anio) : '',
+          color: v.color || '',
+          cliente: usuarioRecibe || '',
+          contenedorId: v.buque?.identificacion || undefined,
+          contenedorCodigo: v.buque?.nombre || undefined,
+          fechaRecepcion,
+          horaRecepcion,
+          improntaId: impronta?.id ? String(impronta.id) : undefined,
+          improntaFolio: impronta?.id ? `IMP-${impronta.id}` : undefined,
+          improntaCompletada: Boolean(improntaCompletada),
+          fechaImpronta: impronta?.fecha
+            ? new Date(impronta.fecha).toISOString().split('T')[0]
+            : undefined,
+          inventarioCompletado,
+          inventarioAprobado,
+          inventarioFecha: inventario?.fecha
+            ? new Date(inventario.fecha).toISOString().split('T')[0]
+            : undefined,
+          inventarioInspector: invUsuario
+            ? `${invUsuario.nombres || ''} ${invUsuario.apellidos || ''}`.trim()
+            : undefined,
+          despachado,
+          fechaDespacho: despacho?.fecha
+            ? new Date(despacho.fecha).toISOString().split('T')[0]
+            : undefined,
+          horaDespacho: despacho?.fecha
+            ? new Date(despacho.fecha).toLocaleTimeString('es-VE')
+            : undefined,
+          lotDespacho: despacho?.id ? `LT-${String(despacho.id).padStart(4, '0')}` : undefined,
+          despachador: despUsuario
+            ? `${despUsuario.nombres || ''} ${despUsuario.apellidos || ''}`.trim()
+            : undefined,
+          estado,
+        }
+      })
+
+      console.log(`[loadFromSupabase] Cargados ${vehiculos.value.length} vehículos de Supabase`)
+      persist()
+      return true
+    } catch (err: unknown) {
+      console.error('[loadFromSupabase] Error:', err)
+      return false
+    }
+  }
+
+  init()
 
   return {
     vehiculos,
-    loading,
-    error,
     total,
     recibidos,
     conImpronta,
@@ -366,12 +655,13 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     getPendientesInventario,
     getPendientesImpronta,
     puedeDespachar,
-    fetchVehiculos,
     registrarRecepcion,
     vincularImpronta,
     completarImpronta,
     aprobarInventario,
     rechazarInventario,
     despachar,
+    loadFromSupabase,
+    persist,
   }
 })

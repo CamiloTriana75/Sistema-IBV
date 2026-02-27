@@ -188,6 +188,137 @@ COMMENT ON COLUMN usuarios.correo IS
 RAISE NOTICE '✅ Tabla de usuarios creada';
 
 -- ============================================
+-- 3.5 NOTIFICACIONES
+-- ============================================
+
+RAISE NOTICE '';
+RAISE NOTICE '▶ Creando tabla de notificaciones...';
+
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id BIGSERIAL PRIMARY KEY,
+    titulo TEXT NOT NULL,
+    mensaje TEXT NOT NULL,
+    modulo VARCHAR(50) NOT NULL DEFAULT 'general'
+        CHECK (modulo IN ('admin', 'porteria', 'recibidor', 'inventario', 'despachador', 'general')),
+    recipient_user_id BIGINT REFERENCES usuarios(id) ON DELETE SET NULL,
+    created_by_user_id BIGINT REFERENCES usuarios(id) ON DELETE SET NULL,
+    created_by_role VARCHAR(50) NOT NULL DEFAULT 'sistema',
+    action_url TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    leida_en TIMESTAMPTZ NULL,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS notificaciones_recipient_user_id_idx
+    ON notificaciones(recipient_user_id);
+CREATE INDEX IF NOT EXISTS notificaciones_modulo_idx
+    ON notificaciones(modulo);
+CREATE INDEX IF NOT EXISTS notificaciones_leida_en_idx
+    ON notificaciones(leida_en);
+CREATE INDEX IF NOT EXISTS notificaciones_created_at_idx
+    ON notificaciones(created_at);
+
+COMMENT ON TABLE notificaciones IS
+    'Notificaciones del sistema para usuarios';
+COMMENT ON COLUMN notificaciones.modulo IS
+    'Modulo origen de la notificacion (admin, porteria, recibidor, inventario, despachador, general)';
+
+RAISE NOTICE '✅ Tabla de notificaciones creada';
+
+-- ============================================
+-- 3b. AUDITORÍA Y CONTROL ADMINISTRATIVO
+-- ============================================
+
+RAISE NOTICE '';
+RAISE NOTICE '▶ Creando tablas de auditoría y control...';
+
+-- Registro de auditoría de cambios
+CREATE TABLE IF NOT EXISTS auditoria_vehiculos (
+    id BIGSERIAL PRIMARY KEY,
+    vehiculo_id BIGINT NOT NULL,
+    cambiado_por_usuario_id BIGINT REFERENCES usuarios(id) ON DELETE SET NULL,
+    cambiado_por_rol VARCHAR(50) NOT NULL,
+    tipo_accion VARCHAR(50) NOT NULL
+        CHECK (tipo_accion IN ('cambio_estado', 'anulacion_admin', 'desbloqueo_manual', 'escalacion', 'nota_agregada')),
+    estado_anterior JSONB NOT NULL DEFAULT '{}'::jsonb,
+    estado_nuevo JSONB NOT NULL DEFAULT '{}'::jsonb,
+    razon TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    creada_en TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS auditoria_vehiculos_vehiculo_id_idx
+    ON auditoria_vehiculos(vehiculo_id);
+CREATE INDEX IF NOT EXISTS auditoria_vehiculos_cambiado_por_usuario_id_idx
+    ON auditoria_vehiculos(cambiado_por_usuario_id);
+CREATE INDEX IF NOT EXISTS auditoria_vehiculos_tipo_accion_idx
+    ON auditoria_vehiculos(tipo_accion);
+CREATE INDEX IF NOT EXISTS auditoria_vehiculos_creada_en_idx
+    ON auditoria_vehiculos(creada_en);
+
+COMMENT ON TABLE auditoria_vehiculos IS
+    'Registro de auditoría de todos los cambios en vehículos (cambios de estado, acciones admin, etc)';
+
+-- Bloqueos de vehículos
+CREATE TABLE IF NOT EXISTS bloqueos_vehiculos (
+    id BIGSERIAL PRIMARY KEY,
+    vehiculo_id BIGINT NOT NULL,
+    bloqueado_por_usuario_id BIGINT REFERENCES usuarios(id) ON DELETE SET NULL,
+    bloqueado_por_rol VARCHAR(50) NOT NULL,
+    razon VARCHAR(100) NOT NULL
+        CHECK (razon IN ('bloqueada_en_estado', 'esperando_revision_manual', 'escalacion_pendiente', 'mantenimiento', 'otra')),
+    descripcion TEXT NOT NULL,
+    bloqueado_en TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    desbloqueado_en TIMESTAMPTZ NULL,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS bloqueos_vehiculos_vehiculo_id_idx
+    ON bloqueos_vehiculos(vehiculo_id);
+CREATE INDEX IF NOT EXISTS bloqueos_vehiculos_razon_idx
+    ON bloqueos_vehiculos(razon);
+CREATE INDEX IF NOT EXISTS bloqueos_vehiculos_bloqueado_en_idx
+    ON bloqueos_vehiculos(bloqueado_en);
+
+COMMENT ON TABLE bloqueos_vehiculos IS
+    'Bloqueos de vehículos para excepciones e intervención manual';
+
+-- Excepciones y anomalías
+CREATE TABLE IF NOT EXISTS excepciones_vehiculos (
+    id BIGSERIAL PRIMARY KEY,
+    vehiculo_id BIGINT NOT NULL,
+    tipo_excepcion VARCHAR(100) NOT NULL
+        CHECK (tipo_excepcion IN ('bloqueada_en_estado', 'retrasada_mas_de_3_dias', 'documento_faltante', 'problema_calidad', 'otra')),
+    severidad VARCHAR(20) NOT NULL DEFAULT 'media'
+        CHECK (severidad IN ('baja', 'media', 'alta', 'critica')),
+    descripcion TEXT NOT NULL,
+    asignado_a_usuario_id BIGINT REFERENCES usuarios(id) ON DELETE SET NULL,
+    estado VARCHAR(20) NOT NULL DEFAULT 'abierta'
+        CHECK (estado IN ('abierta', 'en_progreso', 'resuelta', 'escalada')),
+    creada_en TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    resuelta_en TIMESTAMPTZ NULL,
+    resuelta_por_usuario_id BIGINT REFERENCES usuarios(id) ON DELETE SET NULL,
+    notas_resolucion TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS excepciones_vehiculos_vehiculo_id_idx
+    ON excepciones_vehiculos(vehiculo_id);
+CREATE INDEX IF NOT EXISTS excepciones_vehiculos_tipo_excepcion_idx
+    ON excepciones_vehiculos(tipo_excepcion);
+CREATE INDEX IF NOT EXISTS excepciones_vehiculos_severidad_idx
+    ON excepciones_vehiculos(severidad);
+CREATE INDEX IF NOT EXISTS excepciones_vehiculos_estado_idx
+    ON excepciones_vehiculos(estado);
+CREATE INDEX IF NOT EXISTS excepciones_vehiculos_asignado_a_idx
+    ON excepciones_vehiculos(asignado_a_usuario_id);
+
+COMMENT ON TABLE excepciones_vehiculos IS
+    'Excepciones y anomalías en el flujo de vehículos requieren revisión manual';
+
+RAISE NOTICE '✅ Tablas de auditoría y control creadas';
+
+-- ============================================
 -- 4. RELACIONES MANY-TO-MANY DE USUARIOS
 -- ============================================
 
