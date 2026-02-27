@@ -1,12 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
-import { useVehiculoStore, type VehiculoPipeline } from '~/stores/vehiculoStore'
-import { useAuthStore } from '~/stores/auth'
+import { useInventarioStore, type InventarioVehiculo } from '~/stores/inventarioStore'
 
 definePageMeta({ layout: 'admin' })
 
-const vehiculoStore = useVehiculoStore()
-const authStore = useAuthStore()
+const vehiculoStore = useInventarioStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -16,7 +14,8 @@ const vehicleSearch = ref('')
 const selectedVin = ref<string | null>(null)
 
 // Initialize from query param ?vin=
-onMounted(() => {
+onMounted(async () => {
+  await vehiculoStore.load()
   const vinParam = route.query.vin as string
   if (vinParam) {
     const v = vehiculoStore.getByVin(vinParam)
@@ -67,7 +66,7 @@ const vehiculoActual = computed(() => {
     inventarioAprobado: false,
     despachado: false,
     estado: 'recibido' as const,
-  } as VehiculoPipeline
+  } as InventarioVehiculo
 })
 
 const seleccionarVehiculo = (v: VehiculoPipeline) => {
@@ -275,6 +274,30 @@ const mostrarToast = (tipo: 'ok' | 'error', mensaje: string) => {
   }, 3000)
 }
 
+const buildChecklistJson = (resultado: {
+  totalItems: number
+  aprobados: number
+  fallas: number
+  na: number
+  nota?: string
+}) => {
+  return {
+    resumen: resultado,
+    categorias: categorias.map((cat) => ({
+      id: cat.id,
+      nombre: cat.nombre,
+      descripcion: cat.descripcion,
+      items: cat.items.map((item) => ({
+        id: item.id,
+        nombre: item.nombre,
+        descripcion: item.descripcion,
+        estado: item.estado,
+        nota: item.nota || '',
+      })),
+    })),
+  }
+}
+
 const aprobar = async () => {
   if (!puedeAprobar.value) return
   const v = vehiculoActual.value
@@ -288,9 +311,14 @@ const aprobar = async () => {
     nota: notaInspector.value || undefined,
   }
   const inspector = authStore.user?.name || 'Inspector'
-  await vehiculoStore.aprobarInventario(v.vin, resultado, inspector)
-  mostrarToast('ok', `Inventario aprobado — ${v.marca} ${v.modelo} listo para despacho`)
-  setTimeout(() => router.push('/inventario'), 1500)
+  try {
+    await vehiculoStore.aprobarInventario(v.vin, resultado, inspector)
+    mostrarToast('ok', `Inventario aprobado — ${v.marca} ${v.modelo} listo para despacho`)
+    setTimeout(() => router.push('/inventario'), 1500)
+  } catch (err) {
+    console.error('Error aprobando inventario:', err)
+    mostrarToast('error', 'No se pudo guardar el inventario')
+  }
 }
 
 const rechazar = () => {
@@ -300,7 +328,14 @@ const rechazar = () => {
 const confirmarRechazo = async () => {
   const v = vehiculoActual.value
   if (v && v.vin && v.vin !== '—') {
-    await vehiculoStore.rechazarInventario(v.vin, motivoRechazo.value)
+    try {
+      await vehiculoStore.rechazarInventario(v.vin, motivoRechazo.value)
+    } catch (err) {
+      console.error('Error rechazando inventario:', err)
+      mostrarToast('error', 'No se pudo guardar el rechazo')
+      showModalRechazo.value = false
+      return
+    }
   }
   showModalRechazo.value = false
   mostrarToast('error', 'Inventario rechazado')
