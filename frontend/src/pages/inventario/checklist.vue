@@ -311,7 +311,6 @@ const aprobar = async () => {
     nota: notaInspector.value || undefined,
   }
   try {
-    const inspector = authStore.user?.name || 'Inspector'
     const checklistJson = buildChecklistJson(resultado)
     await vehiculoStore.aprobarInventario(v.vin, resultado, checklistJson)
     mostrarToast('ok', `Inventario aprobado — ${v.marca} ${v.modelo} listo para despacho`)

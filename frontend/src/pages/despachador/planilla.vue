@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useVehiculoStore } from '~/stores/vehiculoStore'
+import { useDespachadorStore } from '~/stores/despachadorStore'
 import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'blank' })
 
 const route = useRoute()
-const vehiculoStore = useVehiculoStore()
+const despachadorStore = useDespachadorStore()
 const authStore = useAuthStore()
 
 const loteNumero = (route.query.lote as string) || `LT-${new Date().getFullYear()}-0000`
@@ -16,13 +16,11 @@ const fechaHoy = new Date().toLocaleDateString('es-VE', {
   year: 'numeric',
 })
 const horaActual = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })
-const despachadorNombre = authStore.user?.name || 'Despachador'
+const despachadorNombre = authStore.user?.nombre || authStore.user?.name || 'Despachador'
 
-// Get vehicles dispatched in this lot (or all dispatched if no specific lot)
+// Get vehicles dispatched in this lot
 const vehiculosDespachados = computed(() =>
-  vehiculoStore.vehiculos.filter(
-    (v) => v.despachado && (v.lotDespacho === loteNumero || !route.query.lote)
-  )
+  despachadorStore.vehiculosDespachados
 )
 
 const clientesUnicos = computed(() => {
@@ -221,7 +219,7 @@ const imprimir = () => window.print()
           <tbody>
             <tr
               v-for="(v, idx) in vehiculosDespachados"
-              :key="v.vin"
+              :key="v.id"
               :class="idx % 2 === 0 ? 'bg-white' : 'bg-gray-50'"
             >
               <td class="py-2.5 px-3 border-b border-gray-100 text-center font-bold text-gray-500">
@@ -230,14 +228,14 @@ const imprimir = () => window.print()
               <td
                 class="py-2.5 px-3 border-b border-gray-100 font-mono text-xs font-bold text-gray-900"
               >
-                {{ v.vin }}
+                {{ v.bin }}
               </td>
               <td class="py-2.5 px-3 border-b border-gray-100 font-medium text-gray-700">
-                {{ v.marca }}
+                {{ v.modelo?.marca || '—' }}
               </td>
-              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.modelo }}</td>
-              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.anio }}</td>
-              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.color }}</td>
+              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.modelo?.modelo || '—' }}</td>
+              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.modelo?.anio || '—' }}</td>
+              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.color || '—' }}</td>
               <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600 text-xs">
                 {{ v.cliente || '—' }}
               </td>
