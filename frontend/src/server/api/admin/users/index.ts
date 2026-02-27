@@ -5,10 +5,7 @@
  */
 import { createClient } from '@supabase/supabase-js'
 
-const getSupabaseAdmin = () => {
-  const supabaseUrl = process.env.SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
-
+const getSupabaseAdmin = (supabaseUrl: string, supabaseServiceKey: string) => {
   if (!supabaseUrl || !supabaseServiceKey) {
     throw createError({
       statusCode: 500,
@@ -25,8 +22,20 @@ const getSupabaseAdmin = () => {
 }
 
 export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
+  const supabaseUrl = config.supabaseUrl
+  const supabaseServiceKey = config.supabaseServiceKey
+  
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('[Admin Users] Missing Supabase config:', { supabaseUrl: !!supabaseUrl, supabaseServiceKey: !!supabaseServiceKey })
+    throw createError({
+      statusCode: 500,
+      statusMessage: 'Supabase configuration missing on server'
+    })
+  }
+  
   const method = getMethod(event)
-  const $supabaseAdmin = getSupabaseAdmin()
+  const $supabaseAdmin = getSupabaseAdmin(supabaseUrl, supabaseServiceKey)
 
   try {
     // ============================================
