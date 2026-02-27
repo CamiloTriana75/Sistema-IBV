@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface DañoZona {
   zona: string
@@ -10,7 +11,6 @@ export interface DañoZona {
 export interface Impronta {
   id: string
   folio: string
-  // Datos del vehículo
   vin: string
   placa: string
   marca: string
@@ -20,14 +20,11 @@ export interface Impronta {
   km: string
   cliente: string
   condicion: 'excelente' | 'bueno' | 'regular' | 'dañado' | ''
-  // Daños
   zonasDañadas: string[]
   daños: DañoZona[]
   observaciones: string
-  // Fotos (base64 o placeholder URLs)
   fotos: Record<string, string>
   fotosAdicionales: string[]
-  // Metadata
   estado: 'borrador' | 'completada' | 'revisada'
   creadoPor: string
   fechaCreacion: string
@@ -35,194 +32,37 @@ export interface Impronta {
   fechaActualizacion: string
 }
 
-const STORAGE_KEY = 'ibv_improntas'
-const FOLIO_KEY = 'ibv_impronta_folio_seq'
-
-function getNextFolio(): string {
-  if (typeof window === 'undefined') return 'IMP-0001'
-  const seq = parseInt(localStorage.getItem(FOLIO_KEY) || '0') + 1
-  localStorage.setItem(FOLIO_KEY, String(seq))
-  return `IMP-${String(seq).padStart(4, '0')}`
-}
-
-const INITIAL_IMPRONTAS: Impronta[] = [
-  {
-    id: '1',
-    folio: 'IMP-0001',
-    vin: '1HGBH41JXMN109186',
-    placa: 'ABC-1234',
-    marca: 'Toyota',
-    modelo: 'Corolla',
-    anio: '2024',
-    color: 'Blanco Perla',
-    km: '12',
-    cliente: 'Distribuidora Caracas',
-    condicion: 'bueno',
-    zonasDañadas: ['frontal'],
-    daños: [{ zona: 'Parte Frontal', tipo: 'Rayón superficial', severidad: 'Baja' }],
-    observaciones: 'Rayón leve en parachoques frontal, pintura intacta.',
-    fotos: {
-      frontal: 'https://placehold.co/400x300/dbeafe/3b82f6?text=Frontal',
-      trasera: 'https://placehold.co/400x300/dbeafe/3b82f6?text=Trasera',
-      lateral_izq: 'https://placehold.co/400x300/dbeafe/3b82f6?text=Lat+Izq',
-      lateral_der: 'https://placehold.co/400x300/dbeafe/3b82f6?text=Lat+Der',
-      tablero: 'https://placehold.co/400x300/dbeafe/3b82f6?text=Tablero',
-      odometro: 'https://placehold.co/400x300/dbeafe/3b82f6?text=Odometro',
-    },
-    fotosAdicionales: [],
-    estado: 'completada',
-    creadoPor: 'María Recibidora',
-    fechaCreacion: '2026-02-22',
-    horaCreacion: '09:30',
-    fechaActualizacion: '2026-02-22',
-  },
-  {
-    id: '2',
-    folio: 'IMP-0002',
-    vin: '3VWDX7AJ5BM123456',
-    placa: 'XYZ-5678',
-    marca: 'Chevrolet',
-    modelo: 'Spark',
-    anio: '2023',
-    color: 'Rojo',
-    km: '8543',
-    cliente: 'AutoVentas Norte',
-    condicion: 'regular',
-    zonasDañadas: ['lateral_der', 'trasero'],
-    daños: [
-      { zona: 'Lateral Derecho', tipo: 'Abolladura', severidad: 'Media' },
-      { zona: 'Parte Trasera', tipo: 'Rayón profundo', severidad: 'Alta' },
-    ],
-    observaciones: 'Abolladura en puerta trasera derecha y rayón profundo en bumper trasero.',
-    fotos: {
-      frontal: 'https://placehold.co/400x300/fef3c7/d97706?text=Frontal',
-      trasera: 'https://placehold.co/400x300/fef3c7/d97706?text=Trasera',
-      lateral_der: 'https://placehold.co/400x300/fef3c7/d97706?text=Lat+Der',
-    },
-    fotosAdicionales: ['https://placehold.co/200x150/fee2e2/dc2626?text=Daño+1'],
-    estado: 'completada',
-    creadoPor: 'María Recibidora',
-    fechaCreacion: '2026-02-22',
-    horaCreacion: '14:15',
-    fechaActualizacion: '2026-02-22',
-  },
-  {
-    id: '3',
-    folio: 'IMP-0003',
-    vin: 'WVWZZZ3CZWE123789',
-    placa: 'DEF-9012',
-    marca: 'Nissan',
-    modelo: 'Versa',
-    anio: '2025',
-    color: 'Plata',
-    km: '0',
-    cliente: 'Distribuidora Valencia',
-    condicion: 'excelente',
-    zonasDañadas: [],
-    daños: [],
-    observaciones: '',
-    fotos: {
-      frontal: 'https://placehold.co/400x300/dcfce7/16a34a?text=Frontal',
-      trasera: 'https://placehold.co/400x300/dcfce7/16a34a?text=Trasera',
-    },
-    fotosAdicionales: [],
-    estado: 'borrador',
-    creadoPor: 'María Recibidora',
-    fechaCreacion: '2026-02-23',
-    horaCreacion: '08:00',
-    fechaActualizacion: '2026-02-23',
-  },
-  {
-    id: '4',
-    folio: 'IMP-0004',
-    vin: 'KNDJP3A53H7654321',
-    placa: 'GHI-3456',
-    marca: 'Kia',
-    modelo: 'Rio',
-    anio: '2024',
-    color: 'Negro',
-    km: '340',
-    cliente: 'Importadora Maracaibo',
-    condicion: 'bueno',
-    zonasDañadas: ['techo'],
-    daños: [{ zona: 'Techo', tipo: 'Mancha de pintura', severidad: 'Baja' }],
-    observaciones: 'Pequeña mancha de pintura industrial en el techo.',
-    fotos: {
-      frontal: 'https://placehold.co/400x300/e0e7ff/4f46e5?text=Frontal',
-      trasera: 'https://placehold.co/400x300/e0e7ff/4f46e5?text=Trasera',
-      lateral_izq: 'https://placehold.co/400x300/e0e7ff/4f46e5?text=Lat+Izq',
-      lateral_der: 'https://placehold.co/400x300/e0e7ff/4f46e5?text=Lat+Der',
-      tablero: 'https://placehold.co/400x300/e0e7ff/4f46e5?text=Tablero',
-      odometro: 'https://placehold.co/400x300/e0e7ff/4f46e5?text=Odometro',
-    },
-    fotosAdicionales: [],
-    estado: 'revisada',
-    creadoPor: 'María Recibidora',
-    fechaCreacion: '2026-02-21',
-    horaCreacion: '16:45',
-    fechaActualizacion: '2026-02-22',
-  },
-  {
-    id: '5',
-    folio: 'IMP-0005',
-    vin: 'KMHDN46D09U987654',
-    placa: 'JKL-7890',
-    marca: 'Hyundai',
-    modelo: 'Accent',
-    anio: '2023',
-    color: 'Azul',
-    km: '15200',
-    cliente: 'AutoCenter Barquisimeto',
-    condicion: 'dañado',
-    zonasDañadas: ['frontal', 'lateral_izq', 'lateral_der'],
-    daños: [
-      { zona: 'Parte Frontal', tipo: 'Parachoques roto', severidad: 'Alta' },
-      { zona: 'Lateral Izquierdo', tipo: 'Rayones múltiples', severidad: 'Media' },
-      { zona: 'Lateral Derecho', tipo: 'Abolladura menor', severidad: 'Baja' },
-    ],
-    observaciones: 'Vehículo con daños evidentes de transporte. Parachoques frontal fracturado.',
-    fotos: {
-      frontal: 'https://placehold.co/400x300/fee2e2/dc2626?text=Frontal',
-      trasera: 'https://placehold.co/400x300/fee2e2/dc2626?text=Trasera',
-      lateral_izq: 'https://placehold.co/400x300/fee2e2/dc2626?text=Lat+Izq',
-      lateral_der: 'https://placehold.co/400x300/fee2e2/dc2626?text=Lat+Der',
-    },
-    fotosAdicionales: [
-      'https://placehold.co/200x150/fee2e2/dc2626?text=Daño+F',
-      'https://placehold.co/200x150/fee2e2/dc2626?text=Daño+LI',
-    ],
-    estado: 'completada',
-    creadoPor: 'María Recibidora',
-    fechaCreacion: '2026-02-23',
-    horaCreacion: '10:20',
-    fechaActualizacion: '2026-02-23',
-  },
-]
-
-function loadImprontas(): Impronta[] {
-  if (typeof window === 'undefined') return INITIAL_IMPRONTAS
-  const stored = localStorage.getItem(STORAGE_KEY)
-  if (stored) {
-    try {
-      return JSON.parse(stored)
-    } catch {
-      /* fallback */
-    }
-  }
-  // Inicializar folio sequence
-  localStorage.setItem(FOLIO_KEY, '5')
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(INITIAL_IMPRONTAS))
-  return [...INITIAL_IMPRONTAS]
-}
-
-function persistImprontas(list: Impronta[]) {
-  if (typeof window !== 'undefined') {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(list))
+function mapRowToImpronta(row: any): Impronta {
+  return {
+    id: row.id,
+    folio: row.folio,
+    vin: row.vin,
+    placa: row.placa || '',
+    marca: row.marca,
+    modelo: row.modelo,
+    anio: row.anio || '',
+    color: row.color || '',
+    km: row.km || '',
+    cliente: row.cliente || '',
+    condicion: row.condicion || '',
+    zonasDañadas: row.zonas_danadas || [],
+    daños: row.danos || [],
+    observaciones: row.observaciones || '',
+    fotos: row.fotos || {},
+    fotosAdicionales: row.fotos_adicionales || [],
+    estado: row.estado,
+    creadoPor: row.creado_por || '',
+    fechaCreacion: row.fecha_creacion,
+    horaCreacion: row.hora_creacion?.substring(0, 5) || '',
+    fechaActualizacion: row.updated_at?.split('T')[0] || row.fecha_creacion,
   }
 }
 
 export const useImprontaStore = defineStore('impronta', () => {
-  const improntas = ref<Impronta[]>(loadImprontas())
+  const { $supabase } = useNuxtApp()
+  const supabase = $supabase as SupabaseClient
+
+  const improntas = ref<Impronta[]>([])
   const loading = ref(false)
   const error = ref<string | null>(null)
 
@@ -238,6 +78,26 @@ export const useImprontaStore = defineStore('impronta', () => {
     return improntas.value.filter((i) => i.fechaCreacion === today).length
   })
 
+  // ===== Fetch =====
+  const fetchImprontas = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      const { data, error: err } = await supabase
+        .from('improntas_registro')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (err) throw err
+      improntas.value = (data || []).map(mapRowToImpronta)
+    } catch (err: any) {
+      error.value = err.message || 'Error al cargar improntas'
+      console.error('Error fetchImprontas:', err)
+    } finally {
+      loading.value = false
+    }
+  }
+
   const getById = (id: string): Impronta | undefined => {
     return improntas.value.find((i) => i.id === id)
   }
@@ -252,21 +112,38 @@ export const useImprontaStore = defineStore('impronta', () => {
     loading.value = true
     error.value = null
     try {
-      await new Promise((r) => setTimeout(r, 400))
-      const now = new Date()
-      const nueva: Impronta = {
-        ...data,
-        id: String(Date.now()),
-        folio: getNextFolio(),
-        fechaCreacion: now.toISOString().split('T')[0],
-        horaCreacion: now.toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' }),
-        fechaActualizacion: now.toISOString().split('T')[0],
+      const insertData = {
+        vin: data.vin,
+        placa: data.placa,
+        marca: data.marca,
+        modelo: data.modelo,
+        anio: data.anio,
+        color: data.color,
+        km: data.km,
+        cliente: data.cliente,
+        condicion: data.condicion || '',
+        zonas_danadas: data.zonasDañadas,
+        danos: data.daños,
+        observaciones: data.observaciones,
+        fotos: data.fotos,
+        fotos_adicionales: data.fotosAdicionales,
+        estado: data.estado,
+        creado_por: data.creadoPor,
       }
+
+      const { data: rows, error: err } = await supabase
+        .from('improntas_registro')
+        .insert(insertData)
+        .select()
+
+      if (err) throw err
+      if (!rows || rows.length === 0) throw new Error('No se pudo crear la impronta')
+
+      const nueva = mapRowToImpronta(rows[0])
       improntas.value.unshift(nueva)
-      persistImprontas(improntas.value)
       return nueva
-    } catch (err: unknown) {
-      error.value = (err as Error).message || 'Error al crear impronta'
+    } catch (err: any) {
+      error.value = err.message || 'Error al crear impronta'
       throw err
     } finally {
       loading.value = false
@@ -277,18 +154,40 @@ export const useImprontaStore = defineStore('impronta', () => {
     loading.value = true
     error.value = null
     try {
-      await new Promise((r) => setTimeout(r, 300))
+      const updateData: Record<string, any> = {}
+      if (data.vin !== undefined) updateData.vin = data.vin
+      if (data.placa !== undefined) updateData.placa = data.placa
+      if (data.marca !== undefined) updateData.marca = data.marca
+      if (data.modelo !== undefined) updateData.modelo = data.modelo
+      if (data.anio !== undefined) updateData.anio = data.anio
+      if (data.color !== undefined) updateData.color = data.color
+      if (data.km !== undefined) updateData.km = data.km
+      if (data.cliente !== undefined) updateData.cliente = data.cliente
+      if (data.condicion !== undefined) updateData.condicion = data.condicion
+      if (data.zonasDañadas !== undefined) updateData.zonas_danadas = data.zonasDañadas
+      if (data.daños !== undefined) updateData.danos = data.daños
+      if (data.observaciones !== undefined) updateData.observaciones = data.observaciones
+      if (data.fotos !== undefined) updateData.fotos = data.fotos
+      if (data.fotosAdicionales !== undefined) updateData.fotos_adicionales = data.fotosAdicionales
+      if (data.estado !== undefined) updateData.estado = data.estado
+      if (data.creadoPor !== undefined) updateData.creado_por = data.creadoPor
+
+      const { data: rows, error: err } = await supabase
+        .from('improntas_registro')
+        .update(updateData)
+        .eq('id', id)
+        .select()
+
+      if (err) throw err
+      if (!rows || rows.length === 0) throw new Error('Impronta no encontrada')
+
+      const updated = mapRowToImpronta(rows[0])
       const idx = improntas.value.findIndex((i) => i.id === id)
-      if (idx === -1) throw new Error('Impronta no encontrada')
-      improntas.value[idx] = {
-        ...improntas.value[idx],
-        ...data,
-        fechaActualizacion: new Date().toISOString().split('T')[0],
-      }
-      persistImprontas(improntas.value)
-      return improntas.value[idx]
-    } catch (err: unknown) {
-      error.value = (err as Error).message || 'Error al actualizar'
+      if (idx !== -1) improntas.value[idx] = updated
+
+      return updated
+    } catch (err: any) {
+      error.value = err.message || 'Error al actualizar'
       throw err
     } finally {
       loading.value = false
@@ -298,11 +197,15 @@ export const useImprontaStore = defineStore('impronta', () => {
   const eliminar = async (id: string) => {
     loading.value = true
     try {
-      await new Promise((r) => setTimeout(r, 300))
+      const { error: err } = await supabase
+        .from('improntas_registro')
+        .delete()
+        .eq('id', id)
+
+      if (err) throw err
       improntas.value = improntas.value.filter((i) => i.id !== id)
-      persistImprontas(improntas.value)
-    } catch (err: unknown) {
-      error.value = (err as Error).message || 'Error al eliminar'
+    } catch (err: any) {
+      error.value = err.message || 'Error al eliminar'
       throw err
     } finally {
       loading.value = false
@@ -313,6 +216,9 @@ export const useImprontaStore = defineStore('impronta', () => {
     return actualizar(id, { estado: nuevoEstado })
   }
 
+  // Init
+  fetchImprontas()
+
   return {
     improntas,
     loading,
@@ -322,6 +228,7 @@ export const useImprontaStore = defineStore('impronta', () => {
     borradores,
     revisadas,
     hoy,
+    fetchImprontas,
     getById,
     getByFolio,
     crear,

@@ -74,7 +74,7 @@ export const useAuthStore = defineStore('auth', () => {
     // Obtener el rol usando múltiples fuentes
     const role = await getRoleForUser(email, data.user)
 
-    // Obtener perfil de la tabla users_user para el nombre
+    // Obtener perfil de la tabla usuarios para el nombre
     const profile = await supabaseUserService.getUserProfile(email)
 
     user.value = {

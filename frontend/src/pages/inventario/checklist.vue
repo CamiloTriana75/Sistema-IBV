@@ -275,7 +275,7 @@ const mostrarToast = (tipo: 'ok' | 'error', mensaje: string) => {
   }, 3000)
 }
 
-const aprobar = () => {
+const aprobar = async () => {
   if (!puedeAprobar.value) return
   const v = vehiculoActual.value
   if (!v || !v.vin || v.vin === '—') return
@@ -288,7 +288,7 @@ const aprobar = () => {
     nota: notaInspector.value || undefined,
   }
   const inspector = authStore.user?.name || 'Inspector'
-  vehiculoStore.aprobarInventario(v.vin, resultado, inspector)
+  await vehiculoStore.aprobarInventario(v.vin, resultado, inspector)
   mostrarToast('ok', `Inventario aprobado — ${v.marca} ${v.modelo} listo para despacho`)
   setTimeout(() => router.push('/inventario'), 1500)
 }
@@ -297,10 +297,10 @@ const rechazar = () => {
   showModalRechazo.value = true
 }
 
-const confirmarRechazo = () => {
+const confirmarRechazo = async () => {
   const v = vehiculoActual.value
   if (v && v.vin && v.vin !== '—') {
-    vehiculoStore.rechazarInventario(v.vin, motivoRechazo.value)
+    await vehiculoStore.rechazarInventario(v.vin, motivoRechazo.value)
   }
   showModalRechazo.value = false
   mostrarToast('error', 'Inventario rechazado')

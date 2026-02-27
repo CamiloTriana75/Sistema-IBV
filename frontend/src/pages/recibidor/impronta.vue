@@ -2,6 +2,74 @@
 import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useImprontaStore, type DañoZona } from '~/stores/improntaStore'
 
+// ── QR Scanner ──────────────────────────────────────────
+type QrScannerRef = {
+  setError: (msg: string) => void
+  setSuccess: (msg: string) => void
+  reset: () => void
+} | null
+
+const showModalQr = ref(false)
+const scannerImpronta = ref<QrScannerRef>(null)
+
+/**
+ * Intenta parsear el contenido del QR del vehículo.
+ * Formatos soportados:
+ *  1. JSON   → {"vin":"...","marca":"...","modelo":"...","anio":"...","color":"...","placa":"...","km":"...","cliente":"..."}
+ *  2. Pipes  → VIN|MARCA|MODELO|AÑO|COLOR
+ *  3. Solo VIN/código → rellena únicamente el campo VIN
+ */
+const parsearQrVehiculo = (raw: string) => {
+  raw = raw.trim()
+
+  // JSON
+  if (raw.startsWith('{')) {
+    try {
+      const obj = JSON.parse(raw)
+      if (obj.vin)    form.vin    = String(obj.vin)
+      if (obj.placa)  form.placa  = String(obj.placa)
+      if (obj.marca)  form.marca  = String(obj.marca)
+      if (obj.modelo) form.modelo = String(obj.modelo)
+      if (obj.anio)   form.anio   = String(obj.anio)
+      if (obj.color)  form.color  = String(obj.color)
+      if (obj.km)     form.km     = String(obj.km)
+      if (obj.cliente) form.cliente = String(obj.cliente)
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  // Pipe-delimited: VIN|MARCA|MODELO|AÑO|COLOR
+  if (raw.includes('|')) {
+    const parts = raw.split('|').map((s) => s.trim())
+    if (parts[0]) form.vin    = parts[0]
+    if (parts[1]) form.marca  = parts[1]
+    if (parts[2]) form.modelo = parts[2]
+    if (parts[3]) form.anio   = parts[3]
+    if (parts[4]) form.color  = parts[4]
+    if (parts[5]) form.placa  = parts[5]
+    return true
+  }
+
+  // VIN solo
+  form.vin = raw
+  return true
+}
+
+const onScanImpronta = (codigo: string) => {
+  const ok = parsearQrVehiculo(codigo)
+  if (ok) {
+    scannerImpronta.value?.setSuccess('Datos del vehículo cargados')
+    setTimeout(() => {
+      showModalQr.value = false
+    }, 1200)
+    showToast('Datos del vehículo leídos del QR', 'success')
+  } else {
+    scannerImpronta.value?.setError('No se pudo leer el QR. Revisa el formato.')
+  }
+}
+
 definePageMeta({ layout: 'admin' })
 
 const route = useRoute()
@@ -338,6 +406,23 @@ const guardarImpronta = async () => {
         </div>
       </div>
       <div class="flex gap-3">
+        <!-- Botón Escanear QR -->
+        <button
+          type="button"
+          class="inline-flex items-center gap-2 px-4 py-2.5 border border-primary-200 bg-primary-50 text-primary-700 text-sm font-semibold rounded-xl hover:bg-primary-100 transition"
+          @click="showModalQr = true"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+            />
+          </svg>
+          Escanear QR
+        </button>
+
         <NuxtLink
           v-if="isEditing"
           :to="`/recibidor/impronta-print?id=${editingId}`"
@@ -1278,6 +1363,100 @@ const guardarImpronta = async () => {
         </div>
       </div>
     </div>
+
+    <!-- Modal: Escanear QR del Vehículo -->
+    <Transition
+      enter-active-class="transition duration-200 ease-out"
+      enter-from-class="opacity-0"
+      enter-to-class="opacity-100"
+      leave-active-class="transition duration-150 ease-in"
+      leave-from-class="opacity-100"
+      leave-to-class="opacity-0"
+    >
+      <div
+        v-if="showModalQr"
+        class="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+        @click.self="showModalQr = false"
+      >
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden">
+          <!-- Header del modal -->
+          <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <div
+                class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center shrink-0"
+              >
+                <svg
+                  class="w-5 h-5 text-primary-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"
+                  />
+                </svg>
+              </div>
+              <div>
+                <h3 class="text-base font-bold text-gray-900">Escanear QR del Vehículo</h3>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  Apunta la cámara al código QR del vehículo para cargar sus datos
+                </p>
+              </div>
+            </div>
+            <button
+              class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-xl transition"
+              @click="showModalQr = false"
+            >
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
+              </svg>
+            </button>
+          </div>
+
+          <!-- Scanner -->
+          <div class="px-6 py-5">
+            <QrScanner
+              ref="scannerImpronta"
+              placeholder="Código QR del vehículo (IMP-XXXX / JSON)"
+              :hide-result="false"
+              :continuous-scan="false"
+              @scan="onScanImpronta"
+            />
+          </div>
+
+          <!-- Hint -->
+          <div class="px-6 pb-5">
+            <div class="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex gap-3">
+              <svg
+                class="w-4 h-4 text-amber-500 shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
+              </svg>
+              <p class="text-xs text-amber-700">
+                Escanea el QR físico del vehículo. Los datos de marca, modelo, VIN y color se
+                cargarán automáticamente en el formulario.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </Transition>
 
     <!-- Toast -->
     <Transition

@@ -100,11 +100,11 @@ const simularEscaneo = () => {
   onScan(pendientes[0].vin)
 }
 
-const finalizarLote = () => {
+const finalizarLote = async () => {
   // Mark all scanned vehicles as dispatched in the store
   const despachador = authStore.user?.name || 'Despachador'
   for (const v of vehiculosEscaneados.value) {
-    vehiculoStore.despachar(v.vin, loteActual, despachador)
+    await vehiculoStore.despachar(v.vin, loteActual, despachador)
   }
   // Navigate to planilla with lot info
   router.push(`/despachador/planilla?lote=${loteActual}`)
