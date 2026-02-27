@@ -172,7 +172,7 @@ export const supabaseUserService = {
 
   /**
    * Asegura que un usuario de Supabase Auth exista en la tabla usuarios
-   * Si no existe y estÃ¡ en el mapa de seed, lo crea automÃ¡ticamente
+   * Si no existe y está en el mapa de seed, lo crea automáticamente
    */
   async ensureUserExists(email: string): Promise<SupabaseUser | null> {
     const $supabase = getSupabase()

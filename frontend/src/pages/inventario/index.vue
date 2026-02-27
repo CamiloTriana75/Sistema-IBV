@@ -1,11 +1,15 @@
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useVehiculoStore } from '~/stores/vehiculoStore'
+import { ref, onMounted } from 'vue'
+import { useInventarioStore } from '~/stores/inventarioStore'
 
 definePageMeta({ layout: 'admin', middleware: ['auth', 'inventario'] })
 
-const vehiculoStore = useVehiculoStore()
+const vehiculoStore = useInventarioStore()
 const tab = ref<'pendientes' | 'completados'>('pendientes')
+
+onMounted(async () => {
+  await vehiculoStore.load()
+})
 </script>
 
 <template>

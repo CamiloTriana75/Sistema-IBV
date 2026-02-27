@@ -136,7 +136,7 @@ export const supabaseDataService = {
     // Obtener improntas recientes
     let improntasQuery = $supabase
       .from('improntas')
-      .select('id, fecha, estado, usuario:usuarios(id, nombres, apellidos)')
+      .select('id, fecha, estado, usuario:usuarios_user!improntas_usuario_id_fkey(nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
 
@@ -161,7 +161,7 @@ export const supabaseDataService = {
     // Obtener inventarios recientes
     let inventariosQuery = $supabase
       .from('inventarios')
-      .select('id, fecha, completo, usuario:usuarios(id, nombres, apellidos)')
+      .select('id, fecha, completo, usuario:usuarios_user!inventarios_usuario_id_fkey(nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
 
@@ -186,7 +186,7 @@ export const supabaseDataService = {
     // Obtener despachos recientes
     let despachosQuery = $supabase
       .from('despachos')
-      .select('id, fecha, estado, cantidad_vehiculos, usuario:usuarios(id, nombres, apellidos)')
+      .select('id, fecha, estado, cantidad_vehiculos, usuario:usuarios_user!despachos_usuario_id_fkey(nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
 
@@ -211,7 +211,7 @@ export const supabaseDataService = {
     // Obtener movimientos de portería recientes
     let movimientosQuery = $supabase
       .from('movimientos_porteria')
-      .select('id, tipo, persona, fecha, observacion, usuario:usuarios(id, nombres, apellidos)')
+      .select('id, tipo, persona, fecha, observacion, usuario:usuarios_user!movimientos_porteria_usuario_id_fkey(nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
 

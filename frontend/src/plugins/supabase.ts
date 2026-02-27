@@ -1,5 +1,7 @@
 import { createClient } from '@supabase/supabase-js'
 
+let supabase: ReturnType<typeof createClient>
+
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
   
@@ -11,7 +13,7 @@ export default defineNuxtPlugin(() => {
     throw new Error('Configuración de Supabase incompleta')
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  supabase = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {
       persistSession: true,
       autoRefreshToken: true,
@@ -25,3 +27,5 @@ export default defineNuxtPlugin(() => {
     }
   }
 })
+
+export { supabase }
