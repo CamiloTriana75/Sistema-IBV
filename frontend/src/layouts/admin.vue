@@ -178,8 +178,9 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100">
-    <!-- Overlay mobile -->
+  <ClientOnly>
+    <div class="min-h-screen bg-gray-100">
+      <!-- Overlay mobile -->
     <div
       v-if="sidebarOpen"
       class="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -322,4 +323,5 @@ const handleLogout = () => {
       </main>
     </div>
   </div>
+  </ClientOnly>
 </template>

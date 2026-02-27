@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { supabaseDataService } from '~/services/supabaseDataService'
-import { supabaseUserService } from '~/services/supabaseUserService'
 import type {
-  VehicleData,
   DashboardStats,
   ActivityItem,
   WeeklyTrends,
 } from '~/services/supabaseDataService'
-import type { SupabaseUser } from '~/services/supabaseUserService'
 
 definePageMeta({ layout: 'admin', middleware: ['auth', 'admin'] })
 
@@ -18,8 +15,6 @@ const periodo = ref<'hoy' | 'semana' | 'mes'>('semana')
 const loading = ref(true)
 const error = ref('')
 const dashboardStats = ref<DashboardStats | null>(null)
-const vehicles = ref<VehicleData[]>([])
-const users = ref<SupabaseUser[]>([])
 const activities = ref<ActivityItem[]>([])
 const weeklyTrends = ref<WeeklyTrends | null>(null)
 
@@ -168,42 +163,56 @@ const moduleEfficiency = computed(() => {
 })
 
 // Load data
+const getStartIso = (value: 'hoy' | 'semana' | 'mes') => {
+  const now = new Date()
+  const start = new Date(now)
+  const daysBack = value === 'semana' ? 6 : value === 'mes' ? 29 : 0
+  start.setDate(now.getDate() - daysBack)
+  start.setHours(0, 0, 0, 0)
+  return start.toISOString()
+}
+
+const getTrendDays = (value: 'hoy' | 'semana' | 'mes') => {
+  if (value === 'hoy') return 1
+  if (value === 'mes') return 30
+  return 7
+}
+
 const loadDashboard = async () => {
   try {
     loading.value = true
     error.value = ''
-    
-    // Diagnostico de base de datos
-    console.log('[loadDashboard] Llamando diagnóstico...')
-    await supabaseDataService.checkDatabaseHealth()
-    
-    // Asegurar que los usuarios seed existan
-    await supabaseUserService.seedAllUsers()
-    
-    const [statsData, vehiclesData, usersData, activitiesData, weeklyData] = await Promise.all([
-      supabaseDataService.getDashboardStats(),
-      supabaseDataService.getVehicles(),
-      supabaseUserService.getAllUsers(),
-      supabaseDataService.getActivities(5),
-      supabaseDataService.getWeeklyTrends(7),
-    ])
-    
-    console.log('[loadDashboard] Datos cargados:', { statsData, vehiclesCount: vehiclesData.length })
-    
+    const startIso = getStartIso(periodo.value)
+    const trendDays = getTrendDays(periodo.value)
+    const statsData = await supabaseDataService.getDashboardStats(startIso)
     dashboardStats.value = statsData
-    vehicles.value = vehiclesData
-    users.value = usersData
-    activities.value = activitiesData || []
-    weeklyTrends.value = weeklyData
   } catch (e: any) {
     error.value = e.message || 'Error al cargar datos del dashboard'
     console.error('Error loading dashboard:', e)
   } finally {
     loading.value = false
   }
+
+  try {
+    const startIso = getStartIso(periodo.value)
+    const trendDays = getTrendDays(periodo.value)
+    const [activitiesData, weeklyData] = await Promise.all([
+      supabaseDataService.getActivities(5, startIso),
+      supabaseDataService.getWeeklyTrends(trendDays, startIso),
+    ])
+
+    activities.value = activitiesData || []
+    weeklyTrends.value = weeklyData
+  } catch (e: any) {
+    console.error('Error loading secondary dashboard data:', e)
+  }
 }
 
 onMounted(() => {
+  loadDashboard()
+})
+
+watch(periodo, () => {
   loadDashboard()
 })
 
@@ -336,11 +345,11 @@ const iconMap: Record<string, string> = {
           </div>
         </div>
         <div class="flex items-center justify-center gap-1 mt-5 flex-wrap">
-          <template v-for="(stage, i) in pipelineData" :key="stage.label">
+          <template v-for="(stage, index) in pipelineData" :key="stage.label">
             <span :class="['text-xs px-2 py-1 rounded-lg font-medium', stage.light, stage.text]">
               {{ stage.label }} ({{ stage.value }})
             </span>
-            <span v-if="i < pipelineData.length - 1" class="text-gray-300 text-sm">›</span>
+            <span v-if="Number(index) < pipelineData.length - 1" class="text-gray-300 text-sm">›</span>
           </template>
         </div>
       </div>

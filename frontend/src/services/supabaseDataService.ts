@@ -13,6 +13,7 @@ export interface VehicleData {
   id: number
   bin: string
   qr_codigo: string
+  placa: string | null
   buque_id: number | null
   modelo_id: number | null
   color: string | null
@@ -79,16 +80,40 @@ export const supabaseDataService = {
   /**
    * Calcula las estadÃ­sticas del dashboard a partir de los vehÃ­culos
    */
-  async getDashboardStats(): Promise<DashboardStats> {
+  async getDashboardStats(startIso?: string): Promise<DashboardStats> {
     const $supabase = getSupabase()
-    console.log('[getDashboardStats] Iniciando query...')
+    const baseQuery = () => {
+      let query = $supabase.from('vehiculos').select('id', { count: 'exact', head: true })
+      if (startIso) query = query.gte('fecha_registro', startIso)
+      return query
+    }
 
-    // Obtener conteos por estado
-    const { data: vehiculos, error } = await $supabase
-      .from('vehiculos')
-      .select('estado, id')
+    try {
+      const [
+        totalRes,
+        improntaRes,
+        inventarioRes,
+        listosRes,
+        despachadosRes,
+        problemasRes,
+      ] = await Promise.all([
+        baseQuery(),
+        baseQuery().in('estado', ['en_impronta', 'impronta']),
+        baseQuery().in('estado', ['en_inventario', 'inventario']),
+        baseQuery().in('estado', ['listo_despacho', 'listo', 'aprobado']),
+        baseQuery().in('estado', ['despachado', 'entregado']),
+        baseQuery().in('estado', ['problema', 'rechazado', 'daÃ±ado', 'danado']),
+      ])
 
-    if (error) {
+      return {
+        total_vehiculos: totalRes.count || 0,
+        en_impronta: improntaRes.count || 0,
+        en_inventario: inventarioRes.count || 0,
+        listos_despacho: listosRes.count || 0,
+        despachados: despachadosRes.count || 0,
+        problemas_encontrados: problemasRes.count || 0,
+      }
+    } catch (error) {
       console.error('[getDashboardStats] Error from Supabase:', error)
       return {
         total_vehiculos: 0,
@@ -99,51 +124,25 @@ export const supabaseDataService = {
         problemas_encontrados: 0,
       }
     }
-
-    if (!vehiculos) {
-      console.warn('[getDashboardStats] No data returned from query')
-      return {
-        total_vehiculos: 0,
-        en_impronta: 0,
-        en_inventario: 0,
-        listos_despacho: 0,
-        despachados: 0,
-        problemas_encontrados: 0,
-      }
-    }
-
-    console.log('[getDashboardStats] Vehículos encontrados:', vehiculos.length, vehiculos.map(v => v.estado))
-
-    const total = vehiculos.length
-    const counts: Record<string, number> = {}
-    for (const v of vehiculos) {
-      const estado = (v.estado || 'sin_estado').toLowerCase()
-      counts[estado] = (counts[estado] || 0) + 1
-    }
-
-    return {
-      total_vehiculos: total,
-      en_impronta: counts['en_impronta'] || counts['impronta'] || 0,
-      en_inventario: counts['en_inventario'] || counts['inventario'] || 0,
-      listos_despacho: counts['listo_despacho'] || counts['listo'] || counts['aprobado'] || 0,
-      despachados: counts['despachado'] || counts['entregado'] || 0,
-      problemas_encontrados: counts['problema'] || counts['rechazado'] || counts['daÃ±ado'] || counts['danado'] || 0,
-    }
   },
 
   /**
    * Obtiene las actividades recientes combinando mÃºltiples tablas
    */
-  async getActivities(limit: number = 5): Promise<ActivityItem[]> {
+  async getActivities(limit: number = 5, startIso?: string): Promise<ActivityItem[]> {
     const $supabase = getSupabase()
     const activities: ActivityItem[] = []
 
     // Obtener improntas recientes
-    const { data: improntas } = await $supabase
+    let improntasQuery = $supabase
       .from('improntas')
       .select('id, fecha, estado, usuario:usuarios(id, nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
+
+    if (startIso) improntasQuery = improntasQuery.gte('fecha', startIso)
+
+    const { data: improntas } = await improntasQuery
 
     if (improntas) {
       for (const imp of improntas) {
@@ -160,11 +159,15 @@ export const supabaseDataService = {
     }
 
     // Obtener inventarios recientes
-    const { data: inventarios } = await $supabase
+    let inventariosQuery = $supabase
       .from('inventarios')
       .select('id, fecha, completo, usuario:usuarios(id, nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
+
+    if (startIso) inventariosQuery = inventariosQuery.gte('fecha', startIso)
+
+    const { data: inventarios } = await inventariosQuery
 
     if (inventarios) {
       for (const inv of inventarios) {
@@ -181,11 +184,15 @@ export const supabaseDataService = {
     }
 
     // Obtener despachos recientes
-    const { data: despachos } = await $supabase
+    let despachosQuery = $supabase
       .from('despachos')
       .select('id, fecha, estado, cantidad_vehiculos, usuario:usuarios(id, nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
+
+    if (startIso) despachosQuery = despachosQuery.gte('fecha', startIso)
+
+    const { data: despachos } = await despachosQuery
 
     if (despachos) {
       for (const desp of despachos) {
@@ -202,11 +209,15 @@ export const supabaseDataService = {
     }
 
     // Obtener movimientos de porterÃ­a recientes
-    const { data: movimientos } = await $supabase
+    let movimientosQuery = $supabase
       .from('movimientos_porteria')
       .select('id, tipo, persona, fecha, observacion, usuario:usuarios(id, nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
+
+    if (startIso) movimientosQuery = movimientosQuery.gte('fecha', startIso)
+
+    const { data: movimientos } = await movimientosQuery
 
     if (movimientos) {
       for (const mov of movimientos) {
@@ -230,17 +241,22 @@ export const supabaseDataService = {
   /**
    * Obtiene tendencia semanal de recibidos vs. despachados (ultimos N dias)
    */
-  async getWeeklyTrends(days: number = 7): Promise<WeeklyTrends> {
+  async getWeeklyTrends(days: number = 7, startIso?: string): Promise<WeeklyTrends> {
     const $supabase = getSupabase()
     const endDate = new Date()
-    const startDate = new Date()
-    startDate.setDate(endDate.getDate() - (days - 1))
+    const startDate = startIso ? new Date(startIso) : new Date()
+    if (!startIso) {
+      startDate.setDate(endDate.getDate() - (days - 1))
+    }
 
-    const startIso = startDate.toISOString()
+    const resolvedStartIso = startDate.toISOString()
+    const totalDays = startIso
+      ? Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / 86400000) + 1)
+      : days
 
     const [vehiculosRes, despachosRes] = await Promise.all([
-      $supabase.from('vehiculos').select('fecha_registro').gte('fecha_registro', startIso),
-      $supabase.from('despachos').select('fecha, cantidad_vehiculos').gte('fecha', startIso),
+      $supabase.from('vehiculos').select('fecha_registro').gte('fecha_registro', resolvedStartIso),
+      $supabase.from('despachos').select('fecha, cantidad_vehiculos').gte('fecha', resolvedStartIso),
     ])
 
     const receivedCounts = new Map<string, number>()
@@ -262,7 +278,7 @@ export const supabaseDataService = {
 
     const dayLabels = ['Dom', 'Lun', 'Mar', 'Mie', 'Jue', 'Vie', 'Sab']
     const dayList: WeeklyTrendItem[] = []
-    for (let i = 0; i < days; i += 1) {
+    for (let i = 0; i < totalDays; i += 1) {
       const d = new Date(startDate)
       d.setDate(startDate.getDate() + i)
       const key = d.toISOString().slice(0, 10)

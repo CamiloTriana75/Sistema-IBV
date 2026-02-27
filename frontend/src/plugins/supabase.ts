@@ -11,7 +11,13 @@ export default defineNuxtPlugin(() => {
     throw new Error('Configuración de Supabase incompleta')
   }
 
-  const supabase = createClient(supabaseUrl, supabaseAnonKey)
+  const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+    auth: {
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: true,
+    },
+  })
 
   return {
     provide: {

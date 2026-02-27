@@ -92,6 +92,7 @@ seed AS (
 INSERT INTO vehiculos (
   bin,
   qr_codigo,
+  placa,
   buque_id,
   modelo_id,
   color,
@@ -102,6 +103,7 @@ INSERT INTO vehiculos (
 SELECT
   'BIN-' || to_char(n, 'FM0000'),
   'QR-' || to_char(n, 'FM0000'),
+  'PL-' || to_char(n, 'FM0000'),
   buque_id,
   modelo_id,
   (ARRAY['Blanco', 'Negro', 'Rojo', 'Azul', 'Gris'])[1 + (n % 5)],

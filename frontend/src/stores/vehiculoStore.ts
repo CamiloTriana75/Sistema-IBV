@@ -397,6 +397,192 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     return true
   }
 
+  /**
+   * Carga vehículos desde Supabase
+   * Si la carga falla, mantiene los datos locales
+   */
+  const loadFromSupabase = async () => {
+    try {
+      const { $supabase } = useNuxtApp()
+      if (!$supabase) {
+        console.warn('[loadFromSupabase] Supabase no disponible')
+        return false
+      }
+
+      const vehiculosQuery = ($supabase as any)
+        .from('vehiculos')
+        .select(
+          `id, bin, qr_codigo, placa, color, estado, fecha_registro, created_at,
+          modelo:modelos_vehiculo(marca, modelo, anio, tipo),
+          buque:buques(nombre, identificacion),
+          usuario_recibe:usuarios(id, nombres, apellidos)`
+        )
+        .order('created_at', { ascending: false })
+
+      const [vehiculosRes, improntasRes, inventariosRes, despachoVehRes, despachosRes] =
+        await Promise.all([
+          vehiculosQuery,
+          ($supabase as any)
+            .from('improntas')
+            .select('id, vehiculo_id, fecha, estado, usuario:usuarios(id, nombres, apellidos)'),
+          ($supabase as any)
+            .from('inventarios')
+            .select('id, vehiculo_id, fecha, completo, usuario:usuarios(id, nombres, apellidos)'),
+          ($supabase as any)
+            .from('despacho_vehiculos')
+            .select('vehiculo_id, despacho_id, fecha_escaneo'),
+          ($supabase as any)
+            .from('despachos')
+            .select('id, fecha, estado, usuario:usuarios(id, nombres, apellidos)'),
+        ])
+
+      const { data, error } = vehiculosRes
+
+      if (error) {
+        console.error('[loadFromSupabase] Error from Supabase:', error)
+        return false
+      }
+
+      if (!data || data.length === 0) {
+        console.log('[loadFromSupabase] No vehículos encontrados en BD, usando datos locales')
+        return false
+      }
+
+      const latestByVehiculo = <T extends { vehiculo_id: number; fecha?: string }>(items: T[]) => {
+        const map = new Map<number, T>()
+        for (const item of items) {
+          const current = map.get(item.vehiculo_id)
+          if (!current) {
+            map.set(item.vehiculo_id, item)
+            continue
+          }
+          const currDate = current.fecha ? new Date(current.fecha).getTime() : 0
+          const nextDate = item.fecha ? new Date(item.fecha).getTime() : 0
+          if (nextDate >= currDate) {
+            map.set(item.vehiculo_id, item)
+          }
+        }
+        return map
+      }
+
+      const improntasMap = latestByVehiculo(improntasRes.data || [])
+      const inventariosMap = latestByVehiculo(inventariosRes.data || [])
+
+      const despachoVehMap = new Map<number, { despacho_id: number; fecha_escaneo: string }>()
+      for (const dv of despachoVehRes.data || []) {
+        const current = despachoVehMap.get(dv.vehiculo_id)
+        if (!current) {
+          despachoVehMap.set(dv.vehiculo_id, dv)
+          continue
+        }
+        const currDate = new Date(current.fecha_escaneo).getTime()
+        const nextDate = new Date(dv.fecha_escaneo).getTime()
+        if (nextDate >= currDate) {
+          despachoVehMap.set(dv.vehiculo_id, dv)
+        }
+      }
+
+      const despachosMap = new Map<number, any>()
+      for (const d of despachosRes.data || []) {
+        despachosMap.set(d.id, d)
+      }
+
+      const toEstado = (
+        despachado: boolean,
+        improntaCompletada: boolean,
+        inventarioCompletado: boolean,
+        inventarioAprobado: boolean
+      ): EstadoVehiculo => {
+        if (despachado) return 'despachado'
+        if (inventarioAprobado && improntaCompletada) return 'listo_despacho'
+        if (inventarioAprobado) return 'inventario_aprobado'
+        if (inventarioCompletado || improntaCompletada) return 'inventario_pendiente'
+        if (improntaCompletada) return 'impronta_completada'
+        return 'recibido'
+      }
+
+      // Mapear datos de Supabase a formato local
+      vehiculos.value = data.map((v: any) => {
+        const impronta = improntasMap.get(v.id)
+        const inventario = inventariosMap.get(v.id)
+        const despachoVeh = despachoVehMap.get(v.id)
+        const despacho = despachoVeh ? despachosMap.get(despachoVeh.despacho_id) : null
+
+        const improntaCompletada =
+          impronta?.estado === 'completada' || impronta?.estado === 'completado'
+        const inventarioCompletado = Boolean(inventario)
+        const inventarioAprobado = inventario?.completo === true
+        const despachado =
+          (v.estado || '').toLowerCase() === 'despachado' || Boolean(despachoVeh)
+
+        const fechaBase = v.fecha_registro || v.created_at
+        const fechaRecepcion = fechaBase
+          ? new Date(fechaBase).toISOString().split('T')[0]
+          : ''
+        const horaRecepcion = fechaBase ? new Date(fechaBase).toLocaleTimeString('es-VE') : ''
+
+        const modelo = v.modelo || {}
+        const usuarioRecibe = v.usuario_recibe
+          ? `${v.usuario_recibe.nombres || ''} ${v.usuario_recibe.apellidos || ''}`.trim()
+          : ''
+
+        const estado = toEstado(
+          despachado,
+          Boolean(improntaCompletada),
+          inventarioCompletado,
+          inventarioAprobado
+        )
+
+        return {
+          id: `vp-${v.id}`,
+          // En Supabase se usa bin/qr_codigo como identificador
+          vin: v.bin || v.qr_codigo || '',
+          placa: v.placa || '',
+          marca: modelo.marca || '',
+          modelo: modelo.modelo || '',
+          anio: modelo.anio ? String(modelo.anio) : '',
+          color: v.color || '',
+          cliente: usuarioRecibe || '',
+          contenedorId: v.buque?.identificacion || undefined,
+          contenedorCodigo: v.buque?.nombre || undefined,
+          fechaRecepcion,
+          horaRecepcion,
+          improntaId: impronta?.id ? String(impronta.id) : undefined,
+          improntaFolio: impronta?.id ? `IMP-${impronta.id}` : undefined,
+          improntaCompletada: Boolean(improntaCompletada),
+          fechaImpronta: impronta?.fecha ? new Date(impronta.fecha).toISOString().split('T')[0] : undefined,
+          inventarioCompletado,
+          inventarioAprobado,
+          inventarioFecha: inventario?.fecha
+            ? new Date(inventario.fecha).toISOString().split('T')[0]
+            : undefined,
+          inventarioInspector: inventario?.usuario
+            ? `${inventario.usuario.nombres || ''} ${inventario.usuario.apellidos || ''}`.trim()
+            : undefined,
+          despachado,
+          fechaDespacho: despacho?.fecha
+            ? new Date(despacho.fecha).toISOString().split('T')[0]
+            : undefined,
+          horaDespacho: despacho?.fecha
+            ? new Date(despacho.fecha).toLocaleTimeString('es-VE')
+            : undefined,
+          lotDespacho: despacho?.id ? `LT-${String(despacho.id).padStart(4, '0')}` : undefined,
+          despachador: despacho?.usuario
+            ? `${despacho.usuario.nombres || ''} ${despacho.usuario.apellidos || ''}`.trim()
+            : undefined,
+          estado,
+        }
+      })
+
+      console.log(`[loadFromSupabase] Cargados ${vehiculos.value.length} vehículos de Supabase`)
+      persist()
+      return true
+    } catch (err: any) {
+      console.error('[loadFromSupabase] Error:', err)
+      return false
+    }
+  }
+
   init()
 
   return {
@@ -421,6 +607,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     aprobarInventario,
     rechazarInventario,
     despachar,
+    loadFromSupabase,
     persist,
   }
 })

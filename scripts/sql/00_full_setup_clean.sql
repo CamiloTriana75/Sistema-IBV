@@ -107,6 +107,7 @@ CREATE TABLE IF NOT EXISTS vehiculos (
     id BIGSERIAL PRIMARY KEY,
     bin VARCHAR(100) NOT NULL UNIQUE,
     qr_codigo VARCHAR(100) NOT NULL UNIQUE,
+    placa VARCHAR(20),
     buque_id BIGINT REFERENCES buques(id) ON DELETE SET NULL,
     modelo_id BIGINT REFERENCES modelos_vehiculo(id) ON DELETE SET NULL,
     color VARCHAR(50),
@@ -119,6 +120,7 @@ CREATE TABLE IF NOT EXISTS vehiculos (
 
 CREATE INDEX IF NOT EXISTS vehiculos_bin_idx ON vehiculos(bin);
 CREATE INDEX IF NOT EXISTS vehiculos_qr_codigo_idx ON vehiculos(qr_codigo);
+CREATE INDEX IF NOT EXISTS vehiculos_placa_idx ON vehiculos(placa);
 CREATE INDEX IF NOT EXISTS vehiculos_estado_idx ON vehiculos(estado);
 CREATE INDEX IF NOT EXISTS vehiculos_buque_id_idx ON vehiculos(buque_id);
 CREATE INDEX IF NOT EXISTS vehiculos_modelo_id_idx ON vehiculos(modelo_id);

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStatsStore } from '~/stores/statsStore'
 import { useVehiculoStore } from '~/stores/vehiculoStore'
 
@@ -8,6 +8,7 @@ definePageMeta({ layout: 'admin', middleware: ['auth', 'admin'] })
 const stats = useStatsStore()
 const vehiculoStore = useVehiculoStore()
 const searchQuery = ref('')
+const loading = ref(false)
 
 const estadoMap: Record<string, { label: string; cls: string }> = {
   recibido: { label: 'Recibido', cls: 'bg-gray-100 text-gray-600' },
@@ -195,11 +196,24 @@ async function descargarExcel() {
   const fecha = new Date().toISOString().slice(0, 10)
   XLSX.writeFile(wb, `IBV_Estadisticas_Reporte_${fecha}.xlsx`)
 }
+
+// Cargar datos de Supabase al montar
+onMounted(async () => {
+  loading.value = true
+  try {
+    await vehiculoStore.loadFromSupabase()
+  } catch (err) {
+    console.error('Error cargando datos:', err)
+  } finally {
+    loading.value = false
+  }
+})
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- ═══════════ Header ═══════════ -->
+  <ClientOnly>
+    <div class="space-y-6">
+      <!-- ═══════════ Header ═══════════ -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-2xl font-bold text-gray-900">Estadísticas y Reportes</h1>
@@ -535,5 +549,6 @@ async function descargarExcel() {
         Descargar .xlsx
       </button>
     </div>
-  </div>
+    </div>
+  </ClientOnly>
 </template>

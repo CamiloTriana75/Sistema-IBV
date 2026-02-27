@@ -112,6 +112,43 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const restoreSession = async () => {
+    try {
+      const { data } = await $supabase.auth.getSession()
+      const session = data?.session
+      if (!session) return false
+
+      token.value = session.access_token || ''
+      if (isClient && token.value) {
+        localStorage.setItem('auth_token', token.value)
+      }
+
+      const email = session.user?.email || ''
+      const role = email ? await getRoleForUser(email, session.user) : 'cliente'
+      const profile = email ? await supabaseUserService.getUserProfile(email) : null
+
+      user.value = {
+        id: session.user?.id || '',
+        name:
+          profile ? `${profile.nombres} ${profile.apellidos}`.trim() :
+          (session.user?.user_metadata?.name as string | undefined) ||
+          email.split('@')[0] ||
+          'Usuario',
+        email,
+        role,
+      }
+
+      if (isClient) {
+        localStorage.setItem('auth_user', JSON.stringify(user.value))
+      }
+
+      return true
+    } catch (err) {
+      console.error('[restoreSession] Error:', err)
+      return false
+    }
+  }
+
   return {
     user,
     token,
@@ -119,5 +156,6 @@ export const useAuthStore = defineStore('auth', () => {
     login,
     logout,
     loadUser,
+    restoreSession,
   }
 })
