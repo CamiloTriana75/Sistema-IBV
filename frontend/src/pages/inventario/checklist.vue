@@ -274,29 +274,6 @@ const mostrarToast = (tipo: 'ok' | 'error', mensaje: string) => {
   }, 3000)
 }
 
-const buildChecklistJson = (resultado: {
-  totalItems: number
-  aprobados: number
-  fallas: number
-  na: number
-  nota?: string
-}) => {
-  return {
-    resumen: resultado,
-    categorias: categorias.map((cat) => ({
-      id: cat.id,
-      nombre: cat.nombre,
-      descripcion: cat.descripcion,
-      items: cat.items.map((item) => ({
-        id: item.id,
-        nombre: item.nombre,
-        descripcion: item.descripcion,
-        estado: item.estado,
-        nota: item.nota || '',
-      })),
-    })),
-  }
-}
 
 const aprobar = async () => {
   if (!puedeAprobar.value) return

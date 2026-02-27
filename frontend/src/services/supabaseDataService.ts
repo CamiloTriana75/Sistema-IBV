@@ -1,4 +1,4 @@
-﻿/**
+/**
  * Servicio para obtener datos del dashboard directamente desde Supabase
  * Reemplaza las llamadas al backend API (/api/vehicles/, /api/stats/, /api/activities/)
  */
@@ -44,7 +44,7 @@ export interface ActivityItem {
 
 export const supabaseDataService = {
   /**
-   * Obtiene todos los vehÃ­culos con sus relaciones
+   * Obtiene todos los vehículos con sus relaciones
    */
   async getVehicles(): Promise<VehicleData[]> {
     const $supabase = getSupabase()
@@ -59,7 +59,7 @@ export const supabaseDataService = {
       .order('created_at', { ascending: false })
 
     if (error) {
-      console.error('Error obteniendo vehÃ­culos:', error)
+      console.error('Error obteniendo vehículos:', error)
       return []
     }
 
@@ -67,7 +67,7 @@ export const supabaseDataService = {
   },
 
   /**
-   * Calcula las estadÃ­sticas del dashboard a partir de los vehÃ­culos
+   * Calcula las estadísticas del dashboard a partir de los vehículos
    */
   async getDashboardStats(): Promise<DashboardStats> {
     const $supabase = getSupabase()
@@ -102,12 +102,12 @@ export const supabaseDataService = {
       en_inventario: counts['en_inventario'] || counts['inventario'] || 0,
       listos_despacho: counts['listo_despacho'] || counts['listo'] || counts['aprobado'] || 0,
       despachados: counts['despachado'] || counts['entregado'] || 0,
-      problemas_encontrados: counts['problema'] || counts['rechazado'] || counts['daÃ±ado'] || counts['danado'] || 0,
+      problemas_encontrados: counts['problema'] || counts['rechazado'] || counts['dañado'] || counts['danado'] || 0,
     }
   },
 
   /**
-   * Obtiene las actividades recientes combinando mÃºltiples tablas
+   * Obtiene las actividades recientes combinando múltiples tablas
    */
   async getActivities(limit: number = 5): Promise<ActivityItem[]> {
     const $supabase = getSupabase()
@@ -116,7 +116,6 @@ export const supabaseDataService = {
     // Obtener improntas recientes
     const { data: improntas } = await $supabase
       .from('improntas')
-<<<<<<< HEAD
       .select('id, fecha, estado, usuario:usuarios!improntas_usuario_id_fkey(nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
@@ -126,7 +125,7 @@ export const supabaseDataService = {
         const usuario = imp.usuario as any
         activities.push({
           id: imp.id,
-          description: `realizÃ³ impronta (${imp.estado || 'completada'})`,
+          description: `realizó impronta (${imp.estado || 'completada'})`,
           timestamp: imp.fecha,
           user: usuario ? { nombres: usuario.nombres, apellidos: usuario.apellidos } : null,
           role: 'recibidor',
@@ -138,7 +137,6 @@ export const supabaseDataService = {
     // Obtener inventarios recientes
     const { data: inventarios } = await $supabase
       .from('inventarios')
-<<<<<<< HEAD
       .select('id, fecha, completo, usuario:usuarios!inventarios_usuario_id_fkey(nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
@@ -148,7 +146,7 @@ export const supabaseDataService = {
         const usuario = inv.usuario as any
         activities.push({
           id: inv.id + 10000,
-          description: `${inv.completo ? 'completÃ³' : 'iniciÃ³'} inventario`,
+          description: `${inv.completo ? 'completó' : 'inició'} inventario`,
           timestamp: inv.fecha,
           user: usuario ? { nombres: usuario.nombres, apellidos: usuario.apellidos } : null,
           role: 'inventario',
@@ -160,7 +158,6 @@ export const supabaseDataService = {
     // Obtener despachos recientes
     const { data: despachos } = await $supabase
       .from('despachos')
-<<<<<<< HEAD
       .select('id, fecha, estado, cantidad_vehiculos, usuario:usuarios!despachos_usuario_id_fkey(nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
@@ -170,7 +167,7 @@ export const supabaseDataService = {
         const usuario = desp.usuario as any
         activities.push({
           id: desp.id + 20000,
-          description: `despacho de ${desp.cantidad_vehiculos} vehÃ­culos (${desp.estado || 'en proceso'})`,
+          description: `despacho de ${desp.cantidad_vehiculos} vehículos (${desp.estado || 'en proceso'})`,
           timestamp: desp.fecha,
           user: usuario ? { nombres: usuario.nombres, apellidos: usuario.apellidos } : null,
           role: 'despachador',
@@ -179,10 +176,9 @@ export const supabaseDataService = {
       }
     }
 
-    // Obtener movimientos de porterÃ­a recientes
+    // Obtener movimientos de portería recientes
     const { data: movimientos } = await $supabase
       .from('movimientos_porteria')
-<<<<<<< HEAD
       .select('id, tipo, persona, fecha, observacion, usuario:usuarios!movimientos_porteria_usuario_id_fkey(nombres, apellidos)')
       .order('fecha', { ascending: false })
       .limit(limit)
@@ -201,7 +197,7 @@ export const supabaseDataService = {
       }
     }
 
-    // Ordenar por fecha descÃ¿ y limitar
+    // Ordenar por fecha descÿ y limitar
     activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     return activities.slice(0, limit)
   },

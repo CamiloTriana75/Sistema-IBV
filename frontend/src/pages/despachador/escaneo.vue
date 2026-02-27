@@ -120,14 +120,14 @@ const finalizarLote = async () => {
   // Despachar todos los vehículos escaneados
   const despachador = authStore.user?.name || 'Despachador'
   let despachosExitosos = 0
-  let despachosError = 0
+  let _despachosError = 0
 
   for (const v of vehiculosEscaneados.value) {
     const ok = await vehiculoStore.despachar(v.vin, loteActual, despachador)
     if (ok) {
       despachosExitosos++
     } else {
-      despachosError++
+      _despachosError++
       console.error(`Error despachando ${v.vin}`)
     }
   }
