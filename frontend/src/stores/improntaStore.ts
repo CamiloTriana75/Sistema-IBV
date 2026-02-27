@@ -32,7 +32,31 @@ export interface Impronta {
   fechaActualizacion: string
 }
 
-function mapRowToImpronta(row: any): Impronta {
+interface ImprontaRow {
+  id: string
+  folio: string
+  vin: string
+  placa?: string
+  marca: string
+  modelo: string
+  anio?: string
+  color?: string
+  km?: string
+  cliente?: string
+  condicion?: string
+  zonas_danadas?: string[]
+  danos?: DañoZona[]
+  observaciones?: string
+  fotos?: Record<string, string>
+  fotos_adicionales?: string[]
+  estado: 'borrador' | 'completada' | 'revisada'
+  creado_por?: string
+  fecha_creacion: string
+  hora_creacion?: string
+  updated_at?: string
+}
+
+function mapRowToImpronta(row: ImprontaRow): Impronta {
   return {
     id: row.id,
     folio: row.folio,
@@ -44,7 +68,7 @@ function mapRowToImpronta(row: any): Impronta {
     color: row.color || '',
     km: row.km || '',
     cliente: row.cliente || '',
-    condicion: row.condicion || '',
+    condicion: (row.condicion || '') as Impronta['condicion'],
     zonasDañadas: row.zonas_danadas || [],
     daños: row.danos || [],
     observaciones: row.observaciones || '',
@@ -89,9 +113,9 @@ export const useImprontaStore = defineStore('impronta', () => {
         .order('created_at', { ascending: false })
 
       if (err) throw err
-      improntas.value = (data || []).map(mapRowToImpronta)
-    } catch (err: any) {
-      error.value = err.message || 'Error al cargar improntas'
+      improntas.value = ((data || []) as ImprontaRow[]).map(mapRowToImpronta)
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Error al cargar improntas'
       console.error('Error fetchImprontas:', err)
     } finally {
       loading.value = false
@@ -139,11 +163,11 @@ export const useImprontaStore = defineStore('impronta', () => {
       if (err) throw err
       if (!rows || rows.length === 0) throw new Error('No se pudo crear la impronta')
 
-      const nueva = mapRowToImpronta(rows[0])
+      const nueva = mapRowToImpronta(rows[0] as ImprontaRow)
       improntas.value.unshift(nueva)
       return nueva
-    } catch (err: any) {
-      error.value = err.message || 'Error al crear impronta'
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Error al crear impronta'
       throw err
     } finally {
       loading.value = false
@@ -154,7 +178,7 @@ export const useImprontaStore = defineStore('impronta', () => {
     loading.value = true
     error.value = null
     try {
-      const updateData: Record<string, any> = {}
+      const updateData: Record<string, string | string[] | DañoZona[] | Record<string, string>> = {}
       if (data.vin !== undefined) updateData.vin = data.vin
       if (data.placa !== undefined) updateData.placa = data.placa
       if (data.marca !== undefined) updateData.marca = data.marca
@@ -181,13 +205,13 @@ export const useImprontaStore = defineStore('impronta', () => {
       if (err) throw err
       if (!rows || rows.length === 0) throw new Error('Impronta no encontrada')
 
-      const updated = mapRowToImpronta(rows[0])
+      const updated = mapRowToImpronta(rows[0] as ImprontaRow)
       const idx = improntas.value.findIndex((i) => i.id === id)
       if (idx !== -1) improntas.value[idx] = updated
 
       return updated
-    } catch (err: any) {
-      error.value = err.message || 'Error al actualizar'
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Error al actualizar'
       throw err
     } finally {
       loading.value = false
@@ -201,8 +225,8 @@ export const useImprontaStore = defineStore('impronta', () => {
 
       if (err) throw err
       improntas.value = improntas.value.filter((i) => i.id !== id)
-    } catch (err: any) {
-      error.value = err.message || 'Error al eliminar'
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Error al eliminar'
       throw err
     } finally {
       loading.value = false

@@ -153,7 +153,7 @@ onMounted(() => {
       )
 
     // ─── Floating orbs ───
-    gsap.utils.toArray<HTMLElement>('.js-orb').forEach((el, i) => {
+    gsap.utils.toArray<HTMLElement>('.js-orb').forEach((el: HTMLElement, i: number) => {
       gsap.to(el, {
         y: `random(-14, 14)`,
         x: `random(-8, 8)`,

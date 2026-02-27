@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { computed } from 'vue'
-import { useVehiculoStore } from '~/stores/vehiculoStore'
+import { useVehiculoStore, type VehiculoPipeline } from '~/stores/vehiculoStore'
 
 export const useStatsStore = defineStore('stats', () => {
   const vehiculoStore = useVehiculoStore()
@@ -200,7 +200,9 @@ export const useStatsStore = defineStore('stats', () => {
   // ──────────────────────────────────────────────
   const vehiculosPorMarca = computed(() => {
     const freq = new Map<string, number>()
-    vehiculoStore.vehiculos.forEach((v) => freq.set(v.marca, (freq.get(v.marca) || 0) + 1))
+    vehiculoStore.vehiculos.forEach((v: VehiculoPipeline) =>
+      freq.set(v.marca, (freq.get(v.marca) || 0) + 1)
+    )
     return [...freq.entries()]
       .map(([marca, n]) => ({ label: marca, value: n }))
       .sort((a, b) => b.value - a.value)
@@ -211,7 +213,7 @@ export const useStatsStore = defineStore('stats', () => {
   // ──────────────────────────────────────────────
   const vehiculosPorCliente = computed(() => {
     const freq = new Map<string, number>()
-    vehiculoStore.vehiculos.forEach((v) => {
+    vehiculoStore.vehiculos.forEach((v: VehiculoPipeline) => {
       if (v.cliente) freq.set(v.cliente, (freq.get(v.cliente) || 0) + 1)
     })
     return [...freq.entries()]
@@ -223,10 +225,10 @@ export const useStatsStore = defineStore('stats', () => {
   // Tiempo promedio en patio (días)
   // ──────────────────────────────────────────────
   const tiempoPromedioEnPatio = computed(() => {
-    const enPatio = vehiculoStore.vehiculos.filter((v) => !v.despachado)
+    const enPatio = vehiculoStore.vehiculos.filter((v: VehiculoPipeline) => !v.despachado)
     if (enPatio.length === 0) return 0
     const now = new Date()
-    const totalDias = enPatio.reduce((sum, v) => {
+    const totalDias = enPatio.reduce((sum: number, v: VehiculoPipeline) => {
       const d = new Date(v.fechaRecepcion)
       return sum + Math.max(0, (now.getTime() - d.getTime()) / 86400000)
     }, 0)
@@ -276,7 +278,7 @@ export const useStatsStore = defineStore('stats', () => {
   // ──────────────────────────────────────────────
   const marcaDonutSegments = computed(() => {
     const colors = ['#0ea5e9', '#f59e0b', '#10b981', '#8b5cf6', '#ef4444', '#ec4899', '#06b6d4']
-    return vehiculosPorMarca.value.map((m, i) => ({
+    return vehiculosPorMarca.value.map((m: { label: string; value: number }, i: number) => ({
       label: m.label,
       value: m.value,
       color: colors[i % colors.length],

@@ -60,7 +60,21 @@ function mapEstadoVehiculos(estadoDB: string): EstadoVehiculo {
   return map[estadoDB] || 'recibido'
 }
 
-function mapRowToVehiculo(row: any): VehiculoPipeline {
+interface VehiculoRow {
+  id: number
+  bin: string
+  qr_codigo: string
+  color: string | null
+  estado: string
+  fecha_registro: string | null
+  created_at: string | null
+  placa?: string
+  cliente?: string
+  modelo_vehiculo?: { marca: string; modelo: string; anio: number | null } | null
+  modelo?: { marca: string; modelo: string; anio: number | null } | null
+}
+
+function mapRowToVehiculo(row: VehiculoRow): VehiculoPipeline {
   const modelo = row.modelo_vehiculo || row.modelo || null
   return {
     id: String(row.id),
@@ -118,9 +132,10 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
         .order('created_at', { ascending: false })
 
       if (err) throw err
-      vehiculos.value = (data || []).map(mapRowToVehiculo)
-    } catch (err: any) {
-      error.value = err.message || 'Error al cargar vehículos'
+      vehiculos.value = ((data || []) as VehiculoRow[]).map(mapRowToVehiculo)
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Error al cargar vehículos'
+      error.value = message
       console.error('Error fetchVehiculos:', err)
     } finally {
       loading.value = false
@@ -202,7 +217,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     if (err) throw err
     if (!rows || rows.length === 0) throw new Error('No se pudo registrar el vehículo')
 
-    const v = mapRowToVehiculo(rows[0])
+    const v = mapRowToVehiculo(rows[0] as VehiculoRow)
     vehiculos.value.push(v)
     return v
   }

@@ -134,8 +134,8 @@ const loadUsers = async () => {
   try {
     loading.value = true
     users.value = await supabaseUserService.getAllUsers()
-  } catch (e: any) {
-    error.value = e.message || 'Error al cargar usuarios'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Error al cargar usuarios'
     showToast(error.value, 'error')
   } finally {
     loading.value = false
@@ -212,8 +212,8 @@ const saveUser = async () => {
     }
     await loadUsers()
     closeModal()
-  } catch (err: any) {
-    formError.value = err.message || 'Error al guardar usuario'
+  } catch (err: unknown) {
+    formError.value = err instanceof Error ? err.message : 'Error al guardar usuario'
   } finally {
     saving.value = false
   }

@@ -127,8 +127,8 @@ const loadDashboard = async () => {
     vehicles.value = vehiclesData
     users.value = usersData
     activities.value = activitiesData || []
-  } catch (e: any) {
-    error.value = e.message || 'Error al cargar datos del dashboard'
+  } catch (e: unknown) {
+    error.value = e instanceof Error ? e.message : 'Error al cargar datos del dashboard'
     console.error('Error loading dashboard:', e)
   } finally {
     loading.value = false

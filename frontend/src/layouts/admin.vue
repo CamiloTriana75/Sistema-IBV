@@ -15,15 +15,13 @@ const currentUser = computed(() => {
   return {
     name: u.name || 'Usuario',
     initials:
-      u.avatar ||
       u.name
         ?.split(' ')
         .map((w: string) => w[0])
         .join('')
-        .substring(0, 2) ||
-      'U',
+        .substring(0, 2) || 'U',
     role: u.role || 'admin',
-    roleName: u.roleLabel || u.role || 'Usuario',
+    roleName: u.role || 'Usuario',
   }
 })
 

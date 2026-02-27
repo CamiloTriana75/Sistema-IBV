@@ -14,9 +14,9 @@ const props = defineProps<{
 }>()
 
 const chartHeight = computed(() => props.height ?? 140)
-const maxVal = computed(() => Math.max(...props.bars.flatMap((b) => b.values), 1))
+const maxVal = computed(() => Math.max(...props.bars.flatMap((b: Bar) => b.values), 1))
 
-const barWidth = computed(() => {
+const _barWidth = computed(() => {
   const groupCount = props.bars.length
   const seriesCount = props.series.length
   const totalWidth = 100

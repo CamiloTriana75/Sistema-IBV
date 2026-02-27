@@ -30,7 +30,38 @@ export interface Contenedor {
   observaciones: string
 }
 
-function mapRowToContenedor(row: any, vehiculosRows: any[] = []): Contenedor {
+interface ContenedorRow {
+  id: string
+  codigo: string
+  origen: string
+  transportista: string
+  placa_camion: string
+  fecha_llegada: string
+  hora_llegada: string | null
+  vehiculos_esperados: number
+  estado: 'pendiente' | 'en_recepcion' | 'completado'
+  recibido_por: string | null
+  observaciones: string | null
+}
+
+interface VehiculoContenedorRow {
+  id: string
+  contenedor_id: string
+  vin: string
+  marca: string
+  modelo: string
+  anio: string
+  color: string
+  codigo_impronta: string
+  escaneado: boolean
+  impronta_id: string | null
+  created_at: string | null
+}
+
+function mapRowToContenedor(
+  row: ContenedorRow,
+  vehiculosRows: VehiculoContenedorRow[] = []
+): Contenedor {
   return {
     id: row.id,
     codigo: row.codigo,
@@ -47,7 +78,7 @@ function mapRowToContenedor(row: any, vehiculosRows: any[] = []): Contenedor {
   }
 }
 
-function mapRowToVehiculo(row: any): VehiculoContenedor {
+function mapRowToVehiculo(row: VehiculoContenedorRow): VehiculoContenedor {
   return {
     id: row.id,
     contenedor_id: row.contenedor_id,
@@ -101,8 +132,8 @@ export const useContenedorStore = defineStore('contenedor', () => {
 
       if (contErr) throw contErr
 
-      const ids = (contRows || []).map((c: any) => c.id)
-      let vehRows: any[] = []
+      const ids = (contRows || []).map((c: ContenedorRow) => c.id)
+      let vehRows: VehiculoContenedorRow[] = []
       if (ids.length > 0) {
         const { data, error: vehErr } = await supabase
           .from('contenedor_vehiculos')
@@ -114,17 +145,17 @@ export const useContenedorStore = defineStore('contenedor', () => {
         vehRows = data || []
       }
 
-      const vehMap: Record<string, any[]> = {}
+      const vehMap: Record<string, VehiculoContenedorRow[]> = {}
       for (const v of vehRows) {
         if (!vehMap[v.contenedor_id]) vehMap[v.contenedor_id] = []
         vehMap[v.contenedor_id].push(v)
       }
 
-      contenedores.value = (contRows || []).map((row: any) =>
+      contenedores.value = (contRows || []).map((row: ContenedorRow) =>
         mapRowToContenedor(row, vehMap[row.id] || [])
       )
-    } catch (err: any) {
-      error.value = err.message || 'Error al cargar contenedores'
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Error al cargar contenedores'
       console.error('Error fetchContenedores:', err)
     } finally {
       loading.value = false
@@ -192,7 +223,7 @@ export const useContenedorStore = defineStore('contenedor', () => {
     )
     if (!veh || !veh.id) return
 
-    const updateData: Record<string, any> = { escaneado: true }
+    const updateData: Record<string, string | boolean> = { escaneado: true }
     if (improntaId) updateData.impronta_id = improntaId
 
     const { error: err } = await supabase
@@ -214,7 +245,7 @@ export const useContenedorStore = defineStore('contenedor', () => {
   }
 
   const completarRecepcion = async (id: string, observaciones?: string) => {
-    const updateData: Record<string, any> = { estado: 'completado' }
+    const updateData: Record<string, string> = { estado: 'completado' }
     if (observaciones) updateData.observaciones = observaciones
 
     const { error: err } = await supabase.from('contenedores').update(updateData).eq('id', id)

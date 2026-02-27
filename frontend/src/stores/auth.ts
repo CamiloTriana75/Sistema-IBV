@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { supabaseUserService } from '~/services/supabaseUserService'
 
 interface AuthUser {
@@ -20,6 +21,7 @@ const ROLE_ROUTES: Record<string, string> = {
 
 export const useAuthStore = defineStore('auth', () => {
   const { $supabase } = useNuxtApp()
+  const supabase = $supabase as SupabaseClient
   const isClient = typeof window !== 'undefined'
   const user = ref<AuthUser | null>(
     isClient ? JSON.parse(localStorage.getItem('auth_user') || 'null') : null
@@ -34,7 +36,13 @@ export const useAuthStore = defineStore('auth', () => {
    * 3. app_metadata de Supabase Auth
    * 4. Default: 'cliente'
    */
-  const getRoleForUser = async (email: string, authUser: any): Promise<string> => {
+  const getRoleForUser = async (
+    email: string,
+    authUser: {
+      user_metadata?: Record<string, string>
+      app_metadata?: Record<string, string>
+    } | null
+  ): Promise<string> => {
     // Primero intenta obtener de la tabla 'users' en Supabase
     const dbRole = await supabaseUserService.getUserRole(email)
     if (dbRole) {
@@ -60,7 +68,7 @@ export const useAuthStore = defineStore('auth', () => {
       throw new Error('Credenciales requeridas')
     }
 
-    const { data, error } = await $supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
 
     if (error) {
       throw new Error(error.message)
@@ -97,7 +105,7 @@ export const useAuthStore = defineStore('auth', () => {
   }
 
   const logout = async () => {
-    await $supabase.auth.signOut()
+    await supabase.auth.signOut()
     user.value = null
     token.value = ''
     if (typeof window !== 'undefined') {

@@ -71,8 +71,11 @@ const progressPorcentaje = computed(() =>
 )
 
 const vehiculosFiltrados = computed(() => {
-  return vehiculosPendientes.value
+  if (filtroEstado.value === 'pendiente') return vehiculosPendientes.value
+  return vehiculosLote.value
 })
+
+const filtroEstado = ref<'todos' | 'pendiente'>('todos')
 
 /**
  * Procesa un BIN escaneado desde el QR scanner o entrada manual
@@ -118,17 +121,17 @@ const simularEscaneo = () => {
 
 const finalizarLote = async () => {
   // Despachar todos los vehículos escaneados
-  const despachador = authStore.user?.name || 'Despachador'
+  const _despachador = authStore.user?.name || 'Despachador'
   let despachosExitosos = 0
   let _despachosError = 0
 
   for (const v of vehiculosEscaneados.value) {
-    const ok = await vehiculoStore.despachar(v.vin, loteActual, despachador)
-    if (ok) {
+    const result = await despachadorStore.despacharVehiculo(v.id, loteActual)
+    if (result.success) {
       despachosExitosos++
     } else {
       _despachosError++
-      console.error(`Error despachando ${v.vin}`)
+      console.error(`Error despachando ${v.bin}`)
     }
   }
 

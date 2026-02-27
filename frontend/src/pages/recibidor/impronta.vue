@@ -259,7 +259,7 @@ onMounted(() => {
 // Ensure dañoDetalles has entry for each zone
 watch(
   zonasDañadas,
-  (zones) => {
+  (zones: string[]) => {
     for (const z of zones) {
       if (!dañoDetalles[z]) {
         dañoDetalles[z] = { tipo: '', severidad: 'Baja' }
@@ -366,7 +366,7 @@ const validate = (): boolean => {
 }
 
 const buildDaños = (): DañoZona[] => {
-  return zonasDañadas.value.map((z) => ({
+  return zonasDañadas.value.map((z: string) => ({
     zona: zonaNombre(z),
     tipo: dañoDetalles[z]?.tipo || 'Sin especificar',
     severidad: dañoDetalles[z]?.severidad || 'Baja',

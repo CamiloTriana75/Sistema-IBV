@@ -1,6 +1,10 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
-import { useContenedorStore, type Contenedor } from '~/stores/contenedorStore'
+import {
+  useContenedorStore,
+  type Contenedor,
+  type VehiculoContenedor,
+} from '~/stores/contenedorStore'
 import { useImprontaStore } from '~/stores/improntaStore'
 import { useVehiculoStore } from '~/stores/vehiculoStore'
 import { useAuthStore } from '~/stores/auth'
@@ -40,12 +44,14 @@ const mostrarToast = (type: 'ok' | 'warn' | 'error', msg: string) => {
 
 // Contenedores pendientes/en recepcion
 const contenedoresPendientes = computed(() =>
-  contStore.contenedores.filter((c) => c.estado === 'pendiente' || c.estado === 'en_recepcion')
+  contStore.contenedores.filter(
+    (c: Contenedor) => c.estado === 'pendiente' || c.estado === 'en_recepcion'
+  )
 )
 
 // Stats para paso 2
 const vehiculosEscaneados = computed(
-  () => contenedorActual.value?.vehiculos.filter((v) => v.escaneado).length || 0
+  () => contenedorActual.value?.vehiculos.filter((v: VehiculoContenedor) => v.escaneado).length || 0
 )
 const progresoVehiculos = computed(() => {
   if (!contenedorActual.value) return 0
@@ -204,7 +210,7 @@ const onScanVehiculo = (codigo: string) => {
 
   // Verificar si ya fue escaneado (por VIN)
   const yaExiste = contenedorActual.value.vehiculos.find(
-    (v) =>
+    (v: VehiculoContenedor) =>
       v.vin.toLowerCase() === codigo.toLowerCase() ||
       v.codigoImpronta.toLowerCase() === codigo.toLowerCase()
   )
@@ -365,7 +371,7 @@ const imprimirResumen = () => {
   })
   const vehiculosHTML = cont.vehiculos
     .map(
-      (v, i) => `
+      (v: VehiculoContenedor, i: number) => `
       <tr style="border-bottom:1px solid #e5e7eb;">
         <td style="padding:8px 12px;text-align:center;font-weight:600;">${i + 1}</td>
         <td style="padding:8px 12px;font-family:monospace;font-size:11px;">${v.vin}</td>
@@ -845,7 +851,7 @@ const imprimirResumen = () => {
                       d="M5 13l4 4L19 7"
                     />
                   </svg>
-                  <span v-else>{{ idx + 1 }}</span>
+                  <span v-else>{{ Number(idx) + 1 }}</span>
                 </div>
 
                 <!-- Info -->
