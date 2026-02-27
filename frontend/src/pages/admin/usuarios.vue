@@ -146,9 +146,16 @@ const saveUser = async () => {
     return
   }
   
+  // Si es crear nuevo usuario, validar password
+  if (!editingUser.value && !form.value.password.trim()) {
+    formError.value = 'La contraseña es requerida para nuevos usuarios'
+    return
+  }
+  
   saving.value = true
   try {
     if (editingUser.value) {
+      // Actualización: no requiere password
       await supabaseUserService.updateUser(editingUser.value.id, {
         nombres: form.value.nombres,
         apellidos: form.value.apellidos,
@@ -157,14 +164,16 @@ const saveUser = async () => {
       })
       showToast(`Usuario "${form.value.nombres}" actualizado`)
     } else {
+      // Crear nuevo usuario: requiere password y crea en Auth
       await supabaseUserService.createUser({
         correo: form.value.correo,
         nombres: form.value.nombres,
         apellidos: form.value.apellidos,
         rol: form.value.rol,
+        password: form.value.password,
         activo: form.value.activo,
       })
-      showToast(`Usuario "${form.value.nombres}" creado exitosamente`)
+      showToast(`Usuario "${form.value.nombres}" creado exitosamente en Auth y BD`)
     }
     await loadUsers()
     closeModal()
@@ -217,8 +226,9 @@ onMounted(() => {
 </script>
 
 <template>
-  <div>
-    <!-- Header -->
+  <ClientOnly>
+    <div>
+      <!-- Header -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
       <div>
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
@@ -226,20 +236,38 @@ onMounted(() => {
           {{ users.filter(u => u.activo).length }} activos de {{ users.length }} usuarios
         </p>
       </div>
-      <button
-        class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition shadow-sm"
-        @click="openCreateModal"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 6v6m0 0v6m0-6h6m-6 0H6"
-          />
-        </svg>
-        Nuevo Usuario
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          @click="loadUsers"
+          :disabled="loading"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8 8 0 104.582 9"
+            />
+          </svg>
+          Recargar
+        </button>
+        <button
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition shadow-sm"
+          @click="openCreateModal"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 6v6m0 0v6m0-6h6m-6 0H6"
+            />
+          </svg>
+          Nuevo Usuario
+        </button>
+      </div>
     </div>
 
     <!-- Filtros y búsqueda -->
@@ -869,4 +897,5 @@ onMounted(() => {
       </Transition>
     </Teleport>
   </div>
+  </ClientOnly>
 </template>

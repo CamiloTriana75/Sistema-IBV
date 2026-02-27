@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useAuthStore } from '~/stores/auth'
+import NotificationBell from '~/components/notifications/NotificationBell.vue'
 
 const route = useRoute()
 const authStore = useAuthStore()
@@ -12,18 +13,30 @@ const currentUser = computed(() => {
   if (!u) {
     return { name: 'Usuario', initials: 'U', role: 'admin', roleName: 'Sin rol' }
   }
+  
+  // Obtener iniciales del nombre
+  const initials = u.name
+    ?.split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'U'
+  
+  // Mapear roles a nombres legibles
+  const roleNames: Record<string, string> = {
+    admin: 'Administrador',
+    recibidor: 'Recibidor',
+    inventario: 'Inventario',
+    despachador: 'Despachador',
+    porteria: 'Portería',
+    cliente: 'Cliente',
+  }
+  
   return {
     name: u.name || 'Usuario',
-    initials:
-      u.avatar ||
-      u.name
-        ?.split(' ')
-        .map((w: string) => w[0])
-        .join('')
-        .substring(0, 2) ||
-      'U',
+    initials,
     role: u.role || 'admin',
-    roleName: u.roleLabel || u.role || 'Usuario',
+    roleName: roleNames[u.role] || u.role || 'Usuario',
   }
 })
 
@@ -33,6 +46,12 @@ const pageTitle = computed(() => {
     '/admin/estadisticas': 'Estadísticas y Reportes',
     '/admin/usuarios': 'Gestión de Usuarios',
     '/admin/roles': 'Roles y Permisos',
+    '/admin/notificaciones': 'Centro de Notificaciones',
+    '/admin/recepcion': 'Monitoreo Recepción',
+    '/admin/inventario': 'Monitoreo Inventario',
+    '/admin/despacho': 'Monitoreo Despacho',
+    '/admin/auditoria': 'Auditoría y Control',
+    '/admin/excepciones': 'Gestión de Excepciones',
     '/recibidor': 'Panel Recibidor',
     '/recibidor/escaneo': 'Recepción de Vehículos',
     '/recibidor/impronta': 'Registro de Impronta',
@@ -88,19 +107,34 @@ const menuItems = computed(() => {
         icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>',
       },
       {
-        to: '/recibidor/escaneo',
-        label: 'Recepción',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" /></svg>',
+        to: '/admin/notificaciones',
+        label: 'Notificaciones',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" /></svg>',
       },
       {
-        to: '/inventario/checklist',
-        label: 'Inventario',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>',
+        to: '/admin/recepcion',
+        label: 'Monitoreo Recepción',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
       },
       {
-        to: '/despachador',
-        label: 'Despacho',
-        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>',
+        to: '/admin/inventario',
+        label: 'Monitoreo Inventario',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+      },
+      {
+        to: '/admin/despacho',
+        label: 'Monitoreo Despacho',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 12l2 2 4-4m7 0a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+      },
+      {
+        to: '/admin/auditoria',
+        label: 'Auditoría y Control',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
+      },
+      {
+        to: '/admin/excepciones',
+        label: 'Excepciones',
+        icon: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4m0 4v.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>',
       },
     ],
     recibidor: [
@@ -178,8 +212,9 @@ const handleLogout = () => {
 </script>
 
 <template>
-  <div class="min-h-screen bg-gray-100">
-    <!-- Overlay mobile -->
+  <ClientOnly>
+    <div class="min-h-screen bg-gray-100">
+      <!-- Overlay mobile -->
     <div
       v-if="sidebarOpen"
       class="fixed inset-0 bg-black/50 z-40 lg:hidden"
@@ -193,21 +228,36 @@ const handleLogout = () => {
         sidebarOpen ? 'translate-x-0' : '-translate-x-full',
       ]"
     >
-      <!-- Logo -->
-      <div class="flex items-center gap-3 px-6 h-16 border-b border-gray-800 shrink-0">
-        <div class="w-9 h-9 bg-primary-500 rounded-lg flex items-center justify-center">
-          <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z"
-            />
-          </svg>
-        </div>
-        <div>
-          <h1 class="text-lg font-bold">Sistema IBV</h1>
-          <p class="text-xs text-gray-400">Gestión de Vehículos</p>
+      <!-- Logo y Header -->
+      <div class="relative px-6 h-20 border-b border-gray-800/50 shrink-0 bg-gray-900">
+        <div class="relative flex items-center gap-4 h-full">
+          <!-- Ícono con efecto moderno -->
+          <div class="relative">
+            <div class="absolute inset-0 bg-primary-500 rounded-xl blur-md opacity-40"></div>
+            <div class="relative w-12 h-12 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/30 transform hover:scale-105 transition-transform duration-200">
+              <svg class="w-7 h-7 text-white drop-shadow-md" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M8 17h.01M12 17h.01M16 17h.01M3.5 11l.5-2a2 2 0 011.9-1.4h12.2A2 2 0 0120 9l.5 2M4 17a2 2 0 01-2-2v-2h20v2a2 2 0 01-2 2H4z"
+                />
+              </svg>
+            </div>
+          </div>
+          
+          <!-- Texto del sistema -->
+          <div class="flex-1 min-w-0">
+            <h1 class="text-xl font-bold text-white tracking-tight mb-0.5">
+              Sistema IBV
+            </h1>
+            <div class="flex items-center gap-2">
+              <div class="h-px w-4 bg-gradient-to-r from-primary-400 to-transparent"></div>
+              <p class="text-xs font-medium text-gray-400 tracking-wide uppercase">
+                Gestión Vehicular
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -261,7 +311,7 @@ const handleLogout = () => {
     <div class="lg:pl-72">
       <!-- Top Header -->
       <header
-        class="sticky top-0 z-30 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-4 sm:px-6 shadow-sm"
+        class="sticky top-0 z-30 bg-white border-b border-gray-200 h-20 flex items-center justify-between px-4 sm:px-6 shadow-sm"
       >
         <!-- Toggle sidebar (mobile) -->
         <button
@@ -286,21 +336,7 @@ const handleLogout = () => {
         <!-- Right side -->
         <div class="flex items-center gap-4">
           <!-- Notificaciones -->
-          <button class="relative text-gray-400 hover:text-gray-600 transition">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-              />
-            </svg>
-            <span
-              class="absolute -top-1 -right-1 w-4 h-4 bg-danger-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center"
-            >
-              3
-            </span>
-          </button>
+          <NotificationBell />
 
           <!-- Perfil -->
           <div class="flex items-center gap-2 pl-4 border-l border-gray-200">
@@ -322,4 +358,5 @@ const handleLogout = () => {
       </main>
     </div>
   </div>
+  </ClientOnly>
 </template>

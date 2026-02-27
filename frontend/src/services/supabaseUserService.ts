@@ -104,42 +104,39 @@ export const supabaseUserService = {
   },
 
   /**
-   * Crea un nuevo usuario en usuarios
+   * Crea un nuevo usuario en Supabase Auth Y en la tabla usuarios (via servidor)
    */
   async createUser(userData: {
     correo: string
     nombres: string
     apellidos: string
     rol: string
+    password: string
     activo?: boolean
   }): Promise<SupabaseUser | null> {
-    const $supabase = getSupabase()
+    try {
+      // Llamar al endpoint del servidor que tiene permisos de admin
+      const response = await $fetch('/api/admin/users', {
+        method: 'POST',
+        body: {
+          correo: userData.correo,
+          nombres: userData.nombres,
+          apellidos: userData.apellidos,
+          rol: userData.rol,
+          password: userData.password,
+          activo: userData.activo ?? true,
+        },
+      }) as any
 
-    const { data, error } = await $supabase
-      .from('usuarios')
-      .insert({
-        correo: userData.correo,
-        nombres: userData.nombres,
-        apellidos: userData.apellidos,
-        rol: userData.rol,
-        activo: userData.activo ?? true,
-        es_superusuario: userData.rol === 'admin',
-        es_personal: true,
-        fecha_registro: new Date().toISOString(),
-      })
-      .select()
-      .single()
-
-    if (error) {
+      return response.user as SupabaseUser
+    } catch (error: any) {
       console.error('Error creando usuario:', error)
-      throw new Error(error.message)
+      throw new Error(error.data?.message || error.message || 'Error creando usuario')
     }
-
-    return data as SupabaseUser
   },
 
   /**
-   * Actualiza un usuario existente
+   * Actualiza un usuario existente (via servidor)
    */
   async updateUser(id: number, updates: Partial<{
     nombres: string
@@ -147,37 +144,34 @@ export const supabaseUserService = {
     rol: string
     activo: boolean
   }>): Promise<SupabaseUser | null> {
-    const $supabase = getSupabase()
-
-    const { data, error } = await $supabase
-      .from('usuarios')
-      .update(updates)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) {
+    try {
+      console.log('[supabaseUserService.updateUser] ID:', id)
+      console.log('[supabaseUserService.updateUser] Updates:', updates)
+      
+      const response = await $fetch(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        body: updates,
+      }) as any
+      
+      console.log('[supabaseUserService.updateUser] Response:', response)
+      return response.user as SupabaseUser
+    } catch (error: any) {
       console.error('Error actualizando usuario:', error)
-      throw new Error(error.message)
+      throw new Error(error.data?.message || error.message || 'Error actualizando usuario')
     }
-
-    return data as SupabaseUser
   },
 
   /**
-   * Elimina un usuario
+   * Elimina un usuario de Supabase Auth Y de la tabla usuarios (via servidor)
    */
   async deleteUser(id: number): Promise<void> {
-    const $supabase = getSupabase()
-
-    const { error } = await $supabase
-      .from('usuarios')
-      .delete()
-      .eq('id', id)
-
-    if (error) {
+    try {
+      await $fetch(`/api/admin/users/${id}`, {
+        method: 'DELETE',
+      })
+    } catch (error: any) {
       console.error('Error eliminando usuario:', error)
-      throw new Error(error.message)
+      throw new Error(error.data?.message || error.message || 'Error eliminando usuario')
     }
   },
 

@@ -1,23 +1,22 @@
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import { useStatsStore } from '~/stores/statsStore'
+import { ref, computed, onMounted, watch } from 'vue'
 import { supabaseDataService } from '~/services/supabaseDataService'
-import { supabaseUserService } from '~/services/supabaseUserService'
-import type { VehicleData, DashboardStats, ActivityItem } from '~/services/supabaseDataService'
-import type { SupabaseUser } from '~/services/supabaseUserService'
+import type {
+  DashboardStats,
+  ActivityItem,
+  WeeklyTrends,
+} from '~/services/supabaseDataService'
 
 definePageMeta({ layout: 'admin', middleware: ['auth', 'admin'] })
 
-const stats = useStatsStore()
 const periodo = ref<'hoy' | 'semana' | 'mes'>('semana')
 
 // States
 const loading = ref(true)
 const error = ref('')
 const dashboardStats = ref<DashboardStats | null>(null)
-const vehicles = ref<VehicleData[]>([])
-const users = ref<SupabaseUser[]>([])
 const activities = ref<ActivityItem[]>([])
+const weeklyTrends = ref<WeeklyTrends | null>(null)
 
 // Computed stats for KPIs
 const kpiData = computed(() => {
@@ -107,35 +106,113 @@ const pipelineData = computed(() => {
   ]
 })
 
+const donutSegments = computed(() => {
+  if (!dashboardStats.value) return []
+  const stats = dashboardStats.value
+  return [
+    { label: 'Recibidos', value: stats.total_vehiculos, color: '#38bdf8' },
+    { label: 'Impronta', value: stats.en_impronta, color: '#60a5fa' },
+    { label: 'Inventario', value: stats.en_inventario, color: '#fbbf24' },
+    { label: 'Listos', value: stats.listos_despacho, color: '#34d399' },
+    { label: 'Despachados', value: stats.despachados, color: '#9ca3af' },
+  ]
+})
+
+const weekDays = computed(() => weeklyTrends.value?.days || [])
+const weekSeries = computed(
+  () => weeklyTrends.value?.series || [
+    { label: 'Recibidos', color: '#38bdf8' },
+    { label: 'Despachados', color: '#34d399' },
+  ]
+)
+
+const moduleEfficiency = computed(() => {
+  if (!dashboardStats.value) return []
+  const stats = dashboardStats.value
+  const total = stats.total_vehiculos || 1
+  return [
+    {
+      label: 'Recepción',
+      sublabel: 'VINs escaneados',
+      pct: stats.total_vehiculos ? 100 : 0,
+      color: 'bg-primary-500',
+      value: stats.total_vehiculos,
+    },
+    {
+      label: 'Impronta',
+      sublabel: 'Completadas',
+      pct: Math.round((stats.en_impronta / total) * 100),
+      color: 'bg-blue-500',
+      value: stats.en_impronta,
+    },
+    {
+      label: 'Inventario',
+      sublabel: 'Aprobados',
+      pct: Math.round((stats.en_inventario / total) * 100),
+      color: 'bg-amber-500',
+      value: stats.en_inventario,
+    },
+    {
+      label: 'Despacho',
+      sublabel: 'Despachados',
+      pct: Math.round((stats.despachados / total) * 100),
+      color: 'bg-success-500',
+      value: stats.despachados,
+    },
+  ]
+})
+
 // Load data
+const getStartIso = (value: 'hoy' | 'semana' | 'mes') => {
+  const now = new Date()
+  const start = new Date(now)
+  const daysBack = value === 'semana' ? 6 : value === 'mes' ? 29 : 0
+  start.setDate(now.getDate() - daysBack)
+  start.setHours(0, 0, 0, 0)
+  return start.toISOString()
+}
+
+const getTrendDays = (value: 'hoy' | 'semana' | 'mes') => {
+  if (value === 'hoy') return 1
+  if (value === 'mes') return 30
+  return 7
+}
+
 const loadDashboard = async () => {
   try {
     loading.value = true
     error.value = ''
-    
-    // Asegurar que los usuarios seed existan
-    await supabaseUserService.seedAllUsers()
-    
-    const [statsData, vehiclesData, usersData, activitiesData] = await Promise.all([
-      supabaseDataService.getDashboardStats(),
-      supabaseDataService.getVehicles(),
-      supabaseUserService.getAllUsers(),
-      supabaseDataService.getActivities(5),
-    ])
-    
+    const startIso = getStartIso(periodo.value)
+    const trendDays = getTrendDays(periodo.value)
+    const statsData = await supabaseDataService.getDashboardStats(startIso)
     dashboardStats.value = statsData
-    vehicles.value = vehiclesData
-    users.value = usersData
-    activities.value = activitiesData || []
   } catch (e: any) {
     error.value = e.message || 'Error al cargar datos del dashboard'
     console.error('Error loading dashboard:', e)
   } finally {
     loading.value = false
   }
+
+  try {
+    const startIso = getStartIso(periodo.value)
+    const trendDays = getTrendDays(periodo.value)
+    const [activitiesData, weeklyData] = await Promise.all([
+      supabaseDataService.getActivities(5, startIso),
+      supabaseDataService.getWeeklyTrends(trendDays, startIso),
+    ])
+
+    activities.value = activitiesData || []
+    weeklyTrends.value = weeklyData
+  } catch (e: any) {
+    console.error('Error loading secondary dashboard data:', e)
+  }
 }
 
 onMounted(() => {
+  loadDashboard()
+})
+
+watch(periodo, () => {
   loadDashboard()
 })
 
@@ -151,14 +228,31 @@ const iconMap: Record<string, string> = {
 </script>
 
 <template>
-  <div class="space-y-8">
-    <!-- ── Header ── -->
+  <ClientOnly>
+    <div class="space-y-8">
+      <!-- ── Header ── -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
       <div>
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Administrativo</h1>
         <p class="text-gray-500 mt-1">KPIs y métricas del sistema IBV en tiempo real</p>
       </div>
       <div class="flex items-center gap-3 self-start sm:self-auto">
+        <button
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          @click="loadDashboard"
+          :disabled="loading"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8 8 0 104.582 9"
+            />
+          </svg>
+          Recargar
+        </button>
         <NuxtLink
           to="/admin/estadisticas"
           class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition shadow-sm"
@@ -267,11 +361,11 @@ const iconMap: Record<string, string> = {
           </div>
         </div>
         <div class="flex items-center justify-center gap-1 mt-5 flex-wrap">
-          <template v-for="(stage, i) in pipelineData" :key="stage.label">
+          <template v-for="(stage, index) in pipelineData" :key="stage.label">
             <span :class="['text-xs px-2 py-1 rounded-lg font-medium', stage.light, stage.text]">
               {{ stage.label }} ({{ stage.value }})
             </span>
-            <span v-if="i < pipelineData.length - 1" class="text-gray-300 text-sm">›</span>
+            <span v-if="Number(index) < pipelineData.length - 1" class="text-gray-300 text-sm">›</span>
           </template>
         </div>
       </div>
@@ -283,7 +377,7 @@ const iconMap: Record<string, string> = {
           <p class="text-xs text-gray-400 mt-0.5">Por etapa del ciclo</p>
         </div>
         <div class="flex-1 flex items-center justify-center">
-          <ChartsDonutChart :segments="stats.donutSegments" :size="190" :thickness="36" />
+          <ChartsDonutChart :segments="donutSegments" :size="190" :thickness="36" />
         </div>
       </div>
     </div>
@@ -296,7 +390,7 @@ const iconMap: Record<string, string> = {
           <h3 class="text-base font-semibold text-gray-900">Tendencia Semanal</h3>
           <p class="text-xs text-gray-400 mt-0.5">Vehículos recibidos vs. despachados</p>
         </div>
-        <ChartsBarChart :bars="stats.weekDays" :series="stats.weekSeries" :height="160" />
+        <ChartsBarChart :bars="weekDays" :series="weekSeries" :height="160" />
       </div>
 
       <!-- Eficiencia por módulo -->
@@ -306,7 +400,7 @@ const iconMap: Record<string, string> = {
           <p class="text-xs text-gray-400 mt-0.5">Porcentaje de completado sobre el total</p>
         </div>
         <div class="space-y-5">
-          <div v-for="mod in stats.moduleEfficiency" :key="mod.label">
+          <div v-for="mod in moduleEfficiency" :key="mod.label">
             <div class="flex items-center justify-between mb-2">
               <div>
                 <span class="text-sm font-medium text-gray-800">{{ mod.label }}</span>
@@ -380,4 +474,5 @@ const iconMap: Record<string, string> = {
       </div>
     </div>
   </div>
+  </ClientOnly>
 </template>
