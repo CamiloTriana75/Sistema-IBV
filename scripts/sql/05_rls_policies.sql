@@ -21,6 +21,33 @@ DROP POLICY IF EXISTS "admin_all" ON despachos;
 DROP POLICY IF EXISTS "admin_all" ON despacho_vehiculos;
 DROP POLICY IF EXISTS "admin_all" ON movimientos_porteria;
 DROP POLICY IF EXISTS "admin_all" ON recibos;
+DROP POLICY IF EXISTS "notificaciones_select_own_or_admin" ON notificaciones;
+DROP POLICY IF EXISTS "notificaciones_insert_own_or_admin" ON notificaciones;
+DROP POLICY IF EXISTS "notificaciones_update_own_or_admin" ON notificaciones;
+DROP POLICY IF EXISTS "notificaciones_delete_admin_only" ON notificaciones;
+DROP POLICY IF EXISTS "contenedores_select_all" ON contenedores;
+DROP POLICY IF EXISTS "contenedores_insert_admin_or_recibidor" ON contenedores;
+DROP POLICY IF EXISTS "contenedores_update_admin_or_roles" ON contenedores;
+DROP POLICY IF EXISTS "contenedores_delete_admin" ON contenedores;
+DROP POLICY IF EXISTS "contenedor_vehiculos_select_all" ON contenedor_vehiculos;
+DROP POLICY IF EXISTS "contenedor_vehiculos_insert_recibidor" ON contenedor_vehiculos;
+DROP POLICY IF EXISTS "contenedor_vehiculos_update_admin" ON contenedor_vehiculos;
+DROP POLICY IF EXISTS "contenedor_vehiculos_delete_admin" ON contenedor_vehiculos;
+DROP POLICY IF EXISTS "improntas_registro_select_allowed" ON improntas_registro;
+DROP POLICY IF EXISTS "improntas_registro_insert_recibidor" ON improntas_registro;
+DROP POLICY IF EXISTS "improntas_registro_update_admin" ON improntas_registro;
+DROP POLICY IF EXISTS "improntas_registro_delete_admin" ON improntas_registro;
+DROP POLICY IF EXISTS "audit_logs_select_admin_only" ON auditoria_vehiculos;
+DROP POLICY IF EXISTS "audit_logs_insert_system_only" ON auditoria_vehiculos;
+DROP POLICY IF EXISTS "audit_logs_update_admin_only" ON auditoria_vehiculos;
+DROP POLICY IF EXISTS "locks_select_admin_only" ON bloqueos_vehiculos;
+DROP POLICY IF EXISTS "locks_insert_admin_only" ON bloqueos_vehiculos;
+DROP POLICY IF EXISTS "locks_update_admin_only" ON bloqueos_vehiculos;
+DROP POLICY IF EXISTS "locks_delete_admin_only" ON bloqueos_vehiculos;
+DROP POLICY IF EXISTS "exceptions_select_admin_or_assigned" ON excepciones_vehiculos;
+DROP POLICY IF EXISTS "exceptions_insert_admin_only" ON excepciones_vehiculos;
+DROP POLICY IF EXISTS "exceptions_update_admin_or_assigned" ON excepciones_vehiculos;
+DROP POLICY IF EXISTS "exceptions_delete_admin_only" ON excepciones_vehiculos;
 
 -- Deshabilitar RLS temporalmente para limpiar
 ALTER TABLE roles DISABLE ROW LEVEL SECURITY;
@@ -34,6 +61,13 @@ ALTER TABLE despachos DISABLE ROW LEVEL SECURITY;
 ALTER TABLE despacho_vehiculos DISABLE ROW LEVEL SECURITY;
 ALTER TABLE movimientos_porteria DISABLE ROW LEVEL SECURITY;
 ALTER TABLE recibos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE notificaciones DISABLE ROW LEVEL SECURITY;
+ALTER TABLE contenedores DISABLE ROW LEVEL SECURITY;
+ALTER TABLE contenedor_vehiculos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE improntas_registro DISABLE ROW LEVEL SECURITY;
+ALTER TABLE auditoria_vehiculos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE bloqueos_vehiculos DISABLE ROW LEVEL SECURITY;
+ALTER TABLE excepciones_vehiculos DISABLE ROW LEVEL SECURITY;
 
 -- ============================================
 -- 2. UTILITY FUNCTION - Get current user role
@@ -113,6 +147,119 @@ CREATE POLICY "usuarios_insert_admin_only" ON usuarios
     WITH CHECK (is_admin());
 
 CREATE POLICY "usuarios_delete_admin_only" ON usuarios
+    FOR DELETE
+    USING (is_admin());
+
+-- ============================================
+-- 5. BUQUES TABLE - All users can read, only admin modify
+-- ============================================
+
+-- ============================================
+-- 4.5 NOTIFICACIONES TABLE - Admin sees all, users see own
+-- ============================================
+
+ALTER TABLE notificaciones ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "notificaciones_select_own_or_admin" ON notificaciones
+    FOR SELECT
+    USING (
+        is_admin() OR
+        recipient_user_id = (SELECT id FROM usuarios WHERE correo = auth.email())
+    );
+
+CREATE POLICY "notificaciones_insert_own_or_admin" ON notificaciones
+    FOR INSERT
+    WITH CHECK (
+        is_admin() OR
+        recipient_user_id = (SELECT id FROM usuarios WHERE correo = auth.email())
+    );
+
+CREATE POLICY "notificaciones_update_own_or_admin" ON notificaciones
+    FOR UPDATE
+    USING (
+        is_admin() OR
+        recipient_user_id = (SELECT id FROM usuarios WHERE correo = auth.email())
+    )
+    WITH CHECK (
+        is_admin() OR
+        recipient_user_id = (SELECT id FROM usuarios WHERE correo = auth.email())
+    );
+
+CREATE POLICY "notificaciones_delete_admin_only" ON notificaciones
+    FOR DELETE
+    USING (is_admin());
+
+-- ============================================
+-- 4.6 VEHICLE AUDIT LOGS - Admin only
+-- ============================================
+
+ALTER TABLE auditoria_vehiculos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "audit_logs_select_admin_only" ON auditoria_vehiculos
+    FOR SELECT
+    USING (is_admin());
+
+CREATE POLICY "audit_logs_insert_system_only" ON auditoria_vehiculos
+    FOR INSERT
+    WITH CHECK (is_admin() OR auth.email() = current_user);
+
+CREATE POLICY "audit_logs_update_admin_only" ON auditoria_vehiculos
+    FOR UPDATE
+    USING (is_admin())
+    WITH CHECK (is_admin());
+
+-- ============================================
+-- 4.7 VEHICLE LOCKS - Admin only
+-- ============================================
+
+ALTER TABLE bloqueos_vehiculos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "locks_select_admin_only" ON bloqueos_vehiculos
+    FOR SELECT
+    USING (is_admin());
+
+CREATE POLICY "locks_insert_admin_only" ON bloqueos_vehiculos
+    FOR INSERT
+    WITH CHECK (is_admin());
+
+CREATE POLICY "locks_update_admin_only" ON bloqueos_vehiculos
+    FOR UPDATE
+    USING (is_admin())
+    WITH CHECK (is_admin());
+
+CREATE POLICY "locks_delete_admin_only" ON bloqueos_vehiculos
+    FOR DELETE
+    USING (is_admin());
+
+-- ============================================
+-- 4.8 VEHICLE EXCEPTIONS - Admin and assigned user
+-- ============================================
+
+ALTER TABLE excepciones_vehiculos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "exceptions_select_admin_or_assigned" ON excepciones_vehiculos
+    FOR SELECT
+    USING (
+        is_admin() OR
+        assigned_to_user_id = (SELECT id FROM usuarios WHERE correo = auth.email())
+    );
+
+CREATE POLICY "exceptions_insert_admin_only" ON excepciones_vehiculos
+    FOR INSERT
+    WITH CHECK (is_admin());
+
+CREATE POLICY "exceptions_update_admin_or_assigned" ON excepciones_vehiculos
+    FOR UPDATE
+    USING (
+        is_admin() OR
+        assigned_to_user_id = (SELECT id FROM usuarios WHERE correo = auth.email())
+    )
+    WITH CHECK (
+        is_admin() OR
+        assigned_to_user_id = (SELECT id FROM usuarios WHERE correo = auth.email())
+    );
+
+CREATE POLICY "exceptions_delete_admin_only" ON excepciones_vehiculos
     FOR DELETE
     USING (is_admin());
 
@@ -437,6 +584,99 @@ CREATE POLICY "recibos_update_admin" ON recibos
     WITH CHECK (is_admin());
 
 CREATE POLICY "recibos_delete_admin" ON recibos
+    FOR DELETE
+    USING (is_admin());
+
+-- ============================================
+-- 14. CONTENEDORES TABLE - Admin and relevant roles
+-- ============================================
+
+ALTER TABLE contenedores ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "contenedores_select_all" ON contenedores
+    FOR SELECT
+    USING (
+        is_admin() OR
+        get_current_user_role() IN ('recibidor', 'inventario', 'despachador')
+    );
+
+CREATE POLICY "contenedores_insert_admin_or_recibidor" ON contenedores
+    FOR INSERT
+    WITH CHECK (
+        is_admin() OR
+        get_current_user_role() IN ('recibidor', 'inventario')
+    );
+
+CREATE POLICY "contenedores_update_admin_or_roles" ON contenedores
+    FOR UPDATE
+    USING (
+        is_admin() OR
+        get_current_user_role() IN ('recibidor', 'inventario', 'despachador')
+    )
+    WITH CHECK (
+        is_admin() OR
+        get_current_user_role() IN ('recibidor', 'inventario', 'despachador')
+    );
+
+CREATE POLICY "contenedores_delete_admin" ON contenedores
+    FOR DELETE
+    USING (is_admin());
+
+-- ============================================
+-- 15. CONTENEDOR_VEHICULOS TABLE - Link table
+-- ============================================
+
+ALTER TABLE contenedor_vehiculos ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "contenedor_vehiculos_select_all" ON contenedor_vehiculos
+    FOR SELECT
+    USING (
+        is_admin() OR
+        get_current_user_role() IN ('recibidor', 'inventario', 'despachador')
+    );
+
+CREATE POLICY "contenedor_vehiculos_insert_recibidor" ON contenedor_vehiculos
+    FOR INSERT
+    WITH CHECK (
+        is_admin() OR
+        get_current_user_role() IN ('recibidor', 'inventario')
+    );
+
+CREATE POLICY "contenedor_vehiculos_update_admin" ON contenedor_vehiculos
+    FOR UPDATE
+    USING (is_admin())
+    WITH CHECK (is_admin());
+
+CREATE POLICY "contenedor_vehiculos_delete_admin" ON contenedor_vehiculos
+    FOR DELETE
+    USING (is_admin());
+
+-- ============================================
+-- 16. IMPRONTAS_REGISTRO TABLE - Recibidor creates and reads
+-- ============================================
+
+ALTER TABLE improntas_registro ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "improntas_registro_select_allowed" ON improntas_registro
+    FOR SELECT
+    USING (
+        is_admin() OR
+        get_current_user_role() IN ('recibidor', 'inventario')
+    );
+
+CREATE POLICY "improntas_registro_insert_recibidor" ON improntas_registro
+    FOR INSERT
+    WITH CHECK (
+        is_admin() OR
+        get_current_user_role() = 'recibidor'
+    );
+
+CREATE POLICY "improntas_registro_update_admin" ON improntas_registro
+    FOR UPDATE
+    USING (is_admin())
+    WITH CHECK (is_admin());
+
+CREATE POLICY "improntas_registro_delete_admin" ON improntas_registro
     FOR DELETE
     USING (is_admin());
 

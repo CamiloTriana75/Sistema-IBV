@@ -22,6 +22,7 @@ export type EstadoVehiculo =
 
 export interface VehiculoPipeline {
   id: string
+  bin?: string
   vin: string
   placa: string
   marca: string
@@ -535,6 +536,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
 
         return {
           id: `vp-${v.id}`,
+          bin: v.bin || undefined,
           // En Supabase se usa bin/qr_codigo como identificador
           vin: v.bin || v.qr_codigo || '',
           placa: v.placa || '',

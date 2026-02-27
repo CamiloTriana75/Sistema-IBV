@@ -90,111 +90,319 @@ const filteredVehiculos = computed(() => {
 async function descargarExcel() {
   const XLSX = await import('xlsx')
   const wb = XLSX.utils.book_new()
+  
+  const fecha = new Date()
+  const fechaStr = fecha.toLocaleDateString('es-VE', { year: 'numeric', month: 'long', day: 'numeric' })
+  const horaStr = fecha.toLocaleTimeString('es-VE')
 
-  // ── Hoja 1: Resumen General ──
+  // ════════════════════════════════════════════════════════════
+  // 📊 HOJA 1: RESUMEN EJECUTIVO
+  // ════════════════════════════════════════════════════════════
   const resumenData = [
-    ['REPORTE DE ESTADÍSTICAS — SISTEMA IBV'],
-    ['Fecha de generación', new Date().toLocaleDateString('es-VE')],
-    ['Hora', new Date().toLocaleTimeString('es-VE')],
+    ['SISTEMA IBV - REPORTE DE ESTADÍSTICAS'],
+    ['Fecha de Generación:', fechaStr, '', 'Hora:', horaStr],
     [],
-    ['INDICADORES CLAVE DE RENDIMIENTO (KPIs)'],
-    ['Indicador', 'Valor'],
-    ['Total registrados', vehiculoStore.total],
-    ['En patio (no despachados)', vehiculoStore.recibidos],
-    ['Con impronta completada', vehiculoStore.conImpronta],
-    ['Con inventario aprobado', vehiculoStore.conInventario],
-    ['Listos para despacho', vehiculoStore.listosDespacho],
-    ['Despachados', vehiculoStore.despachados],
-    ['Pendientes impronta', vehiculoStore.pendientesImpronta],
-    ['Pendientes inventario', vehiculoStore.pendientesInventario],
-    ['Tiempo promedio en patio (días)', stats.tiempoPromedioEnPatio],
-    ['Tasa de despacho', `${stats.tasaDespacho}%`],
+    ['═══ INDICADORES CLAVE DE RENDIMIENTO (KPIs) ═══'],
+    [],
+    ['CATEGORÍA', 'INDICADOR', 'VALOR', 'UNIDAD'],
+    ['Capacidad', 'Total Registrados', vehiculoStore.total, 'vehículos'],
+    ['Operación', 'En Patio (No Despachados)', vehiculoStore.recibidos, 'vehículos'],
+    ['Operación', 'Con Impronta Completada', vehiculoStore.conImpronta, 'vehículos'],
+    ['Operación', 'Con Inventario Aprobado', vehiculoStore.conInventario, 'vehículos'],
+    ['Despacho', 'Listos Para Despacho', vehiculoStore.listosDespacho, 'vehículos'],
+    ['Despacho', 'Despachados', vehiculoStore.despachados, 'vehículos'],
+    ['Pendientes', 'Pendientes Impronta', vehiculoStore.pendientesImpronta, 'vehículos'],
+    ['Pendientes', 'Pendientes Inventario', vehiculoStore.pendientesInventario, 'vehículos'],
+    [],
+    ['═══ MÉTRICAS DE EFICIENCIA ═══'],
+    [],
+    ['MÉTRICA', 'VALOR', 'UNIDAD'],
+    ['Tiempo Promedio en Patio', stats.tiempoPromedioEnPatio, 'días'],
+    ['Tasa de Despacho', stats.tasaDespacho, '%'],
+    ['Eficiencia Global', vehiculoStore.total > 0 ? Math.round((vehiculoStore.despachados / vehiculoStore.total) * 100) : 0, '%'],
   ]
+  
   const ws1 = XLSX.utils.aoa_to_sheet(resumenData)
-  ws1['!cols'] = [{ wch: 38 }, { wch: 22 }]
-  XLSX.utils.book_append_sheet(wb, ws1, 'Resumen General')
+  
+  // Estilos y formato para Resumen
+  ws1['!cols'] = [
+    { wch: 18 }, // Categoría
+    { wch: 35 }, // Indicador
+    { wch: 15 }, // Valor
+    { wch: 15 }, // Unidad
+  ]
+  
+  // Merge cells para título
+  if (!ws1['!merges']) ws1['!merges'] = []
+  ws1['!merges'].push(
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } }, // Título principal
+    { s: { r: 3, c: 0 }, e: { r: 3, c: 3 } }, // Subtítulo KPIs
+    { s: { r: 15, c: 0 }, e: { r: 15, c: 2 } }, // Subtítulo Métricas
+  )
+  
+  XLSX.utils.book_append_sheet(wb, ws1, '📊 Resumen Ejecutivo')
 
-  // ── Hoja 2: Pipeline ──
-  const pipeHeader = [['Etapa', 'Cantidad', 'Porcentaje']]
-  const pipeRows = stats.pipelineFunnel.map((p) => [p.label, p.value, `${p.pct}%`])
-  const ws2 = XLSX.utils.aoa_to_sheet([...pipeHeader, ...pipeRows])
-  ws2['!cols'] = [{ wch: 22 }, { wch: 12 }, { wch: 12 }]
-  XLSX.utils.book_append_sheet(wb, ws2, 'Pipeline')
+  // ════════════════════════════════════════════════════════════
+  // 🔄 HOJA 2: PIPELINE DE PROCESO
+  // ════════════════════════════════════════════════════════════
+  const pipeData = [
+    ['PIPELINE DE VEHÍCULOS - SISTEMA IBV'],
+    ['Fecha:', fechaStr],
+    [],
+    ['ETAPA DEL PROCESO', 'CANTIDAD', 'PORCENTAJE', 'ESTADO'],
+  ]
+  
+  stats.pipelineFunnel.forEach((p) => {
+    const estado = p.pct >= 75 ? '✓ Óptimo' : p.pct >= 50 ? '⚠ Normal' : '⚠ Bajo'
+    pipeData.push([p.label, p.value, p.pct / 100, estado])
+  })
+  
+  pipeData.push([])
+  pipeData.push(['TOTAL VEHÍCULOS EN SISTEMA:', vehiculoStore.total, '', ''])
+  
+  const ws2 = XLSX.utils.aoa_to_sheet(pipeData)
+  ws2['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 15 }, { wch: 15 }]
+  
+  // Merge título
+  if (!ws2['!merges']) ws2['!merges'] = []
+  ws2['!merges'].push(
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 3 } },
+    { s: { r: pipeData.length - 1, c: 1 }, e: { r: pipeData.length - 1, c: 2 } }
+  )
+  
+  // Formato de porcentajes (columna C, desde fila 5)
+  for (let i = 4; i < 4 + stats.pipelineFunnel.length; i++) {
+    const cellRef = XLSX.utils.encode_cell({ r: i, c: 2 })
+    if (ws2[cellRef]) {
+      ws2[cellRef].z = '0.0%'
+    }
+  }
+  
+  XLSX.utils.book_append_sheet(wb, ws2, '🔄 Pipeline')
 
-  // ── Hoja 3: Vehículos (ALL data) ──
+  // ════════════════════════════════════════════════════════════
+  // 🚗 HOJA 3: BASE DE DATOS COMPLETA DE VEHÍCULOS
+  // ════════════════════════════════════════════════════════════
+  const vehHeaders = [
+    ['BASE DE DATOS COMPLETA - TODOS LOS VEHÍCULOS'],
+    ['Generado:', fechaStr, 'Total Registros:', vehiculoStore.vehiculos.length],
+    [],
+  ]
+  
   const vehData = vehiculoStore.vehiculos.map((v) => ({
-    VIN: v.vin,
-    Placa: v.placa,
-    Marca: v.marca,
-    Modelo: v.modelo,
-    Año: v.anio,
-    Color: v.color,
-    Cliente: v.cliente,
-    Contenedor: v.contenedorCodigo || '—',
+    'VIN': v.vin,
+    'Placa': v.placa,
+    'Marca': v.marca,
+    'Modelo': v.modelo,
+    'Año': v.anio,
+    'Color': v.color,
+    'Cliente': v.cliente,
+    'Contenedor': v.contenedorCodigo || '—',
     'Fecha Recepción': v.fechaRecepcion,
-    'Hora Recepción': v.horaRecepcion,
-    'Impronta Completada': v.improntaCompletada ? 'Sí' : 'No',
-    'Folio Impronta': v.improntaFolio || '—',
+    'Hora': v.horaRecepcion,
+    'Impronta': v.improntaCompletada ? 'SÍ' : 'NO',
+    'Folio': v.improntaFolio || '—',
     'Fecha Impronta': v.fechaImpronta || '—',
-    'Inventario Completado': v.inventarioCompletado ? 'Sí' : 'No',
-    'Inventario Aprobado': v.inventarioAprobado ? 'Sí' : 'No',
-    'Fecha Inventario': v.inventarioFecha || '—',
-    Inspector: v.inventarioInspector || '—',
-    'Items Totales': v.inventarioResultado?.totalItems ?? '—',
-    'Items Aprobados': v.inventarioResultado?.aprobados ?? '—',
-    Fallas: v.inventarioResultado?.fallas ?? '—',
-    'N/A': v.inventarioResultado?.na ?? '—',
-    'Nota Inventario': v.inventarioResultado?.nota || '—',
-    Despachado: v.despachado ? 'Sí' : 'No',
-    'Fecha Despacho': v.fechaDespacho || '—',
-    'Hora Despacho': v.horaDespacho || '—',
-    'Lote Despacho': v.lotDespacho || '—',
-    Despachador: v.despachador || '—',
-    Estado: v.estado,
+    'Inventario': v.inventarioCompletado ? 'SÍ' : 'NO',
+    'Aprobado': v.inventarioAprobado ? 'SÍ' : 'NO',
+    'Fecha Inv.': v.inventarioFecha || '—',
+    'Inspector': v.inventarioInspector || '—',
+    'Total Items': v.inventarioResultado?.totalItems ?? 0,
+    'Aprobados': v.inventarioResultado?.aprobados ?? 0,
+    'Fallas': v.inventarioResultado?.fallas ?? 0,
+    'N/A': v.inventarioResultado?.na ?? 0,
+    'Despachado': v.despachado ? 'SÍ' : 'NO',
+    'Fecha Desp.': v.fechaDespacho || '—',
+    'Lote': v.lotDespacho || '—',
+    'Despachador': v.despachador || '—',
+    'Estado Actual': v.estado,
   }))
-  const ws3 = XLSX.utils.json_to_sheet(vehData)
-  XLSX.utils.book_append_sheet(wb, ws3, 'Vehículos')
+  
+  const ws3 = XLSX.utils.aoa_to_sheet([...vehHeaders])
+  XLSX.utils.sheet_add_json(ws3, vehData, { origin: 'A4' })
+  
+  ws3['!cols'] = [
+    { wch: 18 }, // VIN
+    { wch: 10 }, // Placa
+    { wch: 12 }, // Marca
+    { wch: 12 }, // Modelo
+    { wch: 6 },  // Año
+    { wch: 10 }, // Color
+    { wch: 20 }, // Cliente
+    { wch: 12 }, // Contenedor
+    { wch: 12 }, // Fecha Recepción
+    { wch: 8 },  // Hora
+    { wch: 10 }, // Impronta
+    { wch: 12 }, // Folio
+    { wch: 12 }, // Fecha Impronta
+    { wch: 10 }, // Inventario
+    { wch: 10 }, // Aprobado
+    { wch: 12 }, // Fecha Inv
+    { wch: 15 }, // Inspector
+    { wch: 10 }, // Total Items
+    { wch: 10 }, // Aprobados
+    { wch: 8 },  // Fallas
+    { wch: 6 },  // N/A
+    { wch: 10 }, // Despachado
+    { wch: 12 }, // Fecha Desp
+    { wch: 10 }, // Lote
+    { wch: 15 }, // Despachador
+    { wch: 18 }, // Estado
+  ]
+  
+  if (!ws3['!merges']) ws3['!merges'] = []
+  ws3['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 7 } })
+  
+  // Filtros automáticos
+  ws3['!autofilter'] = { ref: `A3:Z${3 + vehData.length}` }
+  
+  XLSX.utils.book_append_sheet(wb, ws3, '🚗 Vehículos')
 
-  // ── Hoja 4: Por Marca ──
-  const marcaData = stats.vehiculosPorMarca.map((m) => ({
-    Marca: m.label,
-    Cantidad: m.value,
-    Porcentaje: `${vehiculoStore.total > 0 ? Math.round((m.value / vehiculoStore.total) * 100) : 0}%`,
-  }))
-  const ws4 = XLSX.utils.json_to_sheet(marcaData)
-  XLSX.utils.book_append_sheet(wb, ws4, 'Por Marca')
+  // ════════════════════════════════════════════════════════════
+  // 🏭 HOJA 4: ANÁLISIS POR MARCA
+  // ════════════════════════════════════════════════════════════
+  const marcaHeaders = [
+    ['ANÁLISIS POR MARCA DE VEHÍCULOS'],
+    ['Total Vehículos:', vehiculoStore.total],
+    [],
+    ['MARCA', 'CANTIDAD', 'PORCENTAJE', 'PARTICIPACIÓN'],
+  ]
+  
+  const marcaData = stats.vehiculosPorMarca.map((m) => {
+    const pct = vehiculoStore.total > 0 ? (m.value / vehiculoStore.total) : 0
+    return [m.label, m.value, pct, pct >= 0.2 ? 'Alta' : pct >= 0.1 ? 'Media' : 'Baja']
+  })
+  
+  const ws4 = XLSX.utils.aoa_to_sheet([...marcaHeaders, ...marcaData])
+  ws4['!cols'] = [{ wch: 20 }, { wch: 12 }, { wch: 15 }, { wch: 15 }]
+  
+  if (!ws4['!merges']) ws4['!merges'] = []
+  ws4['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } })
+  
+  // Formato porcentajes
+  for (let i = 4; i < 4 + marcaData.length; i++) {
+    const cellRef = XLSX.utils.encode_cell({ r: i, c: 2 })
+    if (ws4[cellRef]) {
+      ws4[cellRef].z = '0.0%'
+    }
+  }
+  
+  ws4['!autofilter'] = { ref: `A3:D${3 + marcaData.length}` }
+  
+  XLSX.utils.book_append_sheet(wb, ws4, '🏭 Por Marca')
 
-  // ── Hoja 5: Por Cliente ──
-  const clienteData = stats.vehiculosPorCliente.map((c) => ({
-    Cliente: c.label,
-    Cantidad: c.value,
-    Porcentaje: `${vehiculoStore.total > 0 ? Math.round((c.value / vehiculoStore.total) * 100) : 0}%`,
-  }))
-  const ws5 = XLSX.utils.json_to_sheet(clienteData)
-  XLSX.utils.book_append_sheet(wb, ws5, 'Por Cliente')
+  // ════════════════════════════════════════════════════════════
+  // 👥 HOJA 5: ANÁLISIS POR CLIENTE
+  // ════════════════════════════════════════════════════════════
+  const clienteHeaders = [
+    ['ANÁLISIS POR CLIENTE'],
+    ['Total Vehículos:', vehiculoStore.total],
+    [],
+    ['CLIENTE', 'CANTIDAD', 'PORCENTAJE', 'CLASIFICACIÓN'],
+  ]
+  
+  const clienteData = stats.vehiculosPorCliente.map((c) => {
+    const pct = vehiculoStore.total > 0 ? (c.value / vehiculoStore.total) : 0
+    return [c.label, c.value, pct, pct >= 0.15 ? '⭐ Premium' : pct >= 0.05 ? 'Regular' : 'Ocasional']
+  })
+  
+  const ws5 = XLSX.utils.aoa_to_sheet([...clienteHeaders, ...clienteData])
+  ws5['!cols'] = [{ wch: 25 }, { wch: 12 }, { wch: 15 }, { wch: 18 }]
+  
+  if (!ws5['!merges']) ws5['!merges'] = []
+  ws5['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 3 } })
+  
+  for (let i = 4; i < 4 + clienteData.length; i++) {
+    const cellRef = XLSX.utils.encode_cell({ r: i, c: 2 })
+    if (ws5[cellRef]) {
+      ws5[cellRef].z = '0.0%'
+    }
+  }
+  
+  ws5['!autofilter'] = { ref: `A3:D${3 + clienteData.length}` }
+  
+  XLSX.utils.book_append_sheet(wb, ws5, '👥 Por Cliente')
 
-  // ── Hoja 6: Eficiencia ──
-  const efData = stats.moduleEfficiency.map((e) => ({
-    Módulo: e.label,
-    Detalle: e.sublabel,
-    Cantidad: e.value,
-    Porcentaje: `${e.pct}%`,
-  }))
-  const ws6 = XLSX.utils.json_to_sheet(efData)
-  XLSX.utils.book_append_sheet(wb, ws6, 'Eficiencia Módulos')
+  // ════════════════════════════════════════════════════════════
+  // ⚡ HOJA 6: EFICIENCIA DE MÓDULOS
+  // ════════════════════════════════════════════════════════════
+  const efHeaders = [
+    ['EFICIENCIA DE MÓDULOS OPERATIVOS'],
+    ['Análisis de rendimiento por área'],
+    [],
+    ['MÓDULO', 'DESCRIPCIÓN', 'CANTIDAD', 'EFICIENCIA', 'ESTADO'],
+  ]
+  
+  const efData = stats.moduleEfficiency.map((e) => {
+    const estado = e.pct >= 80 ? '✓ Excelente' : e.pct >= 60 ? '✓ Bueno' : e.pct >= 40 ? '⚠ Regular' : '✗ Bajo'
+    return [e.label, e.sublabel, e.value, e.pct / 100, estado]
+  })
+  
+  const ws6 = XLSX.utils.aoa_to_sheet([...efHeaders, ...efData])
+  ws6['!cols'] = [{ wch: 18 }, { wch: 30 }, { wch: 12 }, { wch: 15 }, { wch: 15 }]
+  
+  if (!ws6['!merges']) ws6['!merges'] = []
+  ws6['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } })
+  
+  for (let i = 4; i < 4 + efData.length; i++) {
+    const cellRef = XLSX.utils.encode_cell({ r: i, c: 3 })
+    if (ws6[cellRef]) {
+      ws6[cellRef].z = '0.0%'
+    }
+  }
+  
+  XLSX.utils.book_append_sheet(wb, ws6, '⚡ Eficiencia')
 
-  // ── Hoja 7: Tendencia Diaria ──
-  const tendData = stats.dailyTrend.map((d) => ({
-    Fecha: d.label,
-    Recibidos: d.values[0],
-    Despachados: d.values[1],
-  }))
-  const ws7 = XLSX.utils.json_to_sheet(tendData)
-  XLSX.utils.book_append_sheet(wb, ws7, 'Tendencia Diaria')
+  // ════════════════════════════════════════════════════════════
+  // 📈 HOJA 7: TENDENCIA TEMPORAL
+  // ════════════════════════════════════════════════════════════
+  const tendHeaders = [
+    ['TENDENCIA TEMPORAL - RECEPCIÓN VS DESPACHO'],
+    ['Período de Análisis:', `Últimos ${stats.dailyTrend.length} registros`],
+    [],
+    ['FECHA', 'RECIBIDOS', 'DESPACHADOS', 'DIFERENCIA', 'BALANCE'],
+  ]
+  
+  const tendData = stats.dailyTrend.map((d) => {
+    const recibidos = d.values[0] || 0
+    const despachados = d.values[1] || 0
+    const diferencia = recibidos - despachados
+    const balance = diferencia > 0 ? '↑ Acumulando' : diferencia < 0 ? '↓ Despachando' : '= Equilibrado'
+    return [d.label, recibidos, despachados, diferencia, balance]
+  })
+  
+  // Calcular totales
+  const totalRecibidos = tendData.reduce((sum, row) => sum + row[1], 0)
+  const totalDespachados = tendData.reduce((sum, row) => sum + row[2], 0)
+  
+  tendData.push([])
+  tendData.push(['TOTALES:', totalRecibidos, totalDespachados, totalRecibidos - totalDespachados, ''])
+  
+  const ws7 = XLSX.utils.aoa_to_sheet([...tendHeaders, ...tendData])
+  ws7['!cols'] = [{ wch: 15 }, { wch: 12 }, { wch: 14 }, { wch: 14 }, { wch: 18 }]
+  
+  if (!ws7['!merges']) ws7['!merges'] = []
+  ws7['!merges'].push({ s: { r: 0, c: 0 }, e: { r: 0, c: 4 } })
+  
+  XLSX.utils.book_append_sheet(wb, ws7, '📈 Tendencia')
 
-  // ── Descargar ──
-  const fecha = new Date().toISOString().slice(0, 10)
-  XLSX.writeFile(wb, `IBV_Estadisticas_Reporte_${fecha}.xlsx`)
+  // ════════════════════════════════════════════════════════════
+  // 💾 GUARDAR ARCHIVO
+  // ════════════════════════════════════════════════════════════
+  const fechaArchivo = fecha.toISOString().slice(0, 10).replace(/-/g, '')
+  const nombreArchivo = `IBV_Reporte_Completo_${fechaArchivo}.xlsx`
+  XLSX.writeFile(wb, nombreArchivo)
+}
+
+const recargarDatos = async () => {
+  loading.value = true
+  try {
+    await vehiculoStore.loadFromSupabase()
+  } catch (err) {
+    console.error('Error cargando datos:', err)
+  } finally {
+    loading.value = false
+  }
 }
 
 // Cargar datos de Supabase al montar
@@ -221,20 +429,38 @@ onMounted(async () => {
           Análisis completo del flujo de vehículos del sistema IBV
         </p>
       </div>
-      <button
-        class="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-medium text-sm hover:bg-green-700 transition shadow-sm self-start sm:self-auto"
-        @click="descargarExcel"
-      >
-        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a2 2 0 002 2h14a2 2 0 002-2v-3"
-          />
-        </svg>
-        Descargar Excel Completo
-      </button>
+      <div class="flex items-center gap-2">
+        <button
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          @click="recargarDatos"
+          :disabled="loading"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8 8 0 104.582 9"
+            />
+          </svg>
+          Recargar
+        </button>
+        <button
+          class="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl font-medium text-sm hover:bg-green-700 transition shadow-sm"
+          @click="descargarExcel"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M12 10v6m0 0l-3-3m3 3l3-3M3 17v3a2 2 0 002 2h14a2 2 0 002-2v-3"
+            />
+          </svg>
+          Descargar Excel Completo
+        </button>
+      </div>
     </div>
 
     <!-- ═══════════ KPI Cards ═══════════ -->

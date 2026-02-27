@@ -91,6 +91,41 @@ CREATE INDEX IF NOT EXISTS usuarios_activo_idx ON usuarios(activo);
 -- ============================================
 -- 3. BUQUES
 -- ============================================
+-- 2.5 NOTIFICACIONES
+-- ============================================
+
+CREATE TABLE IF NOT EXISTS notificaciones (
+    id BIGSERIAL PRIMARY KEY,
+    titulo TEXT NOT NULL,
+    mensaje TEXT NOT NULL,
+    modulo VARCHAR(50) NOT NULL DEFAULT 'general'
+        CHECK (modulo IN ('admin', 'porteria', 'recibidor', 'inventario', 'despachador', 'general')),
+    recipient_user_id BIGINT REFERENCES usuarios(id) ON DELETE SET NULL,
+    created_by_user_id BIGINT REFERENCES usuarios(id) ON DELETE SET NULL,
+    created_by_role VARCHAR(50) NOT NULL DEFAULT 'sistema',
+    action_url TEXT,
+    metadata JSONB NOT NULL DEFAULT '{}'::jsonb,
+    leida_en TIMESTAMPTZ,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS notificaciones_recipient_user_id_idx
+    ON notificaciones(recipient_user_id);
+CREATE INDEX IF NOT EXISTS notificaciones_modulo_idx
+    ON notificaciones(modulo);
+CREATE INDEX IF NOT EXISTS notificaciones_leida_en_idx
+    ON notificaciones(leida_en);
+CREATE INDEX IF NOT EXISTS notificaciones_created_at_idx
+    ON notificaciones(created_at);
+
+COMMENT ON TABLE notificaciones IS
+    'Notificaciones del sistema para usuarios';
+COMMENT ON COLUMN notificaciones.modulo IS
+    'Modulo origen de la notificacion (admin, porteria, recibidor, inventario, despachador, general)';
+
+-- ============================================
+-- 3. BUQUES
+-- ============================================
 
 CREATE TABLE IF NOT EXISTS buques (
     id BIGSERIAL PRIMARY KEY,

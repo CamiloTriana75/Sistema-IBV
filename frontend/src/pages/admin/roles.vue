@@ -179,23 +179,41 @@ const saveRole = async () => {
       <!-- Header -->
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 class="text-3xl font-bold text-gray-900">🔐 Roles y Permisos</h1>
+          <h1 class="text-3xl font-bold text-gray-900"> Roles y Permisos</h1>
           <p class="text-gray-500 mt-2">Administra los roles del sistema y sus permisos</p>
         </div>
-        <button
-          class="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:shadow-lg transition-all shadow-md"
-          @click="openCreateRole"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M12 4v16m8-8H4"
-            />
-          </svg>
-          Nuevo Rol
-        </button>
+        <div class="flex items-center gap-2">
+          <button
+            class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            type="button"
+            @click="loadRoles"
+            :disabled="loading"
+          >
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M4 4v5h.582m15.356 2A8 8 0 104.582 9"
+              />
+            </svg>
+            Recargar
+          </button>
+          <button
+            class="inline-flex items-center gap-2 px-5 py-3 bg-gradient-to-r from-primary-600 to-primary-700 text-white font-semibold rounded-xl hover:shadow-lg transition-all shadow-md"
+            @click="openCreateRole"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+            Nuevo Rol
+          </button>
+        </div>
       </div>
 
       <!-- Roles Grid -->

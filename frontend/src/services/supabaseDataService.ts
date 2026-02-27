@@ -127,7 +127,7 @@ export const supabaseDataService = {
   },
 
   /**
-   * Obtiene las actividades recientes combinando mÃºltiples tablas
+   * Obtiene las actividades recientes combinando múltiples tablas
    */
   async getActivities(limit: number = 5, startIso?: string): Promise<ActivityItem[]> {
     const $supabase = getSupabase()
@@ -149,7 +149,7 @@ export const supabaseDataService = {
         const usuario = imp.usuario as any
         activities.push({
           id: imp.id,
-          description: `realizÃ³ impronta (${imp.estado || 'completada'})`,
+          description: `realizó impronta (${imp.estado || 'completada'})`,
           timestamp: imp.fecha,
           user: usuario ? { nombres: usuario.nombres, apellidos: usuario.apellidos } : null,
           role: 'recibidor',
@@ -174,7 +174,7 @@ export const supabaseDataService = {
         const usuario = inv.usuario as any
         activities.push({
           id: inv.id + 10000,
-          description: `${inv.completo ? 'completÃ³' : 'iniciÃ³'} inventario`,
+          description: `${inv.completo ? 'completó' : 'inició'} inventario`,
           timestamp: inv.fecha,
           user: usuario ? { nombres: usuario.nombres, apellidos: usuario.apellidos } : null,
           role: 'inventario',
@@ -199,7 +199,7 @@ export const supabaseDataService = {
         const usuario = desp.usuario as any
         activities.push({
           id: desp.id + 20000,
-          description: `despacho de ${desp.cantidad_vehiculos} vehÃ­culos (${desp.estado || 'en proceso'})`,
+          description: `despachó ${desp.cantidad_vehiculos} vehículos (${desp.estado || 'en proceso'})`,
           timestamp: desp.fecha,
           user: usuario ? { nombres: usuario.nombres, apellidos: usuario.apellidos } : null,
           role: 'despachador',
@@ -208,7 +208,7 @@ export const supabaseDataService = {
       }
     }
 
-    // Obtener movimientos de porterÃ­a recientes
+    // Obtener movimientos de portería recientes
     let movimientosQuery = $supabase
       .from('movimientos_porteria')
       .select('id, tipo, persona, fecha, observacion, usuario:usuarios(id, nombres, apellidos)')
@@ -224,7 +224,7 @@ export const supabaseDataService = {
         const usuario = mov.usuario as any
         activities.push({
           id: mov.id + 30000,
-          description: `movimiento ${mov.tipo}${mov.persona ? ` - ${mov.persona}` : ''}`,
+          description: `registró movimiento ${mov.tipo}${mov.persona ? ` - ${mov.persona}` : ''}`,
           timestamp: mov.fecha,
           user: usuario ? { nombres: usuario.nombres, apellidos: usuario.apellidos } : null,
           role: 'porteria',
@@ -233,7 +233,7 @@ export const supabaseDataService = {
       }
     }
 
-    // Ordenar por fecha descÃ¿ y limitar
+    // Ordenar por fecha desc y limitar
     activities.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
     return activities.slice(0, limit)
   },

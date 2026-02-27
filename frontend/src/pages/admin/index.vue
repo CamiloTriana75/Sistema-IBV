@@ -237,6 +237,22 @@ const iconMap: Record<string, string> = {
         <p class="text-gray-500 mt-1">KPIs y métricas del sistema IBV en tiempo real</p>
       </div>
       <div class="flex items-center gap-3 self-start sm:self-auto">
+        <button
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          @click="loadDashboard"
+          :disabled="loading"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8 8 0 104.582 9"
+            />
+          </svg>
+          Recargar
+        </button>
         <NuxtLink
           to="/admin/estadisticas"
           class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-xl text-sm font-medium hover:bg-primary-700 transition shadow-sm"
