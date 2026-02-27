@@ -5,37 +5,30 @@
  */
 import { createClient } from '@supabase/supabase-js'
 
-const getSupabaseAdmin = (supabaseUrl: string, supabaseServiceKey: string) => {
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
+  const supabaseUrl = config.supabaseUrl
+  const supabaseServiceKey = config.supabaseServiceKey
+
   if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('[Admin Users Index] Configuración faltante:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseServiceKey,
+    })
     throw createError({
       statusCode: 500,
-      statusMessage: 'Supabase configuration missing on server'
+      statusMessage: 'Supabase configuration missing on server. Set NUXT_SUPABASE_URL and NUXT_SUPABASE_SERVICE_KEY in Vercel.'
     })
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  const $supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
   })
-}
 
-export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const supabaseUrl = config.supabaseUrl
-  const supabaseServiceKey = config.supabaseServiceKey
-  
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('[Admin Users] Missing Supabase config:', { supabaseUrl: !!supabaseUrl, supabaseServiceKey: !!supabaseServiceKey })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Supabase configuration missing on server'
-    })
-  }
-  
   const method = getMethod(event)
-  const $supabaseAdmin = getSupabaseAdmin(supabaseUrl, supabaseServiceKey)
 
   try {
     // ============================================

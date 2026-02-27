@@ -19,11 +19,9 @@ export default defineNuxtConfig({
   },
 
   runtimeConfig: {
-    // Variables privadas (solo servidor)
-    supabaseUrl: process.env.NUXT_SUPABASE_URL || process.env.SUPABASE_URL || '',
-    supabaseServiceKey: process.env.NUXT_SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_KEY || '',
-    
-    // Variables públicas (cliente + servidor)
+    // Privado (solo servidor) - Se mapea automáticamente desde NUXT_SUPABASE_URL y NUXT_SUPABASE_SERVICE_KEY
+    supabaseUrl: process.env.SUPABASE_URL || '',
+    supabaseServiceKey: process.env.SUPABASE_SERVICE_KEY || '',
     public: {
       apiBase: process.env.NUXT_PUBLIC_API_BASE || 'http://localhost:8000/api',
       supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL || '',

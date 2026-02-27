@@ -6,62 +6,36 @@
  */
 import { createClient } from '@supabase/supabase-js'
 
-const getSupabaseAdmin = (supabaseUrl: string, supabaseServiceKey: string) => {
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
+  const supabaseUrl = config.supabaseUrl
+  const supabaseServiceKey = config.supabaseServiceKey
+
   if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('[Admin Users ID] Configuración faltante:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseServiceKey,
+    })
     throw createError({
       statusCode: 500,
-      statusMessage: 'Supabase configuration missing on server'
+      statusMessage: 'Supabase configuration missing on server. Set NUXT_SUPABASE_URL and NUXT_SUPABASE_SERVICE_KEY in Vercel.'
     })
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  const $supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
   })
-}
 
-export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const supabaseUrl = config.supabaseUrl
-  const supabaseServiceKey = config.supabaseServiceKey
-  
-  console.log('[Admin Users] Configuración:', {
-    hasUrl: !!supabaseUrl,
-    hasKey: !!supabaseServiceKey,
-    urlLength: supabaseUrl?.length || 0,
-    keyLength: supabaseServiceKey?.length || 0,
-  })
-  
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('[Admin Users] Missing Supabase config:', { supabaseUrl: !!supabaseUrl, supabaseServiceKey: !!supabaseServiceKey })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Supabase configuration missing on server'
-    })
-  }
-  
   const method = getMethod(event)
   const userId = getRouterParam(event, 'id')
-  
-  console.log('[Admin Users] Request:', { method, userId })
 
   if (!userId) {
     throw createError({
       statusCode: 400,
       statusMessage: 'ID de usuario requerido'
-    })
-  }
-
-  let $supabaseAdmin
-  try {
-    $supabaseAdmin = getSupabaseAdmin(supabaseUrl, supabaseServiceKey)
-  } catch (err) {
-    console.error('[Admin Users] Error creando cliente Supabase:', err)
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Error inicializando cliente Supabase'
     })
   }
 
@@ -73,7 +47,7 @@ export default defineEventHandler(async (event) => {
       const { data, error } = await $supabaseAdmin
         .from('usuarios')
         .select('*')
-        .eq('id', Number(userId))
+        .eq('id', userId)
         .single()
 
       if (error) throw error
@@ -86,19 +60,17 @@ export default defineEventHandler(async (event) => {
     // ============================================
     if (method === 'PATCH') {
       const body = await readBody(event)
-      const userIdNum = Number(userId)
       
       console.log('[PATCH /api/admin/users/:id] Body recibido:', body)
-      console.log('[PATCH /api/admin/users/:id] Usuario ID:', userIdNum)
+      console.log('[PATCH /api/admin/users/:id] Usuario ID:', userId)
 
       const { data: currentUser, error: getError } = await $supabaseAdmin
         .from('usuarios')
         .select('*')
-        .eq('id', userIdNum)
+        .eq('id', userId)
         .single()
 
       if (getError || !currentUser) {
-        console.error('[PATCH] Usuario no encontrado:', { getError, userIdNum })
         throw createError({
           statusCode: 404,
           statusMessage: 'Usuario no encontrado'
@@ -121,7 +93,7 @@ export default defineEventHandler(async (event) => {
       const { data: updatedUser, error: updateError } = await $supabaseAdmin
         .from('usuarios')
         .update(updateData)
-        .eq('id', userIdNum)
+        .eq('id', userId)
         .select()
         .single()
 
@@ -161,12 +133,10 @@ export default defineEventHandler(async (event) => {
     // DELETE /api/admin/users/:id
     // ============================================
     if (method === 'DELETE') {
-      const userIdNum = Number(userId)
-      
       const { data: usuario, error: getError } = await $supabaseAdmin
         .from('usuarios')
         .select('correo')
-        .eq('id', userIdNum)
+        .eq('id', userId)
         .single()
 
       if (getError) {
@@ -197,7 +167,7 @@ export default defineEventHandler(async (event) => {
       const { error: deleteError } = await $supabaseAdmin
         .from('usuarios')
         .delete()
-        .eq('id', userIdNum)
+        .eq('id', userId)
 
       if (deleteError) {
         throw new Error(`Error en BD: ${deleteError.message}`)
