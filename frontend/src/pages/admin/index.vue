@@ -339,118 +339,44 @@ const iconMap: Record<string, string> = {
       </div>
     </div>
 
-    <!-- ── Actividad + Quick Links ── -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Actividad reciente -->
-      <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <div class="flex items-center justify-between mb-5">
-          <h3 class="text-base font-semibold text-gray-900">Actividad Reciente</h3>
-          <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Últimas actividades</span>
-        </div>
-        <div v-if="activities.length > 0" class="space-y-4">
-          <div v-for="(act, i) in activities" :key="i" class="flex items-start gap-3">
-            <div
-              class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white bg-primary-500"
-            >
-              {{ act.user?.nombres?.[0] || 'U' }}{{ act.user?.apellidos?.[0] || '' }}
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm text-gray-800">
-                <span class="font-medium">{{ act.user?.nombres || 'Sistema' }} {{ act.user?.apellidos || '' }}</span>
-                {{ act.description }}
-              </p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ new Date(act.timestamp).toLocaleString('es') }}</p>
-            </div>
-            <span
-              :class="[
-                'text-xs px-2 py-1 rounded-full font-medium shrink-0',
-                act.role === 'admin'
-                  ? 'bg-primary-50 text-primary-600'
-                  : act.role === 'recibidor'
-                    ? 'bg-blue-50 text-blue-600'
-                    : act.role === 'inventario'
-                      ? 'bg-amber-50 text-amber-600'
-                      : 'bg-green-50 text-green-600',
-              ]"
-            >
-              {{ act.role || 'Actividad' }}
-            </span>
+    <!-- ── Actividad Reciente ── -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
+      <div class="flex items-center justify-between mb-5">
+        <h3 class="text-base font-semibold text-gray-900">Actividad Reciente</h3>
+        <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Últimas actividades</span>
+      </div>
+      <div v-if="activities.length > 0" class="space-y-4">
+        <div v-for="(act, i) in activities" :key="i" class="flex items-start gap-3">
+          <div
+            class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white bg-primary-500"
+          >
+            {{ act.user?.nombres?.[0] || 'U' }}{{ act.user?.apellidos?.[0] || '' }}
           </div>
-        </div>
-        <div v-else class="text-center py-8 text-gray-400">
-          No hay actividad reciente
+          <div class="flex-1 min-w-0">
+            <p class="text-sm text-gray-800">
+              <span class="font-medium">{{ act.user?.nombres || 'Sistema' }} {{ act.user?.apellidos || '' }}</span>
+              {{ act.description }}
+            </p>
+            <p class="text-xs text-gray-400 mt-0.5">{{ new Date(act.timestamp).toLocaleString('es') }}</p>
+          </div>
+          <span
+            :class="[
+              'text-xs px-2 py-1 rounded-full font-medium shrink-0',
+              act.role === 'admin'
+                ? 'bg-primary-50 text-primary-600'
+                : act.role === 'recibidor'
+                  ? 'bg-blue-50 text-blue-600'
+                  : act.role === 'inventario'
+                    ? 'bg-amber-50 text-amber-600'
+                    : 'bg-green-50 text-green-600',
+            ]"
+          >
+            {{ act.role || 'Actividad' }}
+          </span>
         </div>
       </div>
-
-      <!-- Accesos rápidos -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
-        <h3 class="text-base font-semibold text-gray-900 mb-5">Acceso Rápido</h3>
-        <div class="space-y-2">
-          <NuxtLink
-            v-for="link in [
-              {
-                to: '/admin/usuarios',
-                label: 'Usuarios',
-                desc: 'Crear y gestionar',
-                bg: 'bg-primary-50',
-                ic: 'text-primary-600',
-              },
-              {
-                to: '/admin/roles',
-                label: 'Roles',
-                desc: 'Configurar permisos',
-                bg: 'bg-purple-50',
-                ic: 'text-purple-600',
-              },
-              {
-                to: '/recibidor',
-                label: 'Recepción',
-                desc: 'Ver panel',
-                bg: 'bg-blue-50',
-                ic: 'text-blue-600',
-              },
-              {
-                to: '/inventario',
-                label: 'Inventario',
-                desc: 'Inspecciones',
-                bg: 'bg-amber-50',
-                ic: 'text-amber-600',
-              },
-              {
-                to: '/despachador',
-                label: 'Despacho',
-                desc: 'Ver lotes',
-                bg: 'bg-success-50',
-                ic: 'text-success-600',
-              },
-            ]"
-            :key="link.to"
-            :to="link.to"
-            class="flex items-center gap-3 p-2.5 rounded-xl hover:bg-gray-50 transition group"
-          >
-            <div :class="['w-8 h-8 rounded-lg shrink-0 flex items-center justify-center', link.bg]">
-              <svg
-                :class="['w-4 h-4', link.ic]"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M9 5l7 7-7 7"
-                />
-              </svg>
-            </div>
-            <div class="flex-1 min-w-0">
-              <p class="text-sm font-medium text-gray-800 group-hover:text-primary-600 transition">
-                {{ link.label }}
-              </p>
-              <p class="text-xs text-gray-400">{{ link.desc }}</p>
-            </div>
-          </NuxtLink>
-        </div>
+      <div v-else class="text-center py-8 text-gray-400">
+        No hay actividad reciente
       </div>
     </div>
   </div>

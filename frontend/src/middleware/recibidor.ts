@@ -13,7 +13,7 @@ export default defineNuxtRouteMiddleware(async (to) => {
     await authStore.loadUser()
   }
 
-  if (authStore.user?.role !== 'recibidor') {
+  if (authStore.user?.role !== 'recibidor' && authStore.user?.role !== 'admin') {
     return navigateTo('/')
   }
 })

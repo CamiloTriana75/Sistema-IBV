@@ -13,9 +13,25 @@ onMounted(async () => {
 
 <template>
   <div>
-    <div class="mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Panel Despachador</h1>
-      <p class="text-gray-500 mt-1">Gestión de despacho y salida de vehículos</p>
+    <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Panel Despachador</h1>
+        <p class="text-gray-500 mt-1">Gestión de despacho y salida de vehículos</p>
+      </div>
+      <NuxtLink
+        to="/despachador/planilla"
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-gray-700 border border-gray-200 rounded-xl text-sm font-semibold hover:bg-gray-50 transition shadow-sm"
+      >
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+          />
+        </svg>
+        Ver lotes
+      </NuxtLink>
     </div>
 
     <!-- Estadísticas -->
