@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useVehiculoStore } from '~/stores/vehiculoStore'
 
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: ['auth', 'despachador'] })
 
 const vehiculoStore = useVehiculoStore()
 

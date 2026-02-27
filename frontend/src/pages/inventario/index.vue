@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useVehiculoStore } from '~/stores/vehiculoStore'
 
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: ['auth', 'inventario'] })
 
 const vehiculoStore = useVehiculoStore()
 const tab = ref<'pendientes' | 'completados'>('pendientes')

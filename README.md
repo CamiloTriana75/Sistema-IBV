@@ -1,6 +1,5 @@
 # Sistema IBV - Inventario y Despacho de Vehículos en Bodegas
 
-![Backend CI](https://github.com/CamiloTriana75/Sistema-IBV/workflows/Backend%20CI/badge.svg)
 ![Frontend CI](https://github.com/CamiloTriana75/Sistema-IBV/workflows/Frontend%20CI/badge.svg)
 
 Sistema web/responsivo para gestionar el ciclo completo de recepción, inventario, impronta y despacho de vehículos provenientes de buques hacia bodegas.
@@ -19,53 +18,46 @@ Sistema integral que permite controlar todo el flujo operativo de vehículos en 
 - **Gestión de roles** — Administrador, Portería, Recibidor, Inventario, Despachador, Cliente
 - **Reportes** — Estadísticas, exportación a Excel, recibos imprimibles
 
-## Stack Tecnologico (Pendiente de confirmacion)
+## Stack Tecnológico
 
-> ⚠️ **Las tecnologias aun no estan definidas oficialmente.** Las siguientes son propuestas iniciales sujetas a revision y aprobacion del equipo.
-
-| Capa | Propuesta | Estado |
+| Capa | Tecnología | Estado |
 |---|---|---|
-| **Frontend** | Vue 3 + Nuxt 3 | 🟡 Pendiente |
-| **Backend** | Django (API RESTful) | 🟡 Pendiente |
-| **Lenguaje** | Python 3.12 | 🟡 Pendiente |
-| **Base de datos** | Supabase (PostgreSQL) | 🟡 Pendiente |
-| **Autenticacion** | Django REST Framework + JWT | 🟡 Pendiente |
-| **Almacenamiento** | Supabase Storage | 🟡 Pendiente |
+| **Frontend** | Vue 3 + Nuxt 3 + TypeScript | ✅ Implementado |
+| **Base de datos** | Supabase (PostgreSQL) | ✅ Implementado |
+| **Autenticación** | Supabase Auth | ✅ Implementado |
+| **Almacenamiento** | Supabase Storage | ✅ Implementado |
+| **Estilos** | TailwindCSS | ✅ Implementado |
+| **API** | Supabase (directo desde frontend) | ✅ Implementado |
 
 ## Estructura del proyecto
 
 ```
 Sistema-IBV/
-├── frontend/          # Nuxt 3 + Vue 3 (Frontend)
-├── backend/           # Django + DRF (API Backend) - Por crear
-├── venv/              # Entorno virtual Python
-├── .github/           # Templates de GitHub (PR, Issues)
-├── requirements.txt   # Dependencias Python
-└── README.md
+├── frontend/          # Nuxt 3 + Vue 3 (Aplicación completa)
+│   ├── src/
+│   │   ├── components/      # Componentes Vue reutilizables
+│   │   ├── pages/           # Páginas/rutas (admin, porteria, etc.)
+│   │   ├── services/        # Servicios de Supabase (users, data, auth)
+│   │   ├── stores/          # Pinia stores (auth, stats)
+│   │   ├── middleware/      # Middlewares de ruta (auth, roles)
+│   │   └── plugins/         # Plugins (supabase client)
+├── scripts/           # Scripts de utilidad (setup Supabase)
+├── docs/              # Documentación del proyecto
+└── .github/           # Templates de GitHub (PR, Issues)
 ```
 
 ## Requisitos previos
 
-- **Python:** 3.12+ (actualmente usando 3.13.9)
-- **Node.js:** 18+ (para Nuxt/Vue)
-- **PostgreSQL:** Supabase (cloud)
+- **Node.js:** 18+ (recomendado 20.x)
+- **npm** o **pnpm** o **yarn**
+- **Cuenta de Supabase** (gratuita)
 - **Git:** Para control de versiones
 
 ## CI/CD Pipeline
 
-Este proyecto tiene configurado GitHub Actions para integración continua y despliegue automático.
+Este proyecto tiene configurado GitHub Actions para integración continua.
 
 ### 🔄 Workflows Automáticos
-
-#### Backend CI
-- **Trigger:** Push o PR a `develop` o `main` con cambios en `backend/` o `requirements.txt`
-- **Pasos:**
-  - ✅ Formateo de código (Black)
-  - ✅ Análisis estático (Flake8)
-  - ✅ Verificación de migraciones Django
-  - ✅ Tests unitarios
-  - ✅ Reporte de cobertura
-- **Matrices:** Python 3.12 y 3.13
 
 #### Frontend CI
 - **Trigger:** Push o PR a `develop` o `main` con cambios en `frontend/`
@@ -82,9 +74,6 @@ Este proyecto tiene configurado GitHub Actions para integración continua y desp
 Ejecuta verificaciones localmente antes de hacer commit:
 
 ```bash
-# Backend
-.\scripts\pre-commit-backend.ps1
-
 # Frontend
 .\scripts\pre-commit-frontend.ps1
 ```
@@ -93,57 +82,83 @@ Ver documentación completa en [.github/README.md](.github/README.md)
 
 ## Instalación
 
-### Backend (Python/Django)
+### 1. Clonar el repositorio
 
-1. **Crear y activar entorno virtual:**
-   ```bash
-   # Crear entorno virtual
-   python -m venv venv
-   
-   # Activar (Windows PowerShell)
-   .\venv\Scripts\Activate.ps1
-   
-   # Activar (Windows CMD)
-   .\venv\Scripts\activate.bat
-   
-   # Activar (Linux/Mac)
-   source venv/bin/activate
-   ```
+```bash
+git clone https://github.com/CamiloTriana75/Sistema-IBV.git
+cd Sistema-IBV
+```
 
-2. **Instalar dependencias:**
-   ```bash
-   pip install -r requirements.txt
-   ```
+### 2. Configurar Supabase
 
-3. **Configurar variables de entorno:**
-   ```bash
-   # Crear archivo .env en la raíz
-   cp .env.example .env
-   # Editar .env con las credenciales de Supabase
-   ```
+1. Crear un proyecto en [Supabase](https://supabase.com)
+2. Ejecutar el SQL de configuración:
+   - Ir a SQL Editor en Supabase Dashboard
+   - Copiar y ejecutar `scripts/sql/00_full_setup.sql`
+3. Obtener credenciales:
+   - **URL del proyecto**: Settings → API → Project URL
+   - **Anon key**: Settings → API → Project API keys → anon/public
 
-4. **Crear estructura del proyecto Django** (pendiente)
+### 3. Configurar variables de entorno
 
-### Frontend (Nuxt 3)
+Crear archivo `.env` en la raíz del proyecto:
 
-1. **Instalar dependencias:**
-   ```bash
-   cd frontend
-   npm install
-   ```
+```bash
+# Supabase
+NUXT_PUBLIC_SUPABASE_URL=tu-url-de-supabase
+NUXT_PUBLIC_SUPABASE_ANON_KEY=tu-anon-key
+```
 
-2. **Ejecutar en desarrollo:**
-   ```bash
-   npm run dev
-   ```
+### 4. Instalar dependencias y ejecutar
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+La aplicación estará disponible en [http://localhost:3000](http://localhost:3000)
+
+### 5. Usuarios por defecto
+
+Al hacer login por primera vez con estos correos, se crean automáticamente en la base de datos:
+
+| Email | Rol | Contraseña |
+|---|---|---|
+| admin1@ibv.com | Administrador | (configurar en Supabase Auth) |
+| porteria1@ibv.com | Portería | (configurar en Supabase Auth) |
+| recibidor1@ibv.com | Recibidor | (configurar en Supabase Auth) |
+| inventario1@ibv.com | Inventario | (configurar en Supabase Auth) |
+| despacho1@ibv.com | Despachador | (configurar en Supabase Auth) |
+
+**Crear usuarios en Supabase:**
+1. Ir a Authentication → Users
+2. Click en "Add user"
+3. Ingresar email y contraseña
+4. El rol se asigna automáticamente al hacer login
+
+## Despliegue
+
+### Vercel (Recomendado para Nuxt)
+
+1. Conectar repositorio GitHub con Vercel
+2. Configurar variables de entorno (Supabase URL y Key)
+3. Deploy automático en cada push a `main`
+
+### Netlify
+
+1. Conectar repositorio GitHub con Netlify
+2. Build command: `cd frontend && npm run build`
+3. Publish directory: `frontend/.output/public`
+4. Configurar variables de entorno
 
 ## Equipo
 
 | Rol | Enfoque |
 |---|---|
 | Dev 1 — Frontend Lead | Vue, Nuxt, UI/UX, componentes QR |
-| Dev 2 — Backend Lead | Django, API, base de datos |
-| Dev 3 — Fullstack | Integracion, reportes, modulos secundarios |
+| Dev 2 — Fullstack | Supabase, integraciones, lógica de negocio |
+| Dev 3 — Fullstack | Reportes, módulos secundarios, testing |
 
 ## Metodología
 

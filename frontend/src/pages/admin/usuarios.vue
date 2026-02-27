@@ -1,74 +1,88 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
-import { useUserStore, SYSTEM_ROLES } from '~/stores/userStore'
-import type { User } from '~/types/index'
+import { supabaseUserService } from '~/services/supabaseUserService'
+import type { SupabaseUser } from '~/services/supabaseUserService'
 
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: ['auth', 'admin'] })
 
-const userStore = useUserStore()
-
-// Filtros
-const searchQuery = ref('')
-const filterRole = ref('')
-const filterStatus = ref('')
-
-// Modal state
+// States
+const loading = ref(false)
+const error = ref('')
+const users = ref<SupabaseUser[]>([])
 const showModal = ref(false)
 const showDeleteModal = ref(false)
-const editingUser = ref<User | null>(null)
-const userToDelete = ref<User | null>(null)
+const editingUser = ref<SupabaseUser | null>(null)
+const userToDelete = ref<SupabaseUser | null>(null)
 const saving = ref(false)
 const formError = ref('')
 const showPassword = ref(false)
 
+// Filters
+const searchQuery = ref('')
+const filterRole = ref('')
+const filterStatus = ref('')
+
 // Toast
 const toast = ref({ show: false, message: '', type: 'success' as 'success' | 'error' })
 
+const SYSTEM_ROLES = [
+  { value: 'admin', label: 'Administrador', description: 'Acceso total al sistema', color: 'bg-primary-100', dotColor: 'bg-primary-600' },
+  { value: 'porteria', label: 'Portería', description: 'Control de acceso y portón', color: 'bg-purple-100', dotColor: 'bg-purple-600' },
+  { value: 'recibidor', label: 'Recibidor', description: 'Recepción de vehículos e impronta', color: 'bg-blue-100', dotColor: 'bg-blue-600' },
+  { value: 'inventario', label: 'Inventario', description: 'Verificación e inspección', color: 'bg-amber-100', dotColor: 'bg-amber-600' },
+  { value: 'despachador', label: 'Despachador', description: 'Despacho y salida de vehículos', color: 'bg-green-100', dotColor: 'bg-green-600' },
+  { value: 'cliente', label: 'Cliente', description: 'Consulta y seguimiento', color: 'bg-gray-100', dotColor: 'bg-gray-600' },
+]
+
 const form = ref({
-  name: '',
-  email: '',
+  nombres: '',
+  apellidos: '',
+  correo: '',
   password: '',
-  role: 'recibidor' as 'admin' | 'porteria' | 'recibidor' | 'inventario' | 'despachador',
-  status: 'active' as User['status'],
+  rol: 'recibidor',
+  activo: true,
 })
 
 // Computed
 const filteredUsers = computed(() => {
-  let result = [...userStore.users]
+  let result = [...users.value]
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(
-      (u) => u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)
+      (u) => u.nombres.toLowerCase().includes(q) || 
+             u.apellidos.toLowerCase().includes(q) || 
+             u.correo.toLowerCase().includes(q)
     )
   }
   if (filterRole.value) {
-    result = result.filter((u) => u.role === filterRole.value)
+    result = result.filter((u) => u.rol === filterRole.value)
   }
   if (filterStatus.value) {
-    result = result.filter((u) => u.status === filterStatus.value)
+    result = result.filter((u) => u.activo === (filterStatus.value === 'active'))
   }
   return result
 })
 
 // Helpers
-const getInitials = (name: string) => {
-  return name
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .substring(0, 2)
-    .toUpperCase()
+const getInitials = (nombres: string, apellidos: string) => {
+  return (nombres?.[0] || '') + (apellidos?.[0] || '')
 }
 
-const getAvatarColor = (role: string) => {
+const getAvatarColor = (rol: string) => {
   const colors: Record<string, string> = {
     admin: 'bg-primary-600',
     recibidor: 'bg-blue-500',
     inventario: 'bg-amber-500',
     despachador: 'bg-green-500',
     porteria: 'bg-purple-500',
+    cliente: 'bg-gray-500',
   }
-  return colors[role] || 'bg-gray-500'
+  return colors[rol] || 'bg-gray-500'
+}
+
+const getRoleInfo = (rol: string) => {
+  const role = SYSTEM_ROLES.find(r => r.value === rol)
+  return role || { value: rol, label: rol, color: 'bg-gray-100', dotColor: 'bg-gray-400' }
 }
 
 const showToast = (message: string, type: 'success' | 'error' = 'success') => {
@@ -78,24 +92,38 @@ const showToast = (message: string, type: 'success' | 'error' = 'success') => {
   }, 3000)
 }
 
+// Load users
+const loadUsers = async () => {
+  try {
+    loading.value = true
+    users.value = await supabaseUserService.getAllUsers()
+  } catch (e: any) {
+    error.value = e.message || 'Error al cargar usuarios'
+    showToast(error.value, 'error')
+  } finally {
+    loading.value = false
+  }
+}
+
 // CRUD handlers
 const openCreateModal = () => {
   editingUser.value = null
   formError.value = ''
   showPassword.value = false
-  form.value = { name: '', email: '', password: '', role: 'recibidor', status: 'active' }
+  form.value = { nombres: '', apellidos: '', correo: '', password: '', rol: 'recibidor', activo: true }
   showModal.value = true
 }
 
-const editUser = (user: User) => {
+const editUser = (user: SupabaseUser) => {
   editingUser.value = user
   formError.value = ''
   form.value = {
-    name: user.name,
-    email: user.email,
+    nombres: user.nombres,
+    apellidos: user.apellidos,
+    correo: user.correo,
     password: '',
-    role: user.role === 'cliente' ? 'recibidor' : user.role,
-    status: user.status,
+    rol: user.rol,
+    activo: user.activo,
   }
   showModal.value = true
 }
@@ -108,39 +136,46 @@ const closeModal = () => {
 
 const saveUser = async () => {
   formError.value = ''
+  
+  if (!form.value.nombres.trim()) {
+    formError.value = 'El nombre es requerido'
+    return
+  }
+  if (!form.value.correo.trim()) {
+    formError.value = 'El email es requerido'
+    return
+  }
+  
   saving.value = true
   try {
     if (editingUser.value) {
-      await userStore.updateUser(editingUser.value.id, {
-        name: form.value.name,
-        email: form.value.email,
-        role: form.value.role,
-        status: form.value.status,
+      await supabaseUserService.updateUser(editingUser.value.id, {
+        nombres: form.value.nombres,
+        apellidos: form.value.apellidos,
+        rol: form.value.rol,
+        activo: form.value.activo,
       })
-      showToast(`Usuario "${form.value.name}" actualizado`)
+      showToast(`Usuario "${form.value.nombres}" actualizado`)
     } else {
-      if (!form.value.password || form.value.password.length < 4) {
-        formError.value = 'La contraseña debe tener al menos 4 caracteres'
-        saving.value = false
-        return
-      }
-      await userStore.createUser({
-        name: form.value.name,
-        email: form.value.email,
-        role: form.value.role,
-        status: form.value.status,
+      await supabaseUserService.createUser({
+        correo: form.value.correo,
+        nombres: form.value.nombres,
+        apellidos: form.value.apellidos,
+        rol: form.value.rol,
+        activo: form.value.activo,
       })
-      showToast(`Usuario "${form.value.name}" creado exitosamente`)
+      showToast(`Usuario "${form.value.nombres}" creado exitosamente`)
     }
+    await loadUsers()
     closeModal()
-  } catch (err: unknown) {
-    formError.value = (err as Error).message || 'Error al guardar'
+  } catch (err: any) {
+    formError.value = err.message || 'Error al guardar usuario'
   } finally {
     saving.value = false
   }
 }
 
-const openDeleteModal = (user: User) => {
+const openDeleteModal = (user: SupabaseUser) => {
   userToDelete.value = user
   showDeleteModal.value = true
 }
@@ -154,9 +189,10 @@ const confirmDelete = async () => {
   if (!userToDelete.value) return
   saving.value = true
   try {
-    const name = userToDelete.value.name
-    await userStore.deleteUser(userToDelete.value.id)
+    const name = userToDelete.value.nombres
+    await supabaseUserService.deleteUser(userToDelete.value.id)
     showToast(`Usuario "${name}" eliminado`)
+    await loadUsers()
     closeDeleteModal()
   } catch (err) {
     showToast('Error al eliminar usuario', 'error')
@@ -165,17 +201,18 @@ const confirmDelete = async () => {
   }
 }
 
-const handleToggleStatus = async (user: User) => {
+const handleToggleStatus = async (user: SupabaseUser) => {
   try {
-    await userStore.toggleStatus(user.id)
-    showToast(`Estado de "${user.name}" actualizado`)
+    await supabaseUserService.updateUser(user.id, { activo: !user.activo })
+    showToast(`Estado de "${user.nombres}" actualizado`)
+    await loadUsers()
   } catch {
     showToast('Error al cambiar estado', 'error')
   }
 }
 
 onMounted(() => {
-  userStore.fetchUsers()
+  loadUsers()
 })
 </script>
 
@@ -186,7 +223,7 @@ onMounted(() => {
       <div>
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
         <p class="text-gray-500 mt-1">
-          {{ userStore.activeUsers }} activos de {{ userStore.userCount }} usuarios
+          {{ users.filter(u => u.activo).length }} activos de {{ users.length }} usuarios
         </p>
       </div>
       <button
@@ -294,7 +331,7 @@ onMounted(() => {
     <!-- Tabla de usuarios -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <!-- Loading -->
-      <div v-if="userStore.loading" class="p-12 text-center">
+      <div v-if="loading" class="p-12 text-center">
         <div
           class="animate-spin w-8 h-8 border-4 border-primary-200 border-t-primary-600 rounded-full mx-auto mb-3"
         />
@@ -357,14 +394,14 @@ onMounted(() => {
                   <div
                     :class="[
                       'w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold text-white shrink-0',
-                      getAvatarColor(user.role),
+                      getAvatarColor(user.rol),
                     ]"
                   >
-                    {{ getInitials(user.name) }}
+                    {{ getInitials(user.nombres, user.apellidos) }}
                   </div>
                   <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-900 truncate">{{ user.name }}</p>
-                    <p class="text-xs text-gray-500 truncate">{{ user.email }}</p>
+                    <p class="text-sm font-semibold text-gray-900 truncate">{{ user.nombres }} {{ user.apellidos }}</p>
+                    <p class="text-xs text-gray-500 truncate">{{ user.correo }}</p>
                   </div>
                 </div>
               </td>
@@ -373,13 +410,13 @@ onMounted(() => {
                 <span
                   :class="[
                     'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold',
-                    userStore.getRoleInfo(user.role).color,
+                    getRoleInfo(user.rol).color,
                   ]"
                 >
                   <span
-                    :class="['w-1.5 h-1.5 rounded-full', userStore.getRoleInfo(user.role).dotColor]"
+                    :class="['w-1.5 h-1.5 rounded-full', getRoleInfo(user.rol).dotColor]"
                   />
-                  {{ userStore.getRoleInfo(user.role).label }}
+                  {{ getRoleInfo(user.rol).label }}
                 </span>
               </td>
               <!-- Estado -->
@@ -387,7 +424,7 @@ onMounted(() => {
                 <button
                   :class="[
                     'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition hover:opacity-80',
-                    user.status === 'active'
+                    user.activo
                       ? 'bg-green-50 text-green-700'
                       : 'bg-red-50 text-red-600',
                   ]"
@@ -396,10 +433,10 @@ onMounted(() => {
                   <span
                     :class="[
                       'w-1.5 h-1.5 rounded-full',
-                      user.status === 'active' ? 'bg-green-500' : 'bg-red-400',
+                      user.activo ? 'bg-green-500' : 'bg-red-400',
                     ]"
                   />
-                  {{ user.status === 'active' ? 'Activo' : 'Inactivo' }}
+                  {{ user.activo ? 'Activo' : 'Inactivo' }}
                 </button>
               </td>
               <!-- Acciones -->
@@ -445,7 +482,7 @@ onMounted(() => {
         v-if="filteredUsers.length > 0"
         class="px-6 py-3 bg-gray-50 border-t border-gray-100 text-xs text-gray-500"
       >
-        Mostrando {{ filteredUsers.length }} de {{ userStore.userCount }} usuarios
+        Mostrando {{ filteredUsers.length }} de {{ users.length }} usuarios
       </div>
     </div>
 
@@ -540,26 +577,43 @@ onMounted(() => {
                 <div
                   :class="[
                     'w-16 h-16 rounded-full flex items-center justify-center text-xl font-bold text-white transition-all',
-                    getAvatarColor(form.role),
+                    getAvatarColor(form.rol),
                   ]"
                 >
-                  {{ form.name ? getInitials(form.name) : '?' }}
+                  {{ form.nombres ? getInitials(form.nombres, form.apellidos) : '?' }}
                 </div>
               </div>
 
               <!-- Nombre completo -->
-              <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Nombre completo
-                  <span class="text-red-500">*</span>
-                </label>
-                <input
-                  v-model="form.name"
-                  type="text"
-                  required
-                  placeholder="Ej: Carlos Pérez"
-                  class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent transition placeholder:text-gray-400"
-                />
+              <div class="grid grid-cols-2 gap-3">
+                <!-- Nombre -->
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Nombre
+                    <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    v-model="form.nombres"
+                    type="text"
+                    required
+                    placeholder="Ej: Carlos"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent transition placeholder:text-gray-400"
+                  />
+                </div>
+                <!-- Apellido -->
+                <div>
+                  <label class="block text-sm font-semibold text-gray-700 mb-1.5">
+                    Apellido
+                    <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    v-model="form.apellidos"
+                    type="text"
+                    required
+                    placeholder="Ej: Pérez"
+                    class="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-transparent transition placeholder:text-gray-400"
+                  />
+                </div>
               </div>
 
               <!-- Email -->
@@ -569,7 +623,7 @@ onMounted(() => {
                   <span class="text-red-500">*</span>
                 </label>
                 <input
-                  v-model="form.email"
+                  v-model="form.correo"
                   type="email"
                   required
                   placeholder="Ej: carlos@ibv.com"
@@ -647,22 +701,22 @@ onMounted(() => {
                     :key="role.value"
                     :class="[
                       'flex items-center gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all',
-                      form.role === role.value
+                      form.rol === role.value
                         ? 'border-primary-500 bg-primary-50 shadow-md'
                         : 'border-gray-200 hover:border-primary-300 hover:bg-gray-50',
                     ]"
                   >
-                    <input v-model="form.role" type="radio" :value="role.value" class="sr-only" />
+                    <input v-model="form.rol" type="radio" :value="role.value" class="sr-only" />
                     <div
                       :class="[
                         'w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-all',
-                        form.role === role.value ? role.color.replace('100', '100') : 'bg-gray-100',
+                        form.rol === role.value ? role.color.replace('100', '100') : 'bg-gray-100',
                       ]"
                     >
                       <span
                         :class="[
                           'w-2.5 h-2.5 rounded-full',
-                          form.role === role.value ? role.dotColor : 'bg-gray-400',
+                          form.rol === role.value ? role.dotColor : 'bg-gray-400',
                         ]"
                       />
                     </div>
@@ -670,7 +724,7 @@ onMounted(() => {
                       <p
                         :class="[
                           'text-sm font-bold',
-                          form.role === role.value ? 'text-primary-700' : 'text-gray-900',
+                          form.rol === role.value ? 'text-primary-700' : 'text-gray-900',
                         ]"
                       >
                         {{ role.label }}
@@ -679,7 +733,7 @@ onMounted(() => {
                     </div>
                     <div class="shrink-0">
                       <div
-                        v-if="form.role === role.value"
+                        v-if="form.rol === role.value"
                         class="w-6 h-6 bg-primary-600 rounded-full flex items-center justify-center"
                       >
                         <svg class="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
@@ -698,33 +752,15 @@ onMounted(() => {
 
               <!-- Estado -->
               <div>
-                <label class="block text-sm font-semibold text-gray-700 mb-1.5">Estado</label>
-                <div class="flex gap-3">
-                  <label
-                    :class="[
-                      'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium',
-                      form.status === 'active'
-                        ? 'border-green-500 bg-green-50 text-green-700'
-                        : 'border-gray-100 text-gray-500 hover:border-gray-200',
-                    ]"
-                  >
-                    <input v-model="form.status" type="radio" value="active" class="sr-only" />
-                    <span class="w-2 h-2 rounded-full bg-green-500" />
-                    Activo
-                  </label>
-                  <label
-                    :class="[
-                      'flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl border-2 cursor-pointer transition-all text-sm font-medium',
-                      form.status === 'inactive'
-                        ? 'border-red-400 bg-red-50 text-red-600'
-                        : 'border-gray-100 text-gray-500 hover:border-gray-200',
-                    ]"
-                  >
-                    <input v-model="form.status" type="radio" value="inactive" class="sr-only" />
-                    <span class="w-2 h-2 rounded-full bg-red-400" />
-                    Inactivo
-                  </label>
-                </div>
+                <label class="flex items-center gap-3 cursor-pointer">
+                  <input
+                    v-model="form.activo"
+                    type="checkbox"
+                    class="w-4 h-4 text-primary-600 rounded border-gray-300 focus:ring-primary-500"
+                  />
+                  <span class="text-sm font-semibold text-gray-700">Usuario activo</span>
+                </label>
+                <p class="text-xs text-gray-400 mt-2">El usuario podrá acceder al sistema</p>
               </div>
 
               <!-- Error -->
@@ -810,7 +846,7 @@ onMounted(() => {
             <h3 class="text-lg font-bold text-gray-900 mb-1">Eliminar Usuario</h3>
             <p class="text-sm text-gray-500 mb-6">
               ¿Estás seguro de eliminar a
-              <span class="font-semibold text-gray-700">{{ userToDelete?.name }}</span>
+              <span class="font-semibold text-gray-700">{{ userToDelete?.nombres }} {{ userToDelete?.apellidos }}</span>
               ? Esta acción no se puede deshacer.
             </p>
             <div class="flex gap-3">

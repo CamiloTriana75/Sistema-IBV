@@ -1,12 +1,21 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import { supabaseUserService } from '~/services/supabaseUserService'
 
 interface AuthUser {
   id: string
   name: string
   email: string
   role: string
-  status: string
+}
+
+const ROLE_ROUTES: Record<string, string> = {
+  admin: '/admin',
+  porteria: '/porteria',
+  recibidor: '/recibidor',
+  inventario: '/inventario',
+  despachador: '/despachador',
+  cliente: '/',
 }
 
 export const useAuthStore = defineStore('auth', () => {
@@ -18,40 +27,69 @@ export const useAuthStore = defineStore('auth', () => {
   const token = ref(isClient ? localStorage.getItem('auth_token') || '' : '')
   const isAuthenticated = computed(() => !!token.value)
 
+  /**
+   * Obtiene el rol del usuario desde múltiples fuentes:
+   * 1. Tabla 'users' en Supabase (si existe)
+   * 2. user_metadata de Supabase Auth
+   * 3. app_metadata de Supabase Auth
+   * 4. Default: 'cliente'
+   */
+  const getRoleForUser = async (email: string, authUser: any): Promise<string> => {
+    // Primero intenta obtener de la tabla 'users' en Supabase
+    const dbRole = await supabaseUserService.getUserRole(email)
+    if (dbRole) {
+      return dbRole
+    }
+
+    // Fallback a user_metadata
+    if (authUser?.user_metadata?.role) {
+      return authUser.user_metadata.role
+    }
+
+    // Fallback a app_metadata
+    if (authUser?.app_metadata?.role) {
+      return authUser.app_metadata.role
+    }
+
+    // Default
+    return 'cliente'
+  }
+
   const login = async (email: string, password: string) => {
     if (!email || !password) {
       throw new Error('Credenciales requeridas')
     }
+
     const { data, error } = await $supabase.auth.signInWithPassword({ email, password })
+
     if (error) {
       throw new Error(error.message)
     }
+
     token.value = data.session?.access_token || ''
     if (typeof window !== 'undefined' && token.value) {
       localStorage.setItem('auth_token', token.value)
     }
-    // Obtener el rol desde metadata de Supabase Auth
-    const role =
-      (data.user?.user_metadata?.role as string | undefined) ||
-      (data.user?.app_metadata?.role as string | undefined) ||
-      'cliente'
+
+    // Obtener el rol usando múltiples fuentes
+    const role = await getRoleForUser(email, data.user)
+
+    // Obtener perfil de la tabla users_user para el nombre
+    const profile = await supabaseUserService.getUserProfile(email)
+
     user.value = {
       id: data.user?.id || '',
-      name: (data.user?.user_metadata?.name as string | undefined) || data.user?.email?.split('@')[0] || 'Usuario',
+      name: profile ? `${profile.nombres} ${profile.apellidos}`.trim() : (data.user?.user_metadata?.name as string | undefined) || data.user?.email?.split('@')[0] || 'Usuario',
       email: data.user?.email || '',
       role,
-      status: 'active',
     }
+
     if (typeof window !== 'undefined') {
       localStorage.setItem('auth_user', JSON.stringify(user.value))
     }
-    // Retornar la ruta según el rol para que login.vue haga la navegación
-    if (role === 'admin') return '/admin'
-    if (role === 'despachador') return '/despachador'
-    if (role === 'inventario') return '/inventario'
-    if (role === 'porteria') return '/porteria'
-    if (role === 'recibidor') return '/recibidor'
-    return '/'
+
+    // Retornar la ruta según el rol
+    return ROLE_ROUTES[role] || '/'
   }
 
   const logout = async () => {
@@ -64,11 +102,22 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
+  const loadUser = async () => {
+    // Intenta cargar el usuario desde localStorage
+    if (!user.value && isClient) {
+      const stored = localStorage.getItem('auth_user')
+      if (stored) {
+        user.value = JSON.parse(stored)
+      }
+    }
+  }
+
   return {
     user,
     token,
     isAuthenticated,
     login,
     logout,
+    loadUser,
   }
 })
