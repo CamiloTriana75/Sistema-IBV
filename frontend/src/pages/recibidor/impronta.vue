@@ -101,15 +101,8 @@ const onScanContenedorImpronta = (codigo: string) => {
     }, 1000)
     showToast(`Contenedor ${cont.codigo} asignado`, 'success')
   } else {
-    // El contenedor no existe — usamos el código tal cual
-    contenedorCodigo.value = codigo.trim()
-    contenedorId.value = null
-    contenedorNombre.value = codigo.trim()
-    scannerContenedor.value?.setSuccess(`Código "${codigo.trim()}" asignado`)
-    setTimeout(() => {
-      showModalQrContenedor.value = false
-    }, 1000)
-    showToast(`Código de contenedor asignado: ${codigo.trim()}`, 'success')
+    scannerContenedor.value?.setSuccess(`Contenedor "${codigo.trim()}" no encontrado en el sistema`)
+    showToast(`Contenedor "${codigo.trim()}" no existe en la tabla de contenedores`, 'error')
   }
 }
 
@@ -225,7 +218,12 @@ const zonaNombres: Record<string, string> = {
 }
 
 // Load existing impronta for editing, or pre-fill from query params
-onMounted(() => {
+onMounted(async () => {
+  // Asegurar que los contenedores estén cargados para el dropdown
+  if (contStore.contenedores.length === 0) {
+    await contStore.fetchContenedores()
+  }
+
   const id = route.query.id as string
   if (id) {
     const imp = store.getById(id)
@@ -410,14 +408,12 @@ const guardarImpronta = async () => {
     }
 
     if (isEditing.value) {
-      const updated = await store.actualizar(editingId.value!, data)
-      // Si la impronta pasa a 'completada', actualizar también el estado del vehículo
-      if (updated.estado === 'completada') {
-        try {
-          await vehiculoStore.completarImpronta(form.vin.trim())
-        } catch (pipeErr) {
-          console.warn('Error al actualizar estado vehículo:', pipeErr)
-        }
+      const _updated = await store.actualizar(editingId.value!, data)
+      // Siempre actualizar el estado del vehículo al enviar formulario
+      try {
+        await vehiculoStore.completarImpronta(form.vin.trim())
+      } catch (pipeErr) {
+        console.warn('Error al actualizar estado vehículo:', pipeErr)
       }
       showToast('Impronta actualizada correctamente')
     } else {
@@ -438,11 +434,9 @@ const guardarImpronta = async () => {
           contenedorCodigo: contenedorCodigo.value || undefined,
         })
 
-        // 3️⃣ Vincular impronta + marcar completada si la impronta está completa
+        // 3️⃣ Vincular impronta + siempre marcar completada al enviar formulario
         await vehiculoStore.vincularImpronta(form.vin.trim(), nueva.id, nueva.folio)
-        if (nueva.estado === 'completada') {
-          await vehiculoStore.completarImpronta(form.vin.trim())
-        }
+        await vehiculoStore.completarImpronta(form.vin.trim())
       } catch (pipeErr) {
         console.warn('Vehículo pipeline ya existía o error:', pipeErr)
       }
@@ -835,30 +829,36 @@ const guardarImpronta = async () => {
               </label>
               <div class="flex gap-2">
                 <div class="flex-1 relative">
-                  <input
-                    v-model="contenedorCodigo"
-                    type="text"
-                    placeholder="Código de contenedor (escanear o escribir)"
-                    class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition font-mono"
-                    @blur="
-                      () => {
-                        if (contenedorCodigo.trim()) {
-                          const cont = contStore.getByCodigo(contenedorCodigo.trim())
+                  <select
+                    :value="contenedorId || ''"
+                    class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+                    @change="
+                      (e: Event) => {
+                        const val = (e.target as HTMLSelectElement).value
+                        if (val) {
+                          const cont = contStore.getById(val)
                           if (cont) {
                             contenedorId = cont.id
+                            contenedorCodigo = cont.codigo
                             contenedorNombre = `${cont.codigo} — ${cont.origen}`
-                          } else {
-                            contenedorId = null
-                            contenedorNombre = contenedorCodigo.trim()
                           }
+                        } else {
+                          limpiarContenedor()
                         }
                       }
                     "
-                  />
-                  <!-- Badge contenedor encontrado -->
-                  <div v-if="contenedorNombre" class="absolute right-10 top-1/2 -translate-y-1/2">
+                  >
+                    <option value="">— Seleccionar contenedor —</option>
+                    <option v-for="cont in contStore.contenedores" :key="cont.id" :value="cont.id">
+                      {{ cont.codigo }} — {{ cont.origen }}
+                    </option>
+                  </select>
+                  <!-- Badge contenedor seleccionado -->
+                  <div
+                    v-if="contenedorNombre && contenedorId"
+                    class="absolute right-10 top-1/2 -translate-y-1/2 pointer-events-none"
+                  >
                     <span
-                      v-if="contenedorId"
                       class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full"
                     >
                       <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -869,12 +869,12 @@ const guardarImpronta = async () => {
                           d="M5 13l4 4L19 7"
                         />
                       </svg>
-                      Encontrado
+                      Asignado
                     </span>
                   </div>
                   <!-- Botón limpiar -->
                   <button
-                    v-if="contenedorCodigo"
+                    v-if="contenedorId"
                     type="button"
                     class="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
                     @click="limpiarContenedor"

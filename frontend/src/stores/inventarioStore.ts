@@ -164,10 +164,20 @@ export const useInventarioStore = defineStore('inventario', () => {
     const vehiculoEstadoDB = normalizeEstado(row.estado)
     const vehiculoRechazadoDB = vehiculoEstadoDB === 'rechazado'
 
+    // vehiculos.estado column is set by vehiculoStore.completarImpronta()
+    const estadoImpliesImpronta = [
+      'impronta_completada',
+      'en_inventario',
+      'inventario_pendiente',
+      'inventario_aprobado',
+      'listo_despacho',
+    ].includes(vehiculoEstadoDB)
+
     const improntaRechazada =
       vehiculoRechazadoDB || (improntaLatest ? isImprontaRechazada(improntaLatest.estado) : false)
     const improntaCompletada =
-      !improntaRechazada && improntaLatest ? isImprontaCompletada(improntaLatest.estado) : false
+      estadoImpliesImpronta ||
+      (!improntaRechazada && improntaLatest ? isImprontaCompletada(improntaLatest.estado) : false)
     const inventarioCompletado = !!inventarioLatest
     const inventarioAprobado = inventarioLatest?.completo ?? false
 
@@ -241,9 +251,9 @@ export const useInventarioStore = defineStore('inventario', () => {
 
       const list = (data || []) as unknown as VehiculoRow[]
       vehiculos.value = list.map(mapVehiculo)
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error cargando inventario:', err)
-      error.value = err?.message || 'Error cargando inventario'
+      error.value = err instanceof Error ? err.message : 'Error cargando inventario'
       vehiculos.value = []
     } finally {
       loading.value = false
