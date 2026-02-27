@@ -197,10 +197,7 @@ export const useImprontaStore = defineStore('impronta', () => {
   const eliminar = async (id: string) => {
     loading.value = true
     try {
-      const { error: err } = await supabase
-        .from('improntas_registro')
-        .delete()
-        .eq('id', id)
+      const { error: err } = await supabase.from('improntas_registro').delete().eq('id', id)
 
       if (err) throw err
       improntas.value = improntas.value.filter((i) => i.id !== id)

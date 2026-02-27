@@ -217,10 +217,7 @@ export const useContenedorStore = defineStore('contenedor', () => {
     const updateData: Record<string, any> = { estado: 'completado' }
     if (observaciones) updateData.observaciones = observaciones
 
-    const { error: err } = await supabase
-      .from('contenedores')
-      .update(updateData)
-      .eq('id', id)
+    const { error: err } = await supabase.from('contenedores').update(updateData).eq('id', id)
 
     if (err) {
       console.error('Error completarRecepcion:', err)

@@ -51,11 +51,13 @@ export const supabaseDataService = {
 
     const { data, error } = await $supabase
       .from('vehiculos')
-      .select(`
+      .select(
+        `
         *,
         buque:buques(nombre, identificacion),
         modelo:modelos_vehiculo(marca, modelo, anio, tipo)
-      `)
+      `
+      )
       .order('created_at', { ascending: false })
 
     if (error) {
@@ -73,9 +75,7 @@ export const supabaseDataService = {
     const $supabase = getSupabase()
 
     // Obtener conteos por estado
-    const { data: vehiculos, error } = await $supabase
-      .from('vehiculos')
-      .select('estado')
+    const { data: vehiculos, error } = await $supabase.from('vehiculos').select('estado')
 
     if (error || !vehiculos) {
       console.error('Error obteniendo stats:', error)
@@ -102,7 +102,8 @@ export const supabaseDataService = {
       en_inventario: counts['en_inventario'] || counts['inventario'] || 0,
       listos_despacho: counts['listo_despacho'] || counts['listo'] || counts['aprobado'] || 0,
       despachados: counts['despachado'] || counts['entregado'] || 0,
-      problemas_encontrados: counts['problema'] || counts['rechazado'] || counts['dañado'] || counts['danado'] || 0,
+      problemas_encontrados:
+        counts['problema'] || counts['rechazado'] || counts['dañado'] || counts['danado'] || 0,
     }
   },
 
@@ -137,7 +138,9 @@ export const supabaseDataService = {
     // Obtener inventarios recientes
     const { data: inventarios } = await $supabase
       .from('inventarios')
-      .select('id, fecha, completo, usuario:usuarios!inventarios_usuario_id_fkey(nombres, apellidos)')
+      .select(
+        'id, fecha, completo, usuario:usuarios!inventarios_usuario_id_fkey(nombres, apellidos)'
+      )
       .order('fecha', { ascending: false })
       .limit(limit)
 
@@ -158,7 +161,9 @@ export const supabaseDataService = {
     // Obtener despachos recientes
     const { data: despachos } = await $supabase
       .from('despachos')
-      .select('id, fecha, estado, cantidad_vehiculos, usuario:usuarios!despachos_usuario_id_fkey(nombres, apellidos)')
+      .select(
+        'id, fecha, estado, cantidad_vehiculos, usuario:usuarios!despachos_usuario_id_fkey(nombres, apellidos)'
+      )
       .order('fecha', { ascending: false })
       .limit(limit)
 
@@ -179,7 +184,9 @@ export const supabaseDataService = {
     // Obtener movimientos de portería recientes
     const { data: movimientos } = await $supabase
       .from('movimientos_porteria')
-      .select('id, tipo, persona, fecha, observacion, usuario:usuarios!movimientos_porteria_usuario_id_fkey(nombres, apellidos)')
+      .select(
+        'id, tipo, persona, fecha, observacion, usuario:usuarios!movimientos_porteria_usuario_id_fkey(nombres, apellidos)'
+      )
       .order('fecha', { ascending: false })
       .limit(limit)
 

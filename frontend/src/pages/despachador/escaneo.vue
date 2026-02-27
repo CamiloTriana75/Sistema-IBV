@@ -33,7 +33,7 @@ interface VehiculoLote {
 // Cargar vehículos al montar
 onMounted(async () => {
   await despachadorStore.load()
-  
+
   // Si viene bin en query, pre-seleccionar ese vehículo
   const binParam = route.query.bin as string
   if (binParam) {

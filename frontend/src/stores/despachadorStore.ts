@@ -113,7 +113,9 @@ export const useDespachadorStore = defineStore('despachador', () => {
         cliente: row.cliente || null,
       }))
 
-      console.log(`Despachador: Cargados ${vehiculosListos.value.length} vehículos listos para despacho`)
+      console.log(
+        `Despachador: Cargados ${vehiculosListos.value.length} vehículos listos para despacho`
+      )
     } catch (err) {
       console.error('Error en load():', err)
       error.value = 'Error desconocido al cargar vehículos'

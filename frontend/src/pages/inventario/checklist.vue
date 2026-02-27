@@ -274,7 +274,6 @@ const mostrarToast = (tipo: 'ok' | 'error', mensaje: string) => {
   }, 3000)
 }
 
-
 const aprobar = async () => {
   if (!puedeAprobar.value) return
   const v = vehiculoActual.value

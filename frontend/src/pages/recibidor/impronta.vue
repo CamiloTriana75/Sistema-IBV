@@ -32,13 +32,13 @@ const parsearQrVehiculo = (raw: string) => {
   if (raw.startsWith('{')) {
     try {
       const obj = JSON.parse(raw)
-      if (obj.vin)    form.vin    = String(obj.vin)
-      if (obj.placa)  form.placa  = String(obj.placa)
-      if (obj.marca)  form.marca  = String(obj.marca)
+      if (obj.vin) form.vin = String(obj.vin)
+      if (obj.placa) form.placa = String(obj.placa)
+      if (obj.marca) form.marca = String(obj.marca)
       if (obj.modelo) form.modelo = String(obj.modelo)
-      if (obj.anio)   form.anio   = String(obj.anio)
-      if (obj.color)  form.color  = String(obj.color)
-      if (obj.km)     form.km     = String(obj.km)
+      if (obj.anio) form.anio = String(obj.anio)
+      if (obj.color) form.color = String(obj.color)
+      if (obj.km) form.km = String(obj.km)
       if (obj.cliente) form.cliente = String(obj.cliente)
       return true
     } catch {
@@ -49,12 +49,12 @@ const parsearQrVehiculo = (raw: string) => {
   // Pipe-delimited: VIN|MARCA|MODELO|AÑO|COLOR
   if (raw.includes('|')) {
     const parts = raw.split('|').map((s) => s.trim())
-    if (parts[0]) form.vin    = parts[0]
-    if (parts[1]) form.marca  = parts[1]
+    if (parts[0]) form.vin = parts[0]
+    if (parts[1]) form.marca = parts[1]
     if (parts[2]) form.modelo = parts[2]
-    if (parts[3]) form.anio   = parts[3]
-    if (parts[4]) form.color  = parts[4]
-    if (parts[5]) form.placa  = parts[5]
+    if (parts[3]) form.anio = parts[3]
+    if (parts[4]) form.color = parts[4]
+    if (parts[5]) form.placa = parts[5]
     return true
   }
 
@@ -96,7 +96,9 @@ const onScanContenedorImpronta = (codigo: string) => {
     contenedorId.value = cont.id
     contenedorNombre.value = `${cont.codigo} — ${cont.origen}`
     scannerContenedor.value?.setSuccess(`Contenedor ${cont.codigo} encontrado`)
-    setTimeout(() => { showModalQrContenedor.value = false }, 1000)
+    setTimeout(() => {
+      showModalQrContenedor.value = false
+    }, 1000)
     showToast(`Contenedor ${cont.codigo} asignado`, 'success')
   } else {
     // El contenedor no existe — usamos el código tal cual
@@ -104,7 +106,9 @@ const onScanContenedorImpronta = (codigo: string) => {
     contenedorId.value = null
     contenedorNombre.value = codigo.trim()
     scannerContenedor.value?.setSuccess(`Código "${codigo.trim()}" asignado`)
-    setTimeout(() => { showModalQrContenedor.value = false }, 1000)
+    setTimeout(() => {
+      showModalQrContenedor.value = false
+    }, 1000)
     showToast(`Código de contenedor asignado: ${codigo.trim()}`, 'success')
   }
 }
@@ -835,12 +839,19 @@ const guardarImpronta = async () => {
                     "
                   />
                   <!-- Badge contenedor encontrado -->
-                  <div
-                    v-if="contenedorNombre"
-                    class="absolute right-10 top-1/2 -translate-y-1/2"
-                  >
-                    <span v-if="contenedorId" class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full">
-                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+                  <div v-if="contenedorNombre" class="absolute right-10 top-1/2 -translate-y-1/2">
+                    <span
+                      v-if="contenedorId"
+                      class="inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full"
+                    >
+                      <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M5 13l4 4L19 7"
+                        />
+                      </svg>
                       Encontrado
                     </span>
                   </div>
@@ -852,7 +863,12 @@ const guardarImpronta = async () => {
                     @click="limpiarContenedor"
                   >
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 </div>
@@ -1612,14 +1628,28 @@ const guardarImpronta = async () => {
           <!-- Header -->
           <div class="px-6 py-5 border-b border-gray-100 flex items-center justify-between">
             <div class="flex items-center gap-3">
-              <div class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0">
-                <svg class="w-5 h-5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+              <div
+                class="w-10 h-10 bg-indigo-100 rounded-xl flex items-center justify-center shrink-0"
+              >
+                <svg
+                  class="w-5 h-5 text-indigo-600"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                  />
                 </svg>
               </div>
               <div>
                 <h3 class="text-base font-bold text-gray-900">Escanear QR del Contenedor</h3>
-                <p class="text-xs text-gray-500 mt-0.5">Escanea el código del contenedor para asignarlo a esta impronta</p>
+                <p class="text-xs text-gray-500 mt-0.5">
+                  Escanea el código del contenedor para asignarlo a esta impronta
+                </p>
               </div>
             </div>
             <button
@@ -1627,7 +1657,12 @@ const guardarImpronta = async () => {
               @click="showModalQrContenedor = false"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M6 18L18 6M6 6l12 12"
+                />
               </svg>
             </button>
           </div>
@@ -1646,11 +1681,22 @@ const guardarImpronta = async () => {
           <!-- Hint -->
           <div class="px-6 pb-5">
             <div class="bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3 flex gap-3">
-              <svg class="w-4 h-4 text-indigo-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                class="w-4 h-4 text-indigo-500 shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <p class="text-xs text-indigo-700">
-                Escanea el código QR del contenedor para vincularlo a este vehículo. Si el contenedor ya fue registrado, se asignará automáticamente.
+                Escanea el código QR del contenedor para vincularlo a este vehículo. Si el
+                contenedor ya fue registrado, se asignará automáticamente.
               </p>
             </div>
           </div>

@@ -67,7 +67,12 @@ interface VehiculoRow {
     | { marca: string; modelo: string; anio: number | null; tipo: string | null }
     | Array<{ marca: string; modelo: string; anio: number | null; tipo: string | null }>
     | null
-  improntas?: Array<{ id: number; estado: string | null; fecha: string | null; created_at: string | null }>
+  improntas?: Array<{
+    id: number
+    estado: string | null
+    fecha: string | null
+    created_at: string | null
+  }>
   inventarios?: Array<{
     id: number
     completo: boolean
@@ -104,7 +109,7 @@ const calcularEstado = (v: Omit<InventarioVehiculo, 'estado'>): EstadoVehiculo =
   if (v.inventarioAprobado && v.improntaCompletada) return 'listo_despacho'
   if (v.inventarioCompletado) return 'inventario_pendiente'
   if (v.improntaCompletada) return 'inventario_pendiente'
-  if (v.improntaRechazada) return 'recibido'  // impronta rechazada → vuelve al inicio
+  if (v.improntaRechazada) return 'recibido' // impronta rechazada → vuelve al inicio
   if (v.improntaId) return 'impronta_pendiente'
   return 'recibido'
 }
@@ -116,8 +121,8 @@ export const useInventarioStore = defineStore('inventario', () => {
 
   const total = computed(() => vehiculos.value.length)
   const conImpronta = computed(() => vehiculos.value.filter((v) => v.improntaCompletada).length)
-  const listosDespacho = computed(() =>
-    vehiculos.value.filter((v) => v.inventarioAprobado && !v.despachado).length
+  const listosDespacho = computed(
+    () => vehiculos.value.filter((v) => v.inventarioAprobado && !v.despachado).length
   )
   const despachados = computed(() => vehiculos.value.filter((v) => v.despachado).length)
   const pendientesInventario = computed(
@@ -130,11 +135,15 @@ export const useInventarioStore = defineStore('inventario', () => {
     vehiculos.value.find((v) => v.vin.toLowerCase() === vin.toLowerCase())
 
   const getListosParaDespacho = computed(() =>
-    vehiculos.value.filter((v) => v.improntaCompletada && v.inventarioAprobado && !v.despachado && !v.improntaRechazada)
+    vehiculos.value.filter(
+      (v) => v.improntaCompletada && v.inventarioAprobado && !v.despachado && !v.improntaRechazada
+    )
   )
 
   const getPendientesInventario = computed(() =>
-    vehiculos.value.filter((v) => v.improntaCompletada && !v.inventarioAprobado && !v.despachado && !v.improntaRechazada)
+    vehiculos.value.filter(
+      (v) => v.improntaCompletada && !v.inventarioAprobado && !v.despachado && !v.improntaRechazada
+    )
   )
 
   const mapVehiculo = (row: VehiculoRow): InventarioVehiculo => {
@@ -142,7 +151,10 @@ export const useInventarioStore = defineStore('inventario', () => {
     const inventarios = Array.isArray(row.inventarios) ? row.inventarios : []
 
     const improntaLatest = [...improntas].sort((a, b) => {
-      return new Date(b.fecha || b.created_at || 0).getTime() - new Date(a.fecha || a.created_at || 0).getTime()
+      return (
+        new Date(b.fecha || b.created_at || 0).getTime() -
+        new Date(a.fecha || a.created_at || 0).getTime()
+      )
     })[0]
 
     const inventarioLatest = [...inventarios].sort((a, b) => {
@@ -152,10 +164,10 @@ export const useInventarioStore = defineStore('inventario', () => {
     const vehiculoEstadoDB = normalizeEstado(row.estado)
     const vehiculoRechazadoDB = vehiculoEstadoDB === 'rechazado'
 
-    const improntaRechazada = vehiculoRechazadoDB || (improntaLatest ? isImprontaRechazada(improntaLatest.estado) : false)
-    const improntaCompletada = !improntaRechazada && improntaLatest
-      ? isImprontaCompletada(improntaLatest.estado)
-      : false
+    const improntaRechazada =
+      vehiculoRechazadoDB || (improntaLatest ? isImprontaRechazada(improntaLatest.estado) : false)
+    const improntaCompletada =
+      !improntaRechazada && improntaLatest ? isImprontaCompletada(improntaLatest.estado) : false
     const inventarioCompletado = !!inventarioLatest
     const inventarioAprobado = inventarioLatest?.completo ?? false
 
@@ -163,9 +175,7 @@ export const useInventarioStore = defineStore('inventario', () => {
       ? `${inventarioLatest.usuario.nombres} ${inventarioLatest.usuario.apellidos}`.trim()
       : ''
 
-    const resultado = inventarioLatest?.checklist_json?.resumen as
-      | InventarioResultado
-      | undefined
+    const resultado = inventarioLatest?.checklist_json?.resumen as InventarioResultado | undefined
 
     const modelo = Array.isArray(row.modelo) ? row.modelo[0] : row.modelo
 
@@ -181,7 +191,9 @@ export const useInventarioStore = defineStore('inventario', () => {
       fechaRecepcion: toDateOnly(row.fecha_registro || row.created_at),
       horaRecepcion: '',
       improntaId: improntaLatest ? String(improntaLatest.id) : undefined,
-      improntaFolio: improntaLatest ? `IMP-${String(improntaLatest.id).padStart(4, '0')}` : undefined,
+      improntaFolio: improntaLatest
+        ? `IMP-${String(improntaLatest.id).padStart(4, '0')}`
+        : undefined,
       improntaCompletada,
       improntaRechazada,
       fechaImpronta: improntaLatest?.fecha ? toDateOnly(improntaLatest.fecha) : undefined,
@@ -221,7 +233,7 @@ export const useInventarioStore = defineStore('inventario', () => {
           modelo:modelos_vehiculo(marca, modelo, anio, tipo),
           improntas:improntas(id, estado, fecha, created_at),
           inventarios:inventarios(id, completo, fecha, checklist_json, usuario:usuarios!inventarios_usuario_id_fkey(nombres, apellidos))
-        `,
+        `
         )
         .order('created_at', { ascending: false })
 
@@ -249,7 +261,7 @@ export const useInventarioStore = defineStore('inventario', () => {
   const aprobarInventario = async (
     vin: string,
     resultado: InventarioResultado,
-    checklistJson: any,
+    checklistJson: any
   ) => {
     const vehiculo = getByVin(vin)
     if (!vehiculo) return

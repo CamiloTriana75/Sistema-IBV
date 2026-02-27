@@ -235,7 +235,6 @@ const handleLogout = () => {
             </span>
           </NuxtLink>
         </template>
-
       </nav>
 
       <!-- Cerrar sesión -->

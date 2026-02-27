@@ -141,12 +141,15 @@ export const supabaseUserService = {
   /**
    * Actualiza un usuario existente
    */
-  async updateUser(id: number, updates: Partial<{
-    nombres: string
-    apellidos: string
-    rol: string
-    activo: boolean
-  }>): Promise<SupabaseUser | null> {
+  async updateUser(
+    id: number,
+    updates: Partial<{
+      nombres: string
+      apellidos: string
+      rol: string
+      activo: boolean
+    }>
+  ): Promise<SupabaseUser | null> {
     const $supabase = getSupabase()
 
     const { data, error } = await $supabase
@@ -170,10 +173,7 @@ export const supabaseUserService = {
   async deleteUser(id: number): Promise<void> {
     const $supabase = getSupabase()
 
-    const { error } = await $supabase
-      .from('usuarios')
-      .delete()
-      .eq('id', id)
+    const { error } = await $supabase.from('usuarios').delete().eq('id', id)
 
     if (error) {
       console.error('Error eliminando usuario:', error)

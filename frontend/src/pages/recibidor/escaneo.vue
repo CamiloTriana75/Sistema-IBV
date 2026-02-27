@@ -50,7 +50,10 @@ const vehiculosEscaneados = computed(
 const progresoVehiculos = computed(() => {
   if (!contenedorActual.value) return 0
   const esperados = contenedorActual.value.vehiculosEsperados
-  const total = esperados > 0 ? Math.max(esperados, contenedorActual.value.vehiculos.length) : contenedorActual.value.vehiculos.length
+  const total =
+    esperados > 0
+      ? Math.max(esperados, contenedorActual.value.vehiculos.length)
+      : contenedorActual.value.vehiculos.length
   if (total === 0) return vehiculosEscaneados.value > 0 ? 100 : 0
   return Math.min(100, Math.round((vehiculosEscaneados.value / total) * 100))
 })
@@ -275,7 +278,8 @@ const confirmarAgregarVehiculo = async () => {
       color: colorTrimmed,
       km: formVehiculo.km || '0',
       cliente: formVehiculo.cliente.trim(),
-      condicion: (formVehiculo.condicion as 'excelente' | 'bueno' | 'regular' | 'dañado') || 'bueno',
+      condicion:
+        (formVehiculo.condicion as 'excelente' | 'bueno' | 'regular' | 'dañado') || 'bueno',
       zonasDañadas: [],
       daños: [],
       observaciones: `Impronta creada automáticamente al escanear vehículo en contenedor ${cont.codigo}`,
@@ -313,7 +317,10 @@ const confirmarAgregarVehiculo = async () => {
     const enStore = contStore.getById(cont.id)
     if (enStore) contenedorActual.value = enStore
 
-    mostrarToast('ok', `${marcaTrimmed} ${modeloTrimmed} — registrado con impronta ${nuevaImpronta.folio}`)
+    mostrarToast(
+      'ok',
+      `${marcaTrimmed} ${modeloTrimmed} — registrado con impronta ${nuevaImpronta.folio}`
+    )
   } catch (err) {
     console.error('Error confirmarAgregarVehiculo:', err)
     mostrarToast('error', 'Error al registrar el vehículo')
@@ -1117,9 +1124,21 @@ const imprimirResumen = () => {
       >
         <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
           <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
-            <div class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center shrink-0">
-              <svg class="w-5 h-5 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+            <div
+              class="w-10 h-10 bg-primary-100 rounded-xl flex items-center justify-center shrink-0"
+            >
+              <svg
+                class="w-5 h-5 text-primary-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
+                />
               </svg>
             </div>
             <div>
@@ -1131,7 +1150,9 @@ const imprimirResumen = () => {
           <div class="px-6 py-5 space-y-4">
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Fecha llegada</label>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Fecha llegada
+                </label>
                 <input
                   v-model="formContenedor.fechaLlegada"
                   type="date"
@@ -1149,7 +1170,10 @@ const imprimirResumen = () => {
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1.5">Origen <span class="text-danger-500">*</span></label>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+                Origen
+                <span class="text-danger-500">*</span>
+              </label>
               <input
                 v-model="formContenedor.origen"
                 type="text"
@@ -1159,7 +1183,10 @@ const imprimirResumen = () => {
             </div>
 
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1.5">Transportista <span class="text-danger-500">*</span></label>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+                Transportista
+                <span class="text-danger-500">*</span>
+              </label>
               <input
                 v-model="formContenedor.transportista"
                 type="text"
@@ -1179,7 +1206,9 @@ const imprimirResumen = () => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Vehículos esperados</label>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Vehículos esperados
+                </label>
                 <input
                   v-model.number="formContenedor.vehiculosEsperados"
                   type="number"
@@ -1225,34 +1254,65 @@ const imprimirResumen = () => {
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
         @click.self="showModalVehiculo = false"
       >
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+        <div
+          class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col"
+        >
           <!-- Header -->
           <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3 shrink-0">
             <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-              <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
+              <svg
+                class="w-5 h-5 text-blue-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"
+                />
               </svg>
             </div>
             <div class="flex-1 min-w-0">
               <h3 class="text-base font-bold text-gray-900">Verificar Datos del Vehículo</h3>
-              <p class="text-xs text-gray-500 mt-0.5">Confirma que los datos son correctos. Se creará el vehículo y su impronta.</p>
+              <p class="text-xs text-gray-500 mt-0.5">
+                Confirma que los datos son correctos. Se creará el vehículo y su impronta.
+              </p>
             </div>
           </div>
 
           <!-- Indicador QR pre-cargado -->
           <div v-if="datosPreCargadosQr" class="px-6 pt-4 shrink-0">
-            <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
-              <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            <div
+              class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 flex items-center gap-2"
+            >
+              <svg
+                class="w-4 h-4 text-emerald-600 shrink-0"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
-              <span class="text-xs font-semibold text-emerald-700">Datos pre-cargados del QR — verifica antes de confirmar</span>
+              <span class="text-xs font-semibold text-emerald-700">
+                Datos pre-cargados del QR — verifica antes de confirmar
+              </span>
             </div>
           </div>
 
           <!-- Formulario scroll -->
           <div class="px-6 py-5 space-y-4 overflow-y-auto flex-1">
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1.5">VIN / Chasis <span class="text-red-500">*</span></label>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+                VIN / Chasis
+                <span class="text-red-500">*</span>
+              </label>
               <input
                 v-model="formVehiculo.vin"
                 type="text"
@@ -1273,7 +1333,10 @@ const imprimirResumen = () => {
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Marca <span class="text-red-500">*</span></label>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Marca
+                  <span class="text-red-500">*</span>
+                </label>
                 <input
                   v-model="formVehiculo.marca"
                   type="text"
@@ -1282,7 +1345,10 @@ const imprimirResumen = () => {
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Modelo <span class="text-red-500">*</span></label>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">
+                  Modelo
+                  <span class="text-red-500">*</span>
+                </label>
                 <input
                   v-model="formVehiculo.modelo"
                   type="text"
@@ -1352,11 +1418,24 @@ const imprimirResumen = () => {
 
             <!-- Info de lo que sucederá -->
             <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex gap-3">
-              <svg class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                class="w-4 h-4 text-blue-500 shrink-0 mt-0.5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
               <p class="text-xs text-blue-700">
-                Al confirmar se registrará el vehículo en el contenedor, se creará la impronta automáticamente y el vehículo quedará como <strong>improntado</strong> en el sistema.
+                Al confirmar se registrará el vehículo en el contenedor, se creará la impronta
+                automáticamente y el vehículo quedará como
+                <strong>improntado</strong>
+                en el sistema.
               </p>
             </div>
           </div>
@@ -1374,9 +1453,25 @@ const imprimirResumen = () => {
               class="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-500/25 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
               @click="confirmarAgregarVehiculo"
             >
-              <svg v-if="cargandoVehiculo" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              <svg
+                v-if="cargandoVehiculo"
+                class="w-4 h-4 animate-spin"
+                fill="none"
+                viewBox="0 0 24 24"
+              >
+                <circle
+                  class="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  stroke-width="4"
+                />
+                <path
+                  class="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
               </svg>
               <span v-if="cargandoVehiculo">Registrando...</span>
               <span v-else>Confirmar y Crear Impronta</span>

@@ -26,12 +26,48 @@ const filterStatus = ref('')
 const toast = ref({ show: false, message: '', type: 'success' as 'success' | 'error' })
 
 const SYSTEM_ROLES = [
-  { value: 'admin', label: 'Administrador', description: 'Acceso total al sistema', color: 'bg-primary-100', dotColor: 'bg-primary-600' },
-  { value: 'porteria', label: 'Portería', description: 'Control de acceso y portón', color: 'bg-purple-100', dotColor: 'bg-purple-600' },
-  { value: 'recibidor', label: 'Recibidor', description: 'Recepción de vehículos e impronta', color: 'bg-blue-100', dotColor: 'bg-blue-600' },
-  { value: 'inventario', label: 'Inventario', description: 'Verificación e inspección', color: 'bg-amber-100', dotColor: 'bg-amber-600' },
-  { value: 'despachador', label: 'Despachador', description: 'Despacho y salida de vehículos', color: 'bg-green-100', dotColor: 'bg-green-600' },
-  { value: 'cliente', label: 'Cliente', description: 'Consulta y seguimiento', color: 'bg-gray-100', dotColor: 'bg-gray-600' },
+  {
+    value: 'admin',
+    label: 'Administrador',
+    description: 'Acceso total al sistema',
+    color: 'bg-primary-100',
+    dotColor: 'bg-primary-600',
+  },
+  {
+    value: 'porteria',
+    label: 'Portería',
+    description: 'Control de acceso y portón',
+    color: 'bg-purple-100',
+    dotColor: 'bg-purple-600',
+  },
+  {
+    value: 'recibidor',
+    label: 'Recibidor',
+    description: 'Recepción de vehículos e impronta',
+    color: 'bg-blue-100',
+    dotColor: 'bg-blue-600',
+  },
+  {
+    value: 'inventario',
+    label: 'Inventario',
+    description: 'Verificación e inspección',
+    color: 'bg-amber-100',
+    dotColor: 'bg-amber-600',
+  },
+  {
+    value: 'despachador',
+    label: 'Despachador',
+    description: 'Despacho y salida de vehículos',
+    color: 'bg-green-100',
+    dotColor: 'bg-green-600',
+  },
+  {
+    value: 'cliente',
+    label: 'Cliente',
+    description: 'Consulta y seguimiento',
+    color: 'bg-gray-100',
+    dotColor: 'bg-gray-600',
+  },
 ]
 
 const form = ref({
@@ -49,9 +85,10 @@ const filteredUsers = computed(() => {
   if (searchQuery.value) {
     const q = searchQuery.value.toLowerCase()
     result = result.filter(
-      (u) => u.nombres.toLowerCase().includes(q) || 
-             u.apellidos.toLowerCase().includes(q) || 
-             u.correo.toLowerCase().includes(q)
+      (u) =>
+        u.nombres.toLowerCase().includes(q) ||
+        u.apellidos.toLowerCase().includes(q) ||
+        u.correo.toLowerCase().includes(q)
     )
   }
   if (filterRole.value) {
@@ -81,7 +118,7 @@ const getAvatarColor = (rol: string) => {
 }
 
 const getRoleInfo = (rol: string) => {
-  const role = SYSTEM_ROLES.find(r => r.value === rol)
+  const role = SYSTEM_ROLES.find((r) => r.value === rol)
   return role || { value: rol, label: rol, color: 'bg-gray-100', dotColor: 'bg-gray-400' }
 }
 
@@ -110,7 +147,14 @@ const openCreateModal = () => {
   editingUser.value = null
   formError.value = ''
   showPassword.value = false
-  form.value = { nombres: '', apellidos: '', correo: '', password: '', rol: 'recibidor', activo: true }
+  form.value = {
+    nombres: '',
+    apellidos: '',
+    correo: '',
+    password: '',
+    rol: 'recibidor',
+    activo: true,
+  }
   showModal.value = true
 }
 
@@ -136,7 +180,7 @@ const closeModal = () => {
 
 const saveUser = async () => {
   formError.value = ''
-  
+
   if (!form.value.nombres.trim()) {
     formError.value = 'El nombre es requerido'
     return
@@ -145,7 +189,7 @@ const saveUser = async () => {
     formError.value = 'El email es requerido'
     return
   }
-  
+
   saving.value = true
   try {
     if (editingUser.value) {
@@ -223,7 +267,7 @@ onMounted(() => {
       <div>
         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Gestión de Usuarios</h1>
         <p class="text-gray-500 mt-1">
-          {{ users.filter(u => u.activo).length }} activos de {{ users.length }} usuarios
+          {{ users.filter((u) => u.activo).length }} activos de {{ users.length }} usuarios
         </p>
       </div>
       <button
@@ -400,7 +444,9 @@ onMounted(() => {
                     {{ getInitials(user.nombres, user.apellidos) }}
                   </div>
                   <div class="min-w-0">
-                    <p class="text-sm font-semibold text-gray-900 truncate">{{ user.nombres }} {{ user.apellidos }}</p>
+                    <p class="text-sm font-semibold text-gray-900 truncate">
+                      {{ user.nombres }} {{ user.apellidos }}
+                    </p>
                     <p class="text-xs text-gray-500 truncate">{{ user.correo }}</p>
                   </div>
                 </div>
@@ -413,9 +459,7 @@ onMounted(() => {
                     getRoleInfo(user.rol).color,
                   ]"
                 >
-                  <span
-                    :class="['w-1.5 h-1.5 rounded-full', getRoleInfo(user.rol).dotColor]"
-                  />
+                  <span :class="['w-1.5 h-1.5 rounded-full', getRoleInfo(user.rol).dotColor]" />
                   {{ getRoleInfo(user.rol).label }}
                 </span>
               </td>
@@ -424,9 +468,7 @@ onMounted(() => {
                 <button
                   :class="[
                     'inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold cursor-pointer transition hover:opacity-80',
-                    user.activo
-                      ? 'bg-green-50 text-green-700'
-                      : 'bg-red-50 text-red-600',
+                    user.activo ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600',
                   ]"
                   @click="handleToggleStatus(user)"
                 >
@@ -846,7 +888,9 @@ onMounted(() => {
             <h3 class="text-lg font-bold text-gray-900 mb-1">Eliminar Usuario</h3>
             <p class="text-sm text-gray-500 mb-6">
               ¿Estás seguro de eliminar a
-              <span class="font-semibold text-gray-700">{{ userToDelete?.nombres }} {{ userToDelete?.apellidos }}</span>
+              <span class="font-semibold text-gray-700">
+                {{ userToDelete?.nombres }} {{ userToDelete?.apellidos }}
+              </span>
               ? Esta acción no se puede deshacer.
             </p>
             <div class="flex gap-3">

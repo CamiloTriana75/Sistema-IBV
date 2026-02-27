@@ -79,7 +79,11 @@ export const useAuthStore = defineStore('auth', () => {
 
     user.value = {
       id: data.user?.id || '',
-      name: profile ? `${profile.nombres} ${profile.apellidos}`.trim() : (data.user?.user_metadata?.name as string | undefined) || data.user?.email?.split('@')[0] || 'Usuario',
+      name: profile
+        ? `${profile.nombres} ${profile.apellidos}`.trim()
+        : (data.user?.user_metadata?.name as string | undefined) ||
+          data.user?.email?.split('@')[0] ||
+          'Usuario',
       email: data.user?.email || '',
       role,
     }

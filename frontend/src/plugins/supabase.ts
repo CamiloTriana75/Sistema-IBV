@@ -4,7 +4,7 @@ let supabase: ReturnType<typeof createClient>
 
 export default defineNuxtPlugin(() => {
   const config = useRuntimeConfig()
-  
+
   const supabaseUrl = config.public.supabaseUrl
   const supabaseAnonKey = config.public.supabaseAnonKey
 
@@ -17,8 +17,8 @@ export default defineNuxtPlugin(() => {
 
   return {
     provide: {
-      supabase
-    }
+      supabase,
+    },
   }
 })
 

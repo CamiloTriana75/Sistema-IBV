@@ -22,7 +22,7 @@ const activities = ref<ActivityItem[]>([])
 // Computed stats for KPIs
 const kpiData = computed(() => {
   if (!dashboardStats.value) return []
-  
+
   const stats = dashboardStats.value
   return [
     {
@@ -67,10 +67,10 @@ const kpiData = computed(() => {
 // Computed pipeline data
 const pipelineData = computed(() => {
   if (!dashboardStats.value) return []
-  
+
   const stats = dashboardStats.value
   const total = stats.total_vehiculos || 1
-  
+
   return [
     {
       label: 'Recibidos',
@@ -112,17 +112,17 @@ const loadDashboard = async () => {
   try {
     loading.value = true
     error.value = ''
-    
+
     // Asegurar que los usuarios seed existan
     await supabaseUserService.seedAllUsers()
-    
+
     const [statsData, vehiclesData, usersData, activitiesData] = await Promise.all([
       supabaseDataService.getDashboardStats(),
       supabaseDataService.getVehicles(),
       supabaseUserService.getAllUsers(),
       supabaseDataService.getActivities(5),
     ])
-    
+
     dashboardStats.value = statsData
     vehicles.value = vehiclesData
     users.value = usersData
@@ -343,7 +343,9 @@ const iconMap: Record<string, string> = {
     <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
       <div class="flex items-center justify-between mb-5">
         <h3 class="text-base font-semibold text-gray-900">Actividad Reciente</h3>
-        <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Últimas actividades</span>
+        <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">
+          Últimas actividades
+        </span>
       </div>
       <div v-if="activities.length > 0" class="space-y-4">
         <div v-for="(act, i) in activities" :key="i" class="flex items-start gap-3">
@@ -354,10 +356,14 @@ const iconMap: Record<string, string> = {
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm text-gray-800">
-              <span class="font-medium">{{ act.user?.nombres || 'Sistema' }} {{ act.user?.apellidos || '' }}</span>
+              <span class="font-medium">
+                {{ act.user?.nombres || 'Sistema' }} {{ act.user?.apellidos || '' }}
+              </span>
               {{ act.description }}
             </p>
-            <p class="text-xs text-gray-400 mt-0.5">{{ new Date(act.timestamp).toLocaleString('es') }}</p>
+            <p class="text-xs text-gray-400 mt-0.5">
+              {{ new Date(act.timestamp).toLocaleString('es') }}
+            </p>
           </div>
           <span
             :class="[
@@ -375,9 +381,7 @@ const iconMap: Record<string, string> = {
           </span>
         </div>
       </div>
-      <div v-else class="text-center py-8 text-gray-400">
-        No hay actividad reciente
-      </div>
+      <div v-else class="text-center py-8 text-gray-400">No hay actividad reciente</div>
     </div>
   </div>
 </template>

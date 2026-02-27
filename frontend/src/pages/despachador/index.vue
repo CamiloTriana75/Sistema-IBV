@@ -38,11 +38,15 @@ onMounted(async () => {
     <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
       <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
         <p class="text-sm text-gray-500 font-medium">Listos para Despacho</p>
-        <p class="text-3xl font-bold text-primary-600 mt-1">{{ despachadorStore.totalListosParaDespacho }}</p>
+        <p class="text-3xl font-bold text-primary-600 mt-1">
+          {{ despachadorStore.totalListosParaDespacho }}
+        </p>
       </div>
       <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
         <p class="text-sm text-gray-500 font-medium">Despachados</p>
-        <p class="text-3xl font-bold text-success-600 mt-1">{{ despachadorStore.totalDespachados }}</p>
+        <p class="text-3xl font-bold text-success-600 mt-1">
+          {{ despachadorStore.totalDespachados }}
+        </p>
       </div>
       <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
         <p class="text-sm text-gray-500 font-medium">Pendiente Despacho</p>
@@ -52,9 +56,9 @@ onMounted(async () => {
       </div>
       <div class="bg-white rounded-xl p-5 shadow-sm border border-gray-100">
         <p class="text-sm text-gray-500 font-medium">Total en Sistema</p>
-        <p class="text-3xl font-bold text-gray-600 mt-1">{{ 
-          despachadorStore.totalListosParaDespacho + despachadorStore.totalDespachados 
-        }}</p>
+        <p class="text-3xl font-bold text-gray-600 mt-1">
+          {{ despachadorStore.totalListosParaDespacho + despachadorStore.totalDespachados }}
+        </p>
       </div>
     </div>
 
@@ -164,10 +168,7 @@ onMounted(async () => {
                 {{ v.modelo?.marca }} {{ v.modelo?.modelo }} {{ v.modelo?.anio }}
               </td>
               <td class="px-6 py-4 text-sm text-gray-600">
-                <span
-                  v-if="v.color"
-                  class="inline-flex items-center gap-2"
-                >
+                <span v-if="v.color" class="inline-flex items-center gap-2">
                   <span
                     class="w-3 h-3 rounded-full border border-gray-300"
                     :style="{ backgroundColor: v.color }"

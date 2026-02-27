@@ -19,9 +19,7 @@ const horaActual = new Date().toLocaleTimeString('es-VE', { hour: '2-digit', min
 const despachadorNombre = authStore.user?.nombre || authStore.user?.name || 'Despachador'
 
 // Get vehicles dispatched in this lot
-const vehiculosDespachados = computed(() =>
-  despachadorStore.vehiculosDespachados
-)
+const vehiculosDespachados = computed(() => despachadorStore.vehiculosDespachados)
 
 const clientesUnicos = computed(() => {
   const clientes = new Set(vehiculosDespachados.value.map((v) => v.cliente).filter(Boolean))
@@ -233,9 +231,15 @@ const imprimir = () => window.print()
               <td class="py-2.5 px-3 border-b border-gray-100 font-medium text-gray-700">
                 {{ v.modelo?.marca || '—' }}
               </td>
-              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.modelo?.modelo || '—' }}</td>
-              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.modelo?.anio || '—' }}</td>
-              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">{{ v.color || '—' }}</td>
+              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">
+                {{ v.modelo?.modelo || '—' }}
+              </td>
+              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">
+                {{ v.modelo?.anio || '—' }}
+              </td>
+              <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600">
+                {{ v.color || '—' }}
+              </td>
               <td class="py-2.5 px-3 border-b border-gray-100 text-gray-600 text-xs">
                 {{ v.cliente || '—' }}
               </td>
