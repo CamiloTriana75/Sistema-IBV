@@ -4,7 +4,7 @@ import { useImprontaStore } from '~/stores/improntaStore'
 import { useContenedorStore } from '~/stores/contenedorStore'
 import { useVehiculoStore, type VehiculoPipeline } from '~/stores/vehiculoStore'
 
-definePageMeta({ layout: 'admin' })
+definePageMeta({ layout: 'admin', middleware: ['auth', 'recibidor'] })
 
 const store = useImprontaStore()
 const contStore = useContenedorStore()

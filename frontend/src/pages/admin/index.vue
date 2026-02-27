@@ -1,11 +1,143 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useStatsStore } from '~/stores/statsStore'
+import { supabaseDataService } from '~/services/supabaseDataService'
+import { supabaseUserService } from '~/services/supabaseUserService'
+import type { VehicleData, DashboardStats, ActivityItem } from '~/services/supabaseDataService'
+import type { SupabaseUser } from '~/services/supabaseUserService'
 
 definePageMeta({ layout: 'admin', middleware: ['auth', 'admin'] })
 
 const stats = useStatsStore()
 const periodo = ref<'hoy' | 'semana' | 'mes'>('semana')
+
+// States
+const loading = ref(true)
+const error = ref('')
+const dashboardStats = ref<DashboardStats | null>(null)
+const vehicles = ref<VehicleData[]>([])
+const users = ref<SupabaseUser[]>([])
+const activities = ref<ActivityItem[]>([])
+
+// Computed stats for KPIs
+const kpiData = computed(() => {
+  if (!dashboardStats.value) return []
+  
+  const stats = dashboardStats.value
+  return [
+    {
+      label: 'Vehículos Totales',
+      value: stats.total_vehiculos,
+      icon: 'truck',
+      bg: 'bg-blue-50',
+      color: 'text-blue-600',
+      trend: '+12% esta semana',
+      trendUp: true,
+    },
+    {
+      label: 'Listos para Despacho',
+      value: stats.listos_despacho,
+      icon: 'check',
+      bg: 'bg-green-50',
+      color: 'text-green-600',
+      trend: 'Aprobados',
+      trendUp: true,
+    },
+    {
+      label: 'Despachados',
+      value: stats.despachados,
+      icon: 'exit',
+      bg: 'bg-purple-50',
+      color: 'text-purple-600',
+      trend: 'En tránsito',
+      trendUp: true,
+    },
+    {
+      label: 'Problemas Encontrados',
+      value: stats.problemas_encontrados,
+      icon: 'alert',
+      bg: 'bg-red-50',
+      color: 'text-red-600',
+      trend: 'Requieren atención',
+      trendUp: false,
+    },
+  ]
+})
+
+// Computed pipeline data
+const pipelineData = computed(() => {
+  if (!dashboardStats.value) return []
+  
+  const stats = dashboardStats.value
+  const total = stats.total_vehiculos || 1
+  
+  return [
+    {
+      label: 'Recibidos',
+      value: stats.total_vehiculos,
+      pct: 100,
+      color: 'bg-blue-500',
+      light: 'bg-blue-50',
+      text: 'text-blue-700',
+    },
+    {
+      label: 'En Impronta',
+      value: stats.en_impronta,
+      pct: Math.round((stats.en_impronta / total) * 100),
+      color: 'bg-amber-500',
+      light: 'bg-amber-50',
+      text: 'text-amber-700',
+    },
+    {
+      label: 'En Inventario',
+      value: stats.en_inventario,
+      pct: Math.round((stats.en_inventario / total) * 100),
+      color: 'bg-orange-500',
+      light: 'bg-orange-50',
+      text: 'text-orange-700',
+    },
+    {
+      label: 'Despachados',
+      value: stats.despachados,
+      pct: Math.round((stats.despachados / total) * 100),
+      color: 'bg-green-500',
+      light: 'bg-green-50',
+      text: 'text-green-700',
+    },
+  ]
+})
+
+// Load data
+const loadDashboard = async () => {
+  try {
+    loading.value = true
+    error.value = ''
+    
+    // Asegurar que los usuarios seed existan
+    await supabaseUserService.seedAllUsers()
+    
+    const [statsData, vehiclesData, usersData, activitiesData] = await Promise.all([
+      supabaseDataService.getDashboardStats(),
+      supabaseDataService.getVehicles(),
+      supabaseUserService.getAllUsers(),
+      supabaseDataService.getActivities(5),
+    ])
+    
+    dashboardStats.value = statsData
+    vehicles.value = vehiclesData
+    users.value = usersData
+    activities.value = activitiesData || []
+  } catch (e: any) {
+    error.value = e.message || 'Error al cargar datos del dashboard'
+    console.error('Error loading dashboard:', e)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(() => {
+  loadDashboard()
+})
 
 const iconMap: Record<string, string> = {
   truck:
@@ -16,54 +148,6 @@ const iconMap: Record<string, string> = {
   alert:
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" /></svg>',
 }
-
-const activities = ref([
-  {
-    user: 'María Recibidora',
-    action: 'registró impronta del vehículo ABC-123',
-    time: 'Hace 15 min',
-    avatar: 'MR',
-    color: 'bg-blue-500',
-    badge: 'Impronta',
-    badgeClass: 'bg-blue-50 text-blue-600',
-  },
-  {
-    user: 'Juan Inventario',
-    action: 'completó inspección del vehículo XYZ-789',
-    time: 'Hace 32 min',
-    avatar: 'JI',
-    color: 'bg-amber-500',
-    badge: 'Inventario',
-    badgeClass: 'bg-amber-50 text-amber-600',
-  },
-  {
-    user: 'Luis Despachador',
-    action: 'despachó lote #2045 (8 vehículos)',
-    time: 'Hace 1 hora',
-    avatar: 'LD',
-    color: 'bg-green-500',
-    badge: 'Despacho',
-    badgeClass: 'bg-green-50 text-green-600',
-  },
-  {
-    user: 'Ana Portería',
-    action: 'autorizó salida del vehículo DEF-456',
-    time: 'Hace 2 horas',
-    avatar: 'AP',
-    color: 'bg-purple-500',
-    badge: 'Portería',
-    badgeClass: 'bg-purple-50 text-purple-600',
-  },
-  {
-    user: 'Carlos Admin',
-    action: 'creó usuario nuevo: Pedro Inspector',
-    time: 'Hace 3 horas',
-    avatar: 'CA',
-    color: 'bg-primary-500',
-    badge: 'Admin',
-    badgeClass: 'bg-primary-50 text-primary-600',
-  },
-])
 </script>
 
 <template>
@@ -106,9 +190,9 @@ const activities = ref([
     </div>
 
     <!-- ── KPI Cards ── -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div v-if="!loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
       <div
-        v-for="kpi in stats.kpiPrincipal"
+        v-for="kpi in kpiData"
         :key="kpi.label"
         class="bg-white rounded-2xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition"
       >
@@ -132,6 +216,16 @@ const activities = ref([
       </div>
     </div>
 
+    <!-- Loading State -->
+    <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div v-for="i in 4" :key="i" class="bg-gray-200 rounded-2xl p-5 h-32 animate-pulse" />
+    </div>
+
+    <!-- Error Message -->
+    <div v-if="error" class="bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+      {{ error }}
+    </div>
+
     <!-- ── Pipeline Funnel + Donut ── -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
       <!-- Funnel (2/3) -->
@@ -145,7 +239,7 @@ const activities = ref([
           </div>
         </div>
         <div class="space-y-3">
-          <div v-for="stage in stats.pipelineFunnel" :key="stage.label">
+          <div v-for="stage in pipelineData" :key="stage.label">
             <div class="flex items-center justify-between mb-1.5">
               <div class="flex items-center gap-2">
                 <span :class="['w-2 h-2 rounded-full', stage.color]" />
@@ -173,11 +267,11 @@ const activities = ref([
           </div>
         </div>
         <div class="flex items-center justify-center gap-1 mt-5 flex-wrap">
-          <template v-for="(stage, i) in stats.pipelineFunnel" :key="stage.label">
+          <template v-for="(stage, i) in pipelineData" :key="stage.label">
             <span :class="['text-xs px-2 py-1 rounded-lg font-medium', stage.light, stage.text]">
               {{ stage.label }} ({{ stage.value }})
             </span>
-            <span v-if="i < stats.pipelineFunnel.length - 1" class="text-gray-300 text-sm">›</span>
+            <span v-if="i < pipelineData.length - 1" class="text-gray-300 text-sm">›</span>
           </template>
         </div>
       </div>
@@ -251,29 +345,40 @@ const activities = ref([
       <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-100 p-6">
         <div class="flex items-center justify-between mb-5">
           <h3 class="text-base font-semibold text-gray-900">Actividad Reciente</h3>
-          <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Últimas 24 h</span>
+          <span class="text-xs text-gray-400 bg-gray-50 px-2 py-1 rounded-lg">Últimas actividades</span>
         </div>
-        <div class="space-y-4">
+        <div v-if="activities.length > 0" class="space-y-4">
           <div v-for="(act, i) in activities" :key="i" class="flex items-start gap-3">
             <div
-              :class="[
-                'w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white',
-                act.color,
-              ]"
+              class="w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-xs font-bold text-white bg-primary-500"
             >
-              {{ act.avatar }}
+              {{ act.user?.nombres?.[0] || 'U' }}{{ act.user?.apellidos?.[0] || '' }}
             </div>
             <div class="flex-1 min-w-0">
               <p class="text-sm text-gray-800">
-                <span class="font-medium">{{ act.user }}</span>
-                {{ act.action }}
+                <span class="font-medium">{{ act.user?.nombres || 'Sistema' }} {{ act.user?.apellidos || '' }}</span>
+                {{ act.description }}
               </p>
-              <p class="text-xs text-gray-400 mt-0.5">{{ act.time }}</p>
+              <p class="text-xs text-gray-400 mt-0.5">{{ new Date(act.timestamp).toLocaleString('es') }}</p>
             </div>
-            <span :class="['text-xs px-2 py-1 rounded-full font-medium shrink-0', act.badgeClass]">
-              {{ act.badge }}
+            <span
+              :class="[
+                'text-xs px-2 py-1 rounded-full font-medium shrink-0',
+                act.role === 'admin'
+                  ? 'bg-primary-50 text-primary-600'
+                  : act.role === 'recibidor'
+                    ? 'bg-blue-50 text-blue-600'
+                    : act.role === 'inventario'
+                      ? 'bg-amber-50 text-amber-600'
+                      : 'bg-green-50 text-green-600',
+              ]"
+            >
+              {{ act.role || 'Actividad' }}
             </span>
           </div>
+        </div>
+        <div v-else class="text-center py-8 text-gray-400">
+          No hay actividad reciente
         </div>
       </div>
 

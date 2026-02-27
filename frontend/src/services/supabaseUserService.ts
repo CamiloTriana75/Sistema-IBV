@@ -1,0 +1,238 @@
+﻿/**
+ * Servicio para gestionar usuarios desde Supabase
+ * Tabla: users_user (columnas: correo, nombres, apellidos, rol, activo, etc.)
+ */
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+const getSupabase = (): SupabaseClient => {
+  const { $supabase } = useNuxtApp()
+  return $supabase as SupabaseClient
+}
+
+export interface SupabaseUser {
+  id: number
+  correo: string
+  nombres: string
+  apellidos: string
+  rol: string
+  activo: boolean
+  es_personal: boolean
+  es_superusuario: boolean
+  fecha_registro: string
+  ultimo_ingreso: string | null
+  rol_id: number | null
+}
+
+// Mapeo de emails a roles para seed automÃ¡tico
+const USER_SEED_MAP: Record<string, { nombres: string; apellidos: string; rol: string }> = {
+  'admin1@ibv.com': { nombres: 'Admin', apellidos: 'IBV', rol: 'admin' },
+  'porteria1@ibv.com': { nombres: 'PorterÃ­a', apellidos: 'IBV', rol: 'porteria' },
+  'recibidor1@ibv.com': { nombres: 'Recibidor', apellidos: 'IBV', rol: 'recibidor' },
+  'inventario1@ibv.com': { nombres: 'Inventario', apellidos: 'IBV', rol: 'inventario' },
+  'despacho1@ibv.com': { nombres: 'Despacho', apellidos: 'IBV', rol: 'despachador' },
+}
+
+export const supabaseUserService = {
+  /**
+   * Obtiene el rol de un usuario por su correo desde la tabla users_user
+   */
+  async getUserRole(email: string): Promise<string | null> {
+    const $supabase = getSupabase()
+
+    try {
+      const { data, error } = await $supabase
+        .from('users_user')
+        .select('rol')
+        .eq('correo', email)
+        .single()
+
+      if (error || !data) {
+        console.log('Usuario no encontrado en users_user, intentando seed:', email)
+        // Intentar crear el usuario si estÃ¡ en el mapa de seed
+        const seeded = await supabaseUserService.ensureUserExists(email)
+        return seeded ? seeded.rol : null
+      }
+
+      return data.rol
+    } catch (err) {
+      console.log('Error consultando users_user:', err)
+      return null
+    }
+  },
+
+  /**
+   * Obtiene el perfil completo de un usuario por correo
+   */
+  async getUserProfile(email: string): Promise<SupabaseUser | null> {
+    const $supabase = getSupabase()
+
+    try {
+      const { data, error } = await $supabase
+        .from('users_user')
+        .select('*')
+        .eq('correo', email)
+        .single()
+
+      if (error || !data) {
+        return null
+      }
+
+      return data as SupabaseUser
+    } catch (err) {
+      console.log('Error obteniendo perfil:', err)
+      return null
+    }
+  },
+
+  /**
+   * Obtiene todos los usuarios
+   */
+  async getAllUsers(): Promise<SupabaseUser[]> {
+    const $supabase = getSupabase()
+
+    const { data, error } = await $supabase
+      .from('users_user')
+      .select('*')
+      .order('fecha_registro', { ascending: false })
+
+    if (error) {
+      console.error('Error obteniendo usuarios:', error)
+      return []
+    }
+
+    return (data || []) as SupabaseUser[]
+  },
+
+  /**
+   * Crea un nuevo usuario en users_user
+   */
+  async createUser(userData: {
+    correo: string
+    nombres: string
+    apellidos: string
+    rol: string
+    activo?: boolean
+  }): Promise<SupabaseUser | null> {
+    const $supabase = getSupabase()
+
+    const { data, error } = await $supabase
+      .from('users_user')
+      .insert({
+        correo: userData.correo,
+        nombres: userData.nombres,
+        apellidos: userData.apellidos,
+        rol: userData.rol,
+        activo: userData.activo ?? true,
+        es_superusuario: userData.rol === 'admin',
+        es_personal: true,
+        fecha_registro: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error creando usuario:', error)
+      throw new Error(error.message)
+    }
+
+    return data as SupabaseUser
+  },
+
+  /**
+   * Actualiza un usuario existente
+   */
+  async updateUser(id: number, updates: Partial<{
+    nombres: string
+    apellidos: string
+    rol: string
+    activo: boolean
+  }>): Promise<SupabaseUser | null> {
+    const $supabase = getSupabase()
+
+    const { data, error } = await $supabase
+      .from('users_user')
+      .update(updates)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error actualizando usuario:', error)
+      throw new Error(error.message)
+    }
+
+    return data as SupabaseUser
+  },
+
+  /**
+   * Elimina un usuario
+   */
+  async deleteUser(id: number): Promise<void> {
+    const $supabase = getSupabase()
+
+    const { error } = await $supabase
+      .from('users_user')
+      .delete()
+      .eq('id', id)
+
+    if (error) {
+      console.error('Error eliminando usuario:', error)
+      throw new Error(error.message)
+    }
+  },
+
+  /**
+   * Asegura que un usuario de Supabase Auth exista en la tabla users_user
+   * Si no existe y estÃ¡ en el mapa de seed, lo crea automÃ¡ticamente
+   */
+  async ensureUserExists(email: string): Promise<SupabaseUser | null> {
+    const $supabase = getSupabase()
+
+    // Verificar si ya existe
+    const { data: existing } = await $supabase
+      .from('users_user')
+      .select('*')
+      .eq('correo', email)
+      .single()
+
+    if (existing) return existing as SupabaseUser
+
+    // Buscar en el mapa de seed
+    const seedInfo = USER_SEED_MAP[email.toLowerCase()]
+    if (!seedInfo) return null
+
+    // Crear el usuario
+    const { data: created, error } = await $supabase
+      .from('users_user')
+      .insert({
+        correo: email,
+        nombres: seedInfo.nombres,
+        apellidos: seedInfo.apellidos,
+        rol: seedInfo.rol,
+        activo: true,
+        es_superusuario: seedInfo.rol === 'admin',
+        es_personal: true,
+        fecha_registro: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) {
+      console.error('Error en seed de usuario:', error)
+      return null
+    }
+
+    console.log(`Usuario ${email} creado automÃ¡ticamente con rol: ${seedInfo.rol}`)
+    return created as SupabaseUser
+  },
+
+  /**
+   * Ejecuta el seed de todos los usuarios predefinidos
+   */
+  async seedAllUsers(): Promise<void> {
+    for (const email of Object.keys(USER_SEED_MAP)) {
+      await supabaseUserService.ensureUserExists(email)
+    }
+    console.log('Seed de usuarios completado')
+  },
+}
