@@ -13,18 +13,30 @@ const currentUser = computed(() => {
   if (!u) {
     return { name: 'Usuario', initials: 'U', role: 'admin', roleName: 'Sin rol' }
   }
+  
+  // Obtener iniciales del nombre
+  const initials = u.name
+    ?.split(' ')
+    .map((w: string) => w[0])
+    .join('')
+    .substring(0, 2)
+    .toUpperCase() || 'U'
+  
+  // Mapear roles a nombres legibles
+  const roleNames: Record<string, string> = {
+    admin: 'Administrador',
+    recibidor: 'Recibidor',
+    inventario: 'Inventario',
+    despachador: 'Despachador',
+    porteria: 'Portería',
+    cliente: 'Cliente',
+  }
+  
   return {
     name: u.name || 'Usuario',
-    initials:
-      u.avatar ||
-      u.name
-        ?.split(' ')
-        .map((w: string) => w[0])
-        .join('')
-        .substring(0, 2) ||
-      'U',
+    initials,
     role: u.role || 'admin',
-    roleName: u.roleLabel || u.role || 'Usuario',
+    roleName: roleNames[u.role] || u.role || 'Usuario',
   }
 })
 

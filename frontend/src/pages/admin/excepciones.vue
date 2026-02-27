@@ -8,14 +8,14 @@ import {
   updateExceptionStatus,
   assignException,
 } from '~/services/supabaseAuditService'
-import { supabaseUserService } from '~/services/supabaseUserService'
+import { supabaseUserService, type SupabaseUser } from '~/services/supabaseUserService'
 import type { VehicleException, ExceptionSeverity, ExceptionType } from '~/services/supabaseAuditService'
 
 definePageMeta({ layout: 'admin', middleware: ['auth', 'admin'] })
 
 const vehiculoStore = useVehiculoStore()
 const exceptions = ref<VehicleException[]>([])
-const users = ref<any[]>([])
+const users = ref<SupabaseUser[]>([])
 const loading = ref(false)
 const statusFilter = ref<'all' | 'abierta' | 'en_progreso' | 'resuelta' | 'escalada'>('all')
 const severityFilter = ref<'all' | 'baja' | 'media' | 'alta' | 'critica'>('all')
@@ -312,7 +312,7 @@ const recargar = () => {
                 >
                   <option value="">Sin asignar</option>
                   <option v-for="user in users" :key="user.id" :value="user.id">
-                    {{ user.name }} ({{ user.role }})
+                    {{ user.nombres }} {{ user.apellidos }} ({{ user.rol }})
                   </option>
                 </select>
               </td>

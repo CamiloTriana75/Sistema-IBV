@@ -126,7 +126,7 @@ export const supabaseUserService = {
           password: userData.password,
           activo: userData.activo ?? true,
         },
-      })
+      }) as any
 
       return response.user as SupabaseUser
     } catch (error: any) {
@@ -145,10 +145,15 @@ export const supabaseUserService = {
     activo: boolean
   }>): Promise<SupabaseUser | null> {
     try {
+      console.log('[supabaseUserService.updateUser] ID:', id)
+      console.log('[supabaseUserService.updateUser] Updates:', updates)
+      
       const response = await $fetch(`/api/admin/users/${id}`, {
         method: 'PATCH',
         body: updates,
-      })
+      }) as any
+      
+      console.log('[supabaseUserService.updateUser] Response:', response)
       return response.user as SupabaseUser
     } catch (error: any) {
       console.error('Error actualizando usuario:', error)

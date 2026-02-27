@@ -58,6 +58,9 @@ export default defineEventHandler(async (event) => {
     // ============================================
     if (method === 'PATCH') {
       const body = await readBody(event)
+      
+      console.log('[PATCH /api/admin/users/:id] Body recibido:', body)
+      console.log('[PATCH /api/admin/users/:id] Usuario ID:', userId)
 
       const { data: currentUser, error: getError } = await $supabaseAdmin
         .from('usuarios')
@@ -71,23 +74,33 @@ export default defineEventHandler(async (event) => {
           statusMessage: 'Usuario no encontrado'
         })
       }
+      
+      console.log('[PATCH] Usuario actual:', currentUser)
+
+      // Preparar datos a actualizar
+      const updateData = {
+        nombres: body.nombres ?? currentUser.nombres,
+        apellidos: body.apellidos ?? currentUser.apellidos,
+        rol: body.rol ?? currentUser.rol,
+        activo: body.activo ?? currentUser.activo,
+      }
+      
+      console.log('[PATCH] Datos a actualizar:', updateData)
 
       // Actualizar en tabla usuarios
       const { data: updatedUser, error: updateError } = await $supabaseAdmin
         .from('usuarios')
-        .update({
-          nombres: body.nombres ?? currentUser.nombres,
-          apellidos: body.apellidos ?? currentUser.apellidos,
-          rol: body.rol ?? currentUser.rol,
-          activo: body.activo ?? currentUser.activo,
-        })
+        .update(updateData)
         .eq('id', userId)
         .select()
         .single()
 
       if (updateError) {
+        console.error('[PATCH] Error actualizando en BD:', updateError)
         throw new Error(`Error actualizando: ${updateError.message}`)
       }
+      
+      console.log('[PATCH] Usuario actualizado en BD:', updatedUser)
 
       // Actualizar en Supabase Auth
       const { data: authUsers, error: authGetError } = await $supabaseAdmin.auth.admin.listUsers()
