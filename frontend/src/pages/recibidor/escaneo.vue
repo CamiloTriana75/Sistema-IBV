@@ -1,11 +1,15 @@
 <script setup lang="ts">
 import { ref, computed, reactive } from 'vue'
-import { useContenedorStore, type Contenedor, type VehiculoContenedor } from '~/stores/contenedorStore'
+import { useContenedorStore, type Contenedor } from '~/stores/contenedorStore'
+import { useImprontaStore } from '~/stores/improntaStore'
+import { useVehiculoStore } from '~/stores/vehiculoStore'
 import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'admin' })
 
 const contStore = useContenedorStore()
+const improntaStore = useImprontaStore()
+const vehiculoStore = useVehiculoStore()
 const authStore = useAuthStore()
 
 const paso = ref(1)
@@ -67,13 +71,64 @@ const formContenedor = reactive({
 // ===== Modal: agregar vehículo =====
 const showModalVehiculo = ref(false)
 const cargandoVehiculo = ref(false)
+const datosPreCargadosQr = ref(false) // indica si el QR llenó los datos
 const formVehiculo = reactive({
   vin: '',
+  placa: '',
   marca: '',
   modelo: '',
   anio: String(new Date().getFullYear()),
   color: '',
+  km: '0',
+  cliente: '',
+  condicion: 'bueno' as '' | 'excelente' | 'bueno' | 'regular' | 'dañado',
 })
+
+/**
+ * Parser multi-formato del QR del vehículo.
+ * Soporta: JSON, pipes (VIN|MARCA|MODELO|AÑO|COLOR|PLACA), VIN solo.
+ */
+const parsearQrVehiculo = (raw: string): boolean => {
+  raw = raw.trim()
+
+  // JSON
+  if (raw.startsWith('{')) {
+    try {
+      const obj = JSON.parse(raw)
+      if (obj.vin) formVehiculo.vin = String(obj.vin)
+      if (obj.placa) formVehiculo.placa = String(obj.placa)
+      if (obj.marca) formVehiculo.marca = String(obj.marca)
+      if (obj.modelo) formVehiculo.modelo = String(obj.modelo)
+      if (obj.anio) formVehiculo.anio = String(obj.anio)
+      if (obj.color) formVehiculo.color = String(obj.color)
+      if (obj.km) formVehiculo.km = String(obj.km)
+      if (obj.cliente) formVehiculo.cliente = String(obj.cliente)
+      if (obj.condicion) formVehiculo.condicion = obj.condicion
+      datosPreCargadosQr.value = true
+      return true
+    } catch {
+      return false
+    }
+  }
+
+  // Pipes: VIN|MARCA|MODELO|AÑO|COLOR|PLACA
+  if (raw.includes('|')) {
+    const parts = raw.split('|').map((s) => s.trim())
+    if (parts[0]) formVehiculo.vin = parts[0]
+    if (parts[1]) formVehiculo.marca = parts[1]
+    if (parts[2]) formVehiculo.modelo = parts[2]
+    if (parts[3]) formVehiculo.anio = parts[3]
+    if (parts[4]) formVehiculo.color = parts[4]
+    if (parts[5]) formVehiculo.placa = parts[5]
+    datosPreCargadosQr.value = true
+    return true
+  }
+
+  // VIN solo
+  formVehiculo.vin = raw
+  datosPreCargadosQr.value = false
+  return true
+}
 
 // ===== Paso 1: Escanear contenedor =====
 const onScanContenedor = (codigo: string) => {
@@ -144,36 +199,37 @@ const seleccionarContenedor = async (cont: Contenedor) => {
 const onScanVehiculo = (codigo: string) => {
   if (!contenedorActual.value) return
 
-  // Verificar si ya fue escaneado
+  // Verificar si ya fue escaneado (por VIN)
   const yaExiste = contenedorActual.value.vehiculos.find(
     (v) =>
       v.vin.toLowerCase() === codigo.toLowerCase() ||
       v.codigoImpronta.toLowerCase() === codigo.toLowerCase()
   )
 
-  if (yaExiste) {
-    if (yaExiste.escaneado) {
-      scannerVehiculo.value?.setError('Este vehículo ya fue escaneado')
-      mostrarToast('warn', 'Este vehículo ya fue escaneado')
-      return
-    }
-    // Pre-cargado pero no escaneado aún → marcar como escaneado
-    _marcarPreCargado(yaExiste)
+  if (yaExiste && yaExiste.escaneado) {
+    scannerVehiculo.value?.setError('Este vehículo ya fue escaneado')
+    mostrarToast('warn', 'Este vehículo ya fue escaneado')
     return
   }
 
-  // Vehículo nuevo → abrir formulario
-  formVehiculo.vin = codigo
+  // Resetear formulario
+  formVehiculo.vin = ''
+  formVehiculo.placa = ''
   formVehiculo.marca = ''
   formVehiculo.modelo = ''
   formVehiculo.anio = String(new Date().getFullYear())
   formVehiculo.color = ''
-  showModalVehiculo.value = true
-}
+  formVehiculo.km = '0'
+  formVehiculo.cliente = ''
+  formVehiculo.condicion = 'bueno'
+  datosPreCargadosQr.value = false
 
-const _marcarPreCargado = async (veh: VehiculoContenedor) => {
-  await contStore.marcarVehiculoEscaneado(contenedorActual.value!.id, veh.codigoImpronta)
-  mostrarToast('ok', `${veh.marca} ${veh.modelo} — escaneado`)
+  // Parsear QR → llena los campos del formulario
+  parsearQrVehiculo(codigo)
+
+  // Mostrar modal con datos pre-cargados para verificación
+  scannerVehiculo.value?.setSuccess('Datos del vehículo leídos')
+  showModalVehiculo.value = true
 }
 
 const confirmarAgregarVehiculo = async () => {
@@ -181,26 +237,85 @@ const confirmarAgregarVehiculo = async () => {
     mostrarToast('warn', 'El VIN / código es requerido')
     return
   }
+  if (!formVehiculo.marca.trim() || !formVehiculo.modelo.trim()) {
+    mostrarToast('warn', 'Marca y modelo son requeridos')
+    return
+  }
   cargandoVehiculo.value = true
   try {
-    const nuevo = await contStore.agregarVehiculoEscaneado(contenedorActual.value!.id, {
-      vin: formVehiculo.vin.trim(),
-      marca: formVehiculo.marca.trim() || 'N/A',
-      modelo: formVehiculo.modelo.trim() || 'N/A',
-      anio: formVehiculo.anio.trim() || String(new Date().getFullYear()),
-      color: formVehiculo.color.trim() || 'N/A',
-      codigoImpronta: formVehiculo.vin.trim(),
+    const cont = contenedorActual.value!
+    const vinTrimmed = formVehiculo.vin.trim()
+    const marcaTrimmed = formVehiculo.marca.trim()
+    const modeloTrimmed = formVehiculo.modelo.trim()
+    const anioTrimmed = formVehiculo.anio.trim() || String(new Date().getFullYear())
+    const colorTrimmed = formVehiculo.color.trim() || 'N/A'
+    const placaTrimmed = formVehiculo.placa.trim()
+
+    // 1️⃣ Agregar vehículo al contenedor
+    const nuevoVeh = await contStore.agregarVehiculoEscaneado(cont.id, {
+      vin: vinTrimmed,
+      marca: marcaTrimmed,
+      modelo: modeloTrimmed,
+      anio: anioTrimmed,
+      color: colorTrimmed,
+      codigoImpronta: vinTrimmed,
     })
-    if (!nuevo) {
-      mostrarToast('error', 'Error al registrar el vehículo')
+    if (!nuevoVeh) {
+      mostrarToast('error', 'Error al registrar el vehículo en el contenedor')
       return
     }
+
+    // 2️⃣ Crear impronta automáticamente
+    const nuevaImpronta = await improntaStore.crear({
+      vin: vinTrimmed,
+      placa: placaTrimmed,
+      marca: marcaTrimmed,
+      modelo: modeloTrimmed,
+      anio: anioTrimmed,
+      color: colorTrimmed,
+      km: formVehiculo.km || '0',
+      cliente: formVehiculo.cliente.trim(),
+      condicion: (formVehiculo.condicion as 'excelente' | 'bueno' | 'regular' | 'dañado') || 'bueno',
+      zonasDañadas: [],
+      daños: [],
+      observaciones: `Impronta creada automáticamente al escanear vehículo en contenedor ${cont.codigo}`,
+      fotos: {},
+      fotosAdicionales: [],
+      estado: 'completada',
+      creadoPor: authStore.user?.name || 'Recibidor',
+    })
+
+    // 3️⃣ Registrar vehículo en el pipeline
+    await vehiculoStore.registrarRecepcion({
+      vin: vinTrimmed,
+      placa: placaTrimmed,
+      marca: marcaTrimmed,
+      modelo: modeloTrimmed,
+      anio: anioTrimmed,
+      color: colorTrimmed,
+      cliente: formVehiculo.cliente.trim(),
+      contenedorId: cont.id,
+      contenedorCodigo: cont.codigo,
+    })
+
+    // 4️⃣ Vincular impronta al pipeline y marcar como completada
+    await vehiculoStore.vincularImpronta(vinTrimmed, nuevaImpronta.id, nuevaImpronta.folio)
+    await vehiculoStore.completarImpronta(vinTrimmed)
+
+    // 5️⃣ Marcar vehículo del contenedor con impronta_id
+    if (nuevoVeh.id) {
+      await contStore.marcarVehiculoEscaneado(cont.id, vinTrimmed, nuevaImpronta.id)
+    }
+
     showModalVehiculo.value = false
-    // Sync contenedorActual with store (store updates the array in-place)
-    const enStore = contStore.getById(contenedorActual.value!.id)
+
+    // Sync contenedorActual
+    const enStore = contStore.getById(cont.id)
     if (enStore) contenedorActual.value = enStore
-    mostrarToast('ok', `${nuevo.marca} ${nuevo.modelo} — registrado`)
-  } catch {
+
+    mostrarToast('ok', `${marcaTrimmed} ${modeloTrimmed} — registrado con impronta ${nuevaImpronta.folio}`)
+  } catch (err) {
+    console.error('Error confirmarAgregarVehiculo:', err)
     mostrarToast('error', 'Error al registrar el vehículo')
   } finally {
     cargandoVehiculo.value = false
@@ -1096,7 +1211,7 @@ const imprimirResumen = () => {
       </div>
     </Transition>
 
-    <!-- ========== Modal: Agregar Vehículo ========== -->
+    <!-- ========== Modal: Verificar y Registrar Vehículo + Impronta ========== -->
     <Transition
       enter-active-class="transition duration-200 ease-out"
       enter-from-class="opacity-0"
@@ -1108,47 +1223,71 @@ const imprimirResumen = () => {
       <div
         v-if="showModalVehiculo"
         class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+        @click.self="showModalVehiculo = false"
       >
-        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden">
-          <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden max-h-[90vh] flex flex-col">
+          <!-- Header -->
+          <div class="px-6 py-5 border-b border-gray-100 flex items-center gap-3 shrink-0">
             <div class="w-10 h-10 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
               <svg class="w-5 h-5 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" />
               </svg>
             </div>
-            <div>
-              <h3 class="text-base font-bold text-gray-900">Registrar Vehículo</h3>
-              <p class="text-xs text-gray-500 font-mono mt-0.5">{{ formVehiculo.vin }}</p>
+            <div class="flex-1 min-w-0">
+              <h3 class="text-base font-bold text-gray-900">Verificar Datos del Vehículo</h3>
+              <p class="text-xs text-gray-500 mt-0.5">Confirma que los datos son correctos. Se creará el vehículo y su impronta.</p>
             </div>
           </div>
 
-          <div class="px-6 py-5 space-y-4">
+          <!-- Indicador QR pre-cargado -->
+          <div v-if="datosPreCargadosQr" class="px-6 pt-4 shrink-0">
+            <div class="bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 flex items-center gap-2">
+              <svg class="w-4 h-4 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <span class="text-xs font-semibold text-emerald-700">Datos pre-cargados del QR — verifica antes de confirmar</span>
+            </div>
+          </div>
+
+          <!-- Formulario scroll -->
+          <div class="px-6 py-5 space-y-4 overflow-y-auto flex-1">
             <div>
-              <label class="block text-xs font-semibold text-gray-600 mb-1.5">VIN / Código escaneado</label>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">VIN / Chasis <span class="text-red-500">*</span></label>
               <input
                 v-model="formVehiculo.vin"
                 type="text"
-                class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+                placeholder="1HGBH41JXMN109186"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-gray-50"
+              />
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">Placa</label>
+              <input
+                v-model="formVehiculo.placa"
+                type="text"
+                placeholder="ABC-1234"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               />
             </div>
 
             <div class="grid grid-cols-2 gap-4">
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Marca</label>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Marca <span class="text-red-500">*</span></label>
                 <input
                   v-model="formVehiculo.marca"
                   type="text"
                   placeholder="Toyota"
-                  class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
-                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Modelo</label>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Modelo <span class="text-red-500">*</span></label>
                 <input
                   v-model="formVehiculo.modelo"
                   type="text"
                   placeholder="Corolla"
-                  class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
@@ -1162,7 +1301,7 @@ const imprimirResumen = () => {
                   min="2000"
                   max="2030"
                   placeholder="2024"
-                  class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
               <div>
@@ -1170,14 +1309,60 @@ const imprimirResumen = () => {
                 <input
                   v-model="formVehiculo.color"
                   type="text"
-                  placeholder="Blanco"
-                  class="w-full px-3 py-2 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Blanco Perla"
+                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
             </div>
+
+            <div class="grid grid-cols-2 gap-4">
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Kilometraje</label>
+                <input
+                  v-model="formVehiculo.km"
+                  type="number"
+                  min="0"
+                  placeholder="0"
+                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                />
+              </div>
+              <div>
+                <label class="block text-xs font-semibold text-gray-600 mb-1.5">Condición</label>
+                <select
+                  v-model="formVehiculo.condicion"
+                  class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white"
+                >
+                  <option value="excelente">Excelente</option>
+                  <option value="bueno">Bueno</option>
+                  <option value="regular">Regular</option>
+                  <option value="dañado">Con daños</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label class="block text-xs font-semibold text-gray-600 mb-1.5">Cliente</label>
+              <input
+                v-model="formVehiculo.cliente"
+                type="text"
+                placeholder="Distribuidora XXX"
+                class="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+
+            <!-- Info de lo que sucederá -->
+            <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 flex gap-3">
+              <svg class="w-4 h-4 text-blue-500 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <p class="text-xs text-blue-700">
+                Al confirmar se registrará el vehículo en el contenedor, se creará la impronta automáticamente y el vehículo quedará como <strong>improntado</strong> en el sistema.
+              </p>
+            </div>
           </div>
 
-          <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3">
+          <!-- Footer -->
+          <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex gap-3 shrink-0">
             <button
               class="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 text-sm font-semibold rounded-xl hover:bg-gray-200 transition"
               @click="showModalVehiculo = false"
@@ -1186,11 +1371,15 @@ const imprimirResumen = () => {
             </button>
             <button
               :disabled="cargandoVehiculo"
-              class="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-500/25 disabled:opacity-60 disabled:cursor-not-allowed"
+              class="flex-1 px-4 py-2.5 bg-blue-600 text-white text-sm font-bold rounded-xl hover:bg-blue-700 transition shadow-lg shadow-blue-500/25 disabled:opacity-60 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
               @click="confirmarAgregarVehiculo"
             >
-              <span v-if="cargandoVehiculo">Guardando...</span>
-              <span v-else>Registrar Vehículo</span>
+              <svg v-if="cargandoVehiculo" class="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <span v-if="cargandoVehiculo">Registrando...</span>
+              <span v-else>Confirmar y Crear Impronta</span>
             </button>
           </div>
         </div>
