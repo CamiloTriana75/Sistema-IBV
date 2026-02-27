@@ -47,51 +47,56 @@ export interface VehiculoPipeline {
   estado: EstadoVehiculo
 }
 
-function mapRowToVehiculo(row: any): VehiculoPipeline {
-  return {
-    id: row.id,
-    vin: row.vin,
-    placa: row.placa || '',
-    marca: row.marca,
-    modelo: row.modelo,
-    anio: row.anio || '',
-    color: row.color || '',
-    cliente: row.cliente || '',
-    contenedorId: row.contenedor_id || undefined,
-    contenedorCodigo: row.contenedor_codigo || undefined,
-    fechaRecepcion: row.fecha_recepcion,
-    horaRecepcion: row.hora_recepcion?.substring(0, 5) || '',
-    improntaId: row.impronta_id || undefined,
-    improntaFolio: row.impronta_folio || undefined,
-    improntaCompletada: row.impronta_completada,
-    fechaImpronta: row.fecha_impronta || undefined,
-    inventarioCompletado: row.inventario_completado,
-    inventarioAprobado: row.inventario_aprobado,
-    inventarioFecha: row.inventario_fecha || undefined,
-    inventarioInspector: row.inventario_inspector || undefined,
-    inventarioResultado: row.inventario_resultado || undefined,
-    despachado: row.despachado,
-    fechaDespacho: row.fecha_despacho || undefined,
-    horaDespacho: row.hora_despacho?.substring(0, 5) || undefined,
-    lotDespacho: row.lot_despacho || undefined,
-    despachador: row.despachador || undefined,
-    estado: row.estado,
+function mapEstadoVehiculos(estadoDB: string): EstadoVehiculo {
+  const map: Record<string, EstadoVehiculo> = {
+    recibido: 'recibido',
+    en_impronta: 'impronta_pendiente',
+    impronta_completada: 'impronta_completada',
+    en_inventario: 'inventario_pendiente',
+    inventario_aprobado: 'inventario_aprobado',
+    listo_despacho: 'listo_despacho',
+    despachado: 'despachado',
   }
+  return map[estadoDB] || 'recibido'
 }
 
-function calcularEstado(v: {
-  despachado: boolean
-  inventarioAprobado: boolean
-  improntaCompletada: boolean
-  inventarioCompletado?: boolean
-  improntaId?: string
-}): EstadoVehiculo {
-  if (v.despachado) return 'despachado'
-  if (v.inventarioAprobado && v.improntaCompletada) return 'listo_despacho'
-  if (v.inventarioCompletado) return 'inventario_aprobado'
-  if (v.improntaCompletada) return 'inventario_pendiente'
-  if (v.improntaId) return 'impronta_pendiente'
-  return 'recibido'
+function mapRowToVehiculo(row: any): VehiculoPipeline {
+  const modelo = row.modelo_vehiculo || row.modelo || null
+  return {
+    id: String(row.id),
+    vin: row.bin,
+    placa: row.placa || '',
+    marca: modelo?.marca || '',
+    modelo: modelo?.modelo || '',
+    anio: modelo?.anio ? String(modelo.anio) : '',
+    color: row.color || '',
+    cliente: row.cliente || '',
+    contenedorId: undefined,
+    contenedorCodigo: undefined,
+    fechaRecepcion: row.fecha_registro?.split('T')[0] || '',
+    horaRecepcion: '',
+    improntaId: undefined,
+    improntaFolio: undefined,
+    improntaCompletada:
+      row.estado === 'impronta_completada' ||
+      row.estado === 'listo_despacho' ||
+      row.estado === 'despachado',
+    fechaImpronta: undefined,
+    inventarioCompletado:
+      row.estado === 'inventario_aprobado' ||
+      row.estado === 'listo_despacho' ||
+      row.estado === 'despachado',
+    inventarioAprobado: row.estado === 'listo_despacho' || row.estado === 'despachado',
+    inventarioFecha: undefined,
+    inventarioInspector: undefined,
+    inventarioResultado: undefined,
+    despachado: row.estado === 'despachado',
+    fechaDespacho: undefined,
+    horaDespacho: undefined,
+    lotDespacho: undefined,
+    despachador: undefined,
+    estado: mapEstadoVehiculos(row.estado),
+  }
 }
 
 export const useVehiculoStore = defineStore('vehiculo', () => {
@@ -108,8 +113,8 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     error.value = null
     try {
       const { data, error: err } = await supabase
-        .from('vehiculos_pipeline')
-        .select('*')
+        .from('vehiculos')
+        .select('*, modelo_vehiculo:modelos_vehiculo(marca, modelo, anio)')
         .order('created_at', { ascending: false })
 
       if (err) throw err
@@ -183,22 +188,16 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     if (existing) return existing
 
     const insertData = {
-      vin: data.vin,
-      placa: data.placa || '',
-      marca: data.marca,
-      modelo: data.modelo,
-      anio: data.anio,
-      color: data.color,
-      cliente: data.cliente || '',
-      contenedor_id: data.contenedorId || null,
-      contenedor_codigo: data.contenedorCodigo || null,
-      estado: 'recibido' as const,
+      bin: data.vin,
+      qr_codigo: data.vin,
+      color: data.color || null,
+      estado: 'recibido',
     }
 
     const { data: rows, error: err } = await supabase
-      .from('vehiculos_pipeline')
+      .from('vehiculos')
       .insert(insertData)
-      .select()
+      .select('*, modelo_vehiculo:modelos_vehiculo(marca, modelo, anio)')
 
     if (err) throw err
     if (!rows || rows.length === 0) throw new Error('No se pudo registrar el vehículo')
@@ -212,15 +211,9 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     const v = getByVin(vin)
     if (!v) return
 
-    const nuevoEstado = calcularEstado({ ...v, improntaId })
-
     const { error: err } = await supabase
-      .from('vehiculos_pipeline')
-      .update({
-        impronta_id: improntaId,
-        impronta_folio: improntaFolio,
-        estado: nuevoEstado,
-      })
+      .from('vehiculos')
+      .update({ estado: 'en_impronta' })
       .eq('id', v.id)
 
     if (err) {
@@ -230,7 +223,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
 
     v.improntaId = improntaId
     v.improntaFolio = improntaFolio
-    v.estado = nuevoEstado
+    v.estado = 'impronta_pendiente'
   }
 
   const completarImpronta = async (vin: string) => {
@@ -238,15 +231,10 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     if (!v) return
 
     const fechaImpronta = new Date().toISOString().split('T')[0]
-    const nuevoEstado = calcularEstado({ ...v, improntaCompletada: true })
 
     const { error: err } = await supabase
-      .from('vehiculos_pipeline')
-      .update({
-        impronta_completada: true,
-        fecha_impronta: fechaImpronta,
-        estado: nuevoEstado,
-      })
+      .from('vehiculos')
+      .update({ estado: 'impronta_completada' })
       .eq('id', v.id)
 
     if (err) {
@@ -256,7 +244,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
 
     v.improntaCompletada = true
     v.fechaImpronta = fechaImpronta
-    v.estado = nuevoEstado
+    v.estado = 'impronta_completada'
   }
 
   const aprobarInventario = async (
@@ -268,22 +256,10 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     if (!v) return
 
     const inventarioFecha = new Date().toISOString().split('T')[0]
-    const nuevoEstado = calcularEstado({
-      ...v,
-      inventarioCompletado: true,
-      inventarioAprobado: true,
-    })
 
     const { error: err } = await supabase
-      .from('vehiculos_pipeline')
-      .update({
-        inventario_completado: true,
-        inventario_aprobado: true,
-        inventario_fecha: inventarioFecha,
-        inventario_inspector: inspector,
-        inventario_resultado: resultado,
-        estado: nuevoEstado,
-      })
+      .from('vehiculos')
+      .update({ estado: 'listo_despacho' })
       .eq('id', v.id)
 
     if (err) {
@@ -296,7 +272,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     v.inventarioFecha = inventarioFecha
     v.inventarioInspector = inspector
     v.inventarioResultado = resultado
-    v.estado = nuevoEstado
+    v.estado = 'listo_despacho'
   }
 
   const rechazarInventario = async (vin: string, motivo: string) => {
@@ -305,21 +281,10 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
 
     const inventarioFecha = new Date().toISOString().split('T')[0]
     const resultado = { totalItems: 0, aprobados: 0, fallas: 0, na: 0, nota: motivo }
-    const nuevoEstado = calcularEstado({
-      ...v,
-      inventarioCompletado: true,
-      inventarioAprobado: false,
-    })
 
     const { error: err } = await supabase
-      .from('vehiculos_pipeline')
-      .update({
-        inventario_completado: true,
-        inventario_aprobado: false,
-        inventario_fecha: inventarioFecha,
-        inventario_resultado: resultado,
-        estado: nuevoEstado,
-      })
+      .from('vehiculos')
+      .update({ estado: 'en_inventario' })
       .eq('id', v.id)
 
     if (err) {
@@ -331,7 +296,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     v.inventarioAprobado = false
     v.inventarioFecha = inventarioFecha
     v.inventarioResultado = resultado
-    v.estado = nuevoEstado
+    v.estado = 'inventario_pendiente'
   }
 
   const despachar = async (vin: string, lote: string, despachador: string): Promise<boolean> => {
@@ -347,15 +312,8 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     })
 
     const { error: err } = await supabase
-      .from('vehiculos_pipeline')
-      .update({
-        despachado: true,
-        fecha_despacho: fechaDespacho,
-        hora_despacho: horaDespacho,
-        lot_despacho: lote,
-        despachador,
-        estado: 'despachado',
-      })
+      .from('vehiculos')
+      .update({ estado: 'despachado' })
       .eq('id', v.id)
 
     if (err) {
