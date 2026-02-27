@@ -6,6 +6,7 @@ node_modules/
 # Build
 dist/
 dist-ssr/
+.netlify/
 
 # Variables de entorno — NUNCA subir al repositorio
 .env

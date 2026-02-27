@@ -233,6 +233,10 @@ backend/auth.json
 # =========================
 .supabase/
 
+# Netlify
+.netlify/
+frontend/.netlify/
+
 # =========================
 # Logs
 # =========================
