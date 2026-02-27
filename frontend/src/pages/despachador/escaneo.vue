@@ -1,44 +1,58 @@
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useVehiculoStore } from '~/stores/vehiculoStore'
+import { ref, computed, onMounted } from 'vue'
+import { useDespachadorStore } from '~/stores/despachadorStore'
 import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'admin' })
 
-const vehiculoStore = useVehiculoStore()
+const despachadorStore = useDespachadorStore()
 const authStore = useAuthStore()
 const router = useRouter()
+const route = useRoute()
 const scannerRef = ref<{
   setError: (msg: string) => void
   setSuccess: (msg?: string) => void
   reset: () => void
   focus: () => void
 } | null>(null)
-const filtroEstado = ref<'todos' | 'pendiente'>('todos')
 
 // Lot number auto-generated
 const loteActual = `LT-${new Date().getFullYear()}-${String(Date.now()).slice(-4)}`
 
 interface VehiculoLote {
-  vin: string
+  id: string | number
+  bin: string
   marca: string
   modelo: string
-  anio: string
+  anio: number
   color: string
-  cliente: string
   escaneado: boolean
   horaEscaneo?: string
 }
 
+// Cargar vehículos al montar
+onMounted(async () => {
+  await despachadorStore.load()
+  
+  // Si viene bin en query, pre-seleccionar ese vehículo
+  const binParam = route.query.bin as string
+  if (binParam) {
+    const v = despachadorStore.getByBin(binParam)
+    if (v) {
+      handleScan(binParam)
+    }
+  }
+})
+
 // Build lot from vehicles ready in the store
 const vehiculosLote = ref<VehiculoLote[]>(
-  vehiculoStore.getListosParaDespacho.map((v) => ({
-    vin: v.vin,
-    marca: v.marca,
-    modelo: v.modelo,
-    anio: v.anio,
-    color: v.color,
-    cliente: v.cliente,
+  despachadorStore.vehiculosListos.map((v) => ({
+    id: v.id,
+    bin: v.bin,
+    marca: v.modelo?.marca || '',
+    modelo: v.modelo?.modelo || '',
+    anio: v.modelo?.anio || new Date().getFullYear(),
+    color: v.color || '',
     escaneado: false,
   }))
 )
@@ -57,26 +71,24 @@ const progressPorcentaje = computed(() =>
 )
 
 const vehiculosFiltrados = computed(() => {
-  if (filtroEstado.value === 'pendiente') return vehiculosPendientes.value
-  return vehiculosLote.value
+  return vehiculosPendientes.value
 })
 
 /**
- * Procesa un VIN escaneado (ya sea por cámara QR o entrada manual).
- * Usa el componente QrScanner reutilizable para el feedback visual.
+ * Procesa un BIN escaneado desde el QR scanner o entrada manual
  */
-const onScan = (vin: string) => {
-  // 1. Check dispatch eligibility via vehiculoStore
-  const check = vehiculoStore.puedeDespachar(vin)
-  if (!check.ok) {
-    scannerRef.value?.setError(check.razon || 'No se puede despachar este vehículo')
+const handleScan = (bin: string) => {
+  // 1. Check if vehicle exists in the list
+  const vehiculoDb = despachadorStore.getByBin(bin)
+  if (!vehiculoDb) {
+    scannerRef.value?.setError('Este BIN no está en la lista de despacho')
     return
   }
 
   // 2. Find in lot
-  const v = vehiculosLote.value.find((x) => x.vin.toLowerCase() === vin.toLowerCase())
+  const v = vehiculosLote.value.find((x) => x.bin.toLowerCase() === bin.toLowerCase())
   if (!v) {
-    scannerRef.value?.setError('Este VIN no está en el lote actual')
+    scannerRef.value?.setError('Este BIN no está en el lote actual')
     return
   }
   if (v.escaneado) {
@@ -84,30 +96,47 @@ const onScan = (vin: string) => {
     return
   }
 
-  // 3. Success — marcar como escaneado y dar feedback
+  // 3. Success — marcar como escaneado
   v.horaEscaneo = new Date().toLocaleTimeString('es-VE', {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
   })
   v.escaneado = true
-  scannerRef.value?.setSuccess(`${v.marca} ${v.modelo} — VIN verificado`)
+  scannerRef.value?.setSuccess(`${v.marca} ${v.modelo} — BIN verificado`)
+}
+
+const onScan = (bin: string) => {
+  handleScan(bin)
 }
 
 const simularEscaneo = () => {
   const pendientes = vehiculosPendientes.value
   if (pendientes.length === 0) return
-  onScan(pendientes[0].vin)
+  onScan(pendientes[0].bin)
 }
 
-const finalizarLote = () => {
-  // Mark all scanned vehicles as dispatched in the store
-  const despachador = authStore.user?.name || 'Despachador'
+const finalizarLote = async () => {
+  // Despachar todos los vehículos escaneados
+  let despachosExitosos = 0
+  let despachosError = 0
+
   for (const v of vehiculosEscaneados.value) {
-    vehiculoStore.despachar(v.vin, loteActual, despachador)
+    const result = await despachadorStore.despacharVehiculo(v.id, loteActual)
+    if (result.success) {
+      despachosExitosos++
+    } else {
+      despachosError++
+      console.error(`Error despachando ${v.bin}: ${result.error}`)
+    }
   }
-  // Navigate to planilla with lot info
-  router.push(`/despachador/planilla?lote=${loteActual}`)
+
+  // Mostrar resumen y navegar
+  if (despachosExitosos > 0) {
+    router.push(`/despachador/planilla?lote=${loteActual}`)
+  } else {
+    console.error(`No se pudo despachar ningún vehículo`)
+  }
 }
 </script>
 
@@ -248,7 +277,7 @@ const finalizarLote = () => {
 
           <QrScanner
             ref="scannerRef"
-            placeholder="VIN del vehículo (ej: 1HGCM82633A004352)"
+            placeholder="BIN del vehículo (escanea el código QR)"
             hide-result
             @scan="onScan"
           />
@@ -303,7 +332,7 @@ const finalizarLote = () => {
           <div class="divide-y divide-gray-50 max-h-[520px] overflow-y-auto">
             <div
               v-for="(v, idx) in vehiculosFiltrados"
-              :key="v.vin"
+              :key="v.bin"
               class="flex items-center gap-4 px-5 py-3.5 transition-colors"
               :class="v.escaneado ? 'bg-success-50/50' : 'hover:bg-gray-50'"
             >
@@ -316,7 +345,7 @@ const finalizarLote = () => {
 
               <div class="flex-1 min-w-0">
                 <div class="flex items-center gap-2">
-                  <p class="text-sm font-bold text-gray-900 font-mono">{{ v.vin }}</p>
+                  <p class="text-sm font-bold text-gray-900 font-mono">{{ v.bin }}</p>
                   <span
                     v-if="v.escaneado"
                     class="text-xs px-2 py-0.5 bg-success-100 text-success-700 font-semibold rounded-full"
@@ -325,7 +354,7 @@ const finalizarLote = () => {
                   </span>
                 </div>
                 <p class="text-xs text-gray-400 mt-0.5">
-                  {{ v.marca }} {{ v.modelo }} {{ v.anio }} — {{ v.color }}
+                  {{ v.marca }} {{ v.modelo }} {{ String(v.anio) }} — {{ v.color }}
                 </p>
               </div>
 
