@@ -148,9 +148,11 @@ Al hacer login por primera vez con estos correos, se crean automáticamente en l
 ### Netlify
 
 1. Conectar repositorio GitHub con Netlify
-2. Build command: `cd frontend && npm run build`
-3. Publish directory: `frontend/.output/public`
-4. Configurar variables de entorno
+2. Netlify detecta automáticamente `netlify.toml` (ya incluido en la raíz)
+3. Configurar variables de entorno en Netlify:
+   - `NUXT_PUBLIC_SUPABASE_URL`
+   - `NUXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy automático en cada push a `main`
 
 ## Equipo
 
