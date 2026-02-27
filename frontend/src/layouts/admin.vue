@@ -195,21 +195,6 @@ const handleLogout = () => {
         </div>
       </div>
 
-      <!-- Perfil del usuario -->
-      <div class="px-6 py-4 border-b border-gray-800 shrink-0">
-        <div class="flex items-center gap-3">
-          <div
-            class="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-sm font-bold"
-          >
-            {{ currentUser.initials }}
-          </div>
-          <div class="flex-1 min-w-0">
-            <p class="text-sm font-medium truncate">{{ currentUser.name }}</p>
-            <p class="text-xs text-gray-400 truncate">{{ currentUser.roleName }}</p>
-          </div>
-        </div>
-      </div>
-
       <!-- Navegación -->
       <nav class="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
         <template v-for="item in menuItems" :key="item.to">
