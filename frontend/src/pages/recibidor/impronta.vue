@@ -224,7 +224,7 @@ const zonaNombres: Record<string, string> = {
   techo: 'Techo',
 }
 
-// Load existing impronta for editing
+// Load existing impronta for editing, or pre-fill from query params
 onMounted(() => {
   const id = route.query.id as string
   if (id) {
@@ -253,6 +253,15 @@ onMounted(() => {
       fotosCapturadas.value = { ...imp.fotos }
       fotosAdicionales.value = [...imp.fotosAdicionales]
     }
+  } else {
+    // Pre-fill from query params (e.g. coming from "Estado Improntas" page)
+    if (route.query.vin) form.vin = String(route.query.vin)
+    if (route.query.marca) form.marca = String(route.query.marca)
+    if (route.query.modelo) form.modelo = String(route.query.modelo)
+    if (route.query.anio) form.anio = String(route.query.anio)
+    if (route.query.color) form.color = String(route.query.color)
+    if (route.query.placa) form.placa = String(route.query.placa)
+    if (route.query.cliente) form.cliente = String(route.query.cliente)
   }
 })
 
@@ -401,7 +410,15 @@ const guardarImpronta = async () => {
     }
 
     if (isEditing.value) {
-      await store.actualizar(editingId.value!, data)
+      const updated = await store.actualizar(editingId.value!, data)
+      // Si la impronta pasa a 'completada', actualizar también el estado del vehículo
+      if (updated.estado === 'completada') {
+        try {
+          await vehiculoStore.completarImpronta(form.vin.trim())
+        } catch (pipeErr) {
+          console.warn('Error al actualizar estado vehículo:', pipeErr)
+        }
+      }
       showToast('Impronta actualizada correctamente')
     } else {
       // 1️⃣ Crear la impronta
