@@ -22,6 +22,19 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  // Diagnóstico: verificar que es la service_role key (no la anon key)
+  const keyPayload = JSON.parse(atob(supabaseServiceKey.split('.')[1]))
+  const keyRole = keyPayload.role
+  console.log('[Admin Users] Key role:', keyRole, '| URL:', supabaseUrl.substring(0, 30))
+
+  if (keyRole !== 'service_role') {
+    console.error('[Admin Users] ERROR: Se está usando la key con role:', keyRole, 'en vez de service_role')
+    throw createError({
+      statusCode: 500,
+      statusMessage: `Configuración incorrecta: se está usando key con role "${keyRole}" en vez de "service_role". Revisa NUXT_SUPABASE_SERVICE_KEY en Vercel.`
+    })
+  }
+
   const $supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
@@ -97,15 +110,23 @@ export default defineEventHandler(async (event) => {
       
       console.log('[PATCH] Datos a actualizar:', updateData)
 
-      // Actualizar en tabla usuarios (sin .select() para evitar problemas con PostgREST)
-      const { error: updateError } = await $supabaseAdmin
+      // Actualizar en tabla usuarios con count para verificar filas afectadas
+      const { error: updateError, count } = await $supabaseAdmin
         .from('usuarios')
-        .update(updateData)
+        .update(updateData, { count: 'exact' })
         .eq('id', userIdNum)
+
+      console.log('[PATCH] Update result - error:', updateError, '| count:', count)
 
       if (updateError) {
         console.error('[PATCH] Error actualizando en BD:', updateError)
         throw new Error(`Error actualizando: ${updateError.message}`)
+      }
+
+      if (count === 0) {
+        console.error('[PATCH] Update afectó 0 filas! Posible problema de RLS. UserID:', userIdNum)
+        // Intentar con query directa RPC como alternativa
+        throw new Error('Update no afectó ninguna fila. Posible bloqueo por RLS. Verifica las políticas de seguridad en Supabase.')
       }
 
       // Obtener usuario actualizado
