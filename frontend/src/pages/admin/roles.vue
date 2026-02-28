@@ -119,7 +119,6 @@ const toggleAllInModule = (module: string) => {
 
 const saveRole = async () => {
   if (!roleForm.name.trim()) {
-    alert('Por favor ingresa un nombre para el rol')
     return
   }
 
@@ -129,6 +128,7 @@ const saveRole = async () => {
     if (editingRole.value) {
       // Actualizar rol existente
       const updateResult = await supabaseRoleService.updateRole(editingRole.value.id, {
+        nombre: roleForm.name,
         descripcion: roleForm.description,
       })
 
@@ -145,8 +145,6 @@ const saveRole = async () => {
       if (!permResult) {
         throw new Error('Error al guardar los permisos')
       }
-
-      alert('✅ Rol actualizado correctamente')
     } else {
       // Crear nuevo rol
       const newRole = await supabaseRoleService.createRole(
@@ -158,15 +156,12 @@ const saveRole = async () => {
       if (!newRole) {
         throw new Error('Error al crear el rol')
       }
-
-      alert('✅ Rol creado correctamente')
     }
 
     showModal.value = false
     await loadRoles()
   } catch (err: any) {
     console.error('Error guardando rol:', err)
-    alert(`❌ ${err.message || 'Error al guardar el rol'}`)
   } finally {
     saving.value = false
   }

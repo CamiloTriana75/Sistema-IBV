@@ -7,6 +7,26 @@ const useSupabaseClient = (): SupabaseClient => {
   return $supabase as SupabaseClient
 }
 
+/**
+ * Helper para obtener el ID numérico del usuario desde la tabla usuarios
+ * (no confundir con el UUID de Supabase Auth)
+ */
+async function getUserNumericId(email: string | undefined): Promise<number | null> {
+  if (!email) return null
+  
+  const client = useSupabaseClient()
+  try {
+    const { data } = await client
+      .from('usuarios')
+      .select('id')
+      .eq('correo', email)
+      .single()
+    return data?.id || null
+  } catch {
+    return null
+  }
+}
+
 export type AuditActionType = 'cambio_estado' | 'anulacion_admin' | 'desbloqueo_manual' | 'escalacion' | 'nota_agregada'
 export type LockReason = 'bloqueada_en_estado' | 'esperando_revision_manual' | 'escalacion_pendiente' | 'mantenimiento' | 'otra'
 export type ExceptionType = 'bloqueada_en_estado' | 'retrasada_mas_de_3_dias' | 'documento_faltante' | 'problema_calidad' | 'otra'
@@ -66,9 +86,12 @@ export async function logAuditEntry(options: {
   const user = authStore.user
 
   try {
+    // Obtener el ID numérico del usuario desde la tabla usuarios
+    const numericUserId = await getUserNumericId(user?.email)
+
     const { data, error } = await client.from('auditoria_vehiculos').insert({
       vehiculo_id: options.vehiculoId,
-      cambiado_por_usuario_id: user?.id,
+      cambiado_por_usuario_id: numericUserId,
       cambiado_por_rol: user?.role || 'sistema',
       tipo_accion: options.actionType,
       estado_anterior: options.oldState,
@@ -127,9 +150,11 @@ export async function lockVehicle(options: {
   const user = authStore.user
 
   try {
+    const numericUserId = await getUserNumericId(user?.email)
+
     const { data, error } = await client.from('bloqueos_vehiculos').insert({
       vehiculo_id: options.vehiculoId,
-      bloqueado_por_usuario_id: user?.id,
+      bloqueado_por_usuario_id: numericUserId,
       bloqueado_por_rol: user?.role || 'admin',
       razon: options.reason,
       descripcion: options.description,
@@ -223,6 +248,22 @@ export async function createException(options: {
 }): Promise<VehicleException | null> {
   const client = useSupabaseClient()
 
+  // Validar parámetros
+  if (typeof options.vehiculoId !== 'number' || isNaN(options.vehiculoId) || options.vehiculoId <= 0) {
+    console.error('[createException] vehiculoId inválido:', options.vehiculoId, 'tipo:', typeof options.vehiculoId)
+    throw new Error(`vehiculoId debe ser un número válido positivo, recibido: ${options.vehiculoId}`)
+  }
+
+  console.log('[createException] Creando excepción con params:', {
+    vehiculo_id: options.vehiculoId,
+    tipo_excepcion: options.exceptionType,
+    severidad: options.severity,
+    descripcion: options.description,
+    asignado_a_usuario_id: options.assignedToUserId,
+    estado: 'abierta',
+    metadata: options.metadata || {},
+  })
+
   try {
     const { data, error } = await client.from('excepciones_vehiculos').insert({
       vehiculo_id: options.vehiculoId,
@@ -235,14 +276,15 @@ export async function createException(options: {
     }).select().single()
 
     if (error) {
-      console.error('Error creating exception:', error)
-      return null
+      console.error('[createException] Error de Supabase:', error)
+      throw new Error(`${error.code}: ${error.message} ${error.details || ''}`)
     }
 
+    console.log('[createException] Excepción creada exitosamente:', data)
     return data
   } catch (err) {
-    console.error('Exception in createException:', err)
-    return null
+    console.error('[createException] Exception caught:', err)
+    throw err
   }
 }
 
@@ -260,7 +302,7 @@ export async function updateExceptionStatus(
     
     if (status === 'resuelta') {
       updateData.resuelta_en = new Date().toISOString()
-      updateData.resuelta_por_usuario_id = user?.id
+      updateData.resuelta_por_usuario_id = await getUserNumericId(user?.email)
       if (resolutionNotes) updateData.notas_resolucion = resolutionNotes
     }
 
@@ -339,22 +381,30 @@ export async function forceStatusChange(options: {
   metadata?: Record<string, any>
 }): Promise<boolean> {
   const client = useSupabaseClient()
-  const authStore = useAuthStore()
-  const user = authStore.user
 
   try {
-    // Log the change
-    const oldStateQuery = await client
+    console.log('[forceStatusChange] Iniciando con:', options)
+
+    // Log the change - obtener estado actual
+    const { data: oldStateData, error: queryError } = await client
       .from('vehiculos')
       .select('estado')
       .eq('id', options.vehiculoId)
       .single()
 
-    const oldState = { estado: oldStateQuery.data?.estado }
+    if (queryError) {
+      console.error('[forceStatusChange] Error obteniendo estado actual:', queryError)
+      throw new Error(`Error al obtener estado actual: ${queryError.message}`)
+    }
+
+    console.log('[forceStatusChange] Estado actual obtenido:', oldStateData)
+
+    const oldState = { estado: oldStateData?.estado }
     const newState = { estado: options.newStatus }
 
     // Create audit entry
-    await logAuditEntry({
+    console.log('[forceStatusChange] Creando entrada de auditoría...')
+    const auditResult = await logAuditEntry({
       vehiculoId: options.vehiculoId,
       actionType: 'anulacion_admin',
       oldState,
@@ -363,20 +413,29 @@ export async function forceStatusChange(options: {
       metadata: options.metadata || {},
     })
 
+    if (!auditResult) {
+      console.error('[forceStatusChange] Falló al crear entrada de auditoría')
+      throw new Error('No se pudo crear la entrada de auditoría')
+    }
+
+    console.log('[forceStatusChange] Auditoría creada:', auditResult)
+
     // Actually update the vehicle
+    console.log('[forceStatusChange] Actualizando vehículo...')
     const { error } = await client
       .from('vehiculos')
-      .update({ estado: options.newStatus, actualizado_en: new Date().toISOString() })
+      .update({ estado: options.newStatus, updated_at: new Date().toISOString() })
       .eq('id', options.vehiculoId)
 
     if (error) {
-      console.error('Error forcing status change:', error)
-      return false
+      console.error('[forceStatusChange] Error actualizando vehículo:', error)
+      throw new Error(`Error al actualizar vehículo: ${error.message}`)
     }
 
+    console.log('[forceStatusChange] ✅ Cambio de estado exitoso')
     return true
   } catch (err) {
-    console.error('Exception in forceStatusChange:', err)
+    console.error('[forceStatusChange] Exception:', err)
     return false
   }
 }
@@ -390,7 +449,7 @@ export async function assignException(
   try {
     const { error } = await client
       .from('excepciones_vehiculos')
-      .update({ assigned_to_user_id: assignedToUserId, status: 'in_progress' })
+      .update({ asignado_a_usuario_id: assignedToUserId, estado: 'en_progreso' })
       .eq('id', exceptionId)
 
     if (error) {

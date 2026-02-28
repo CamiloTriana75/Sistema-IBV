@@ -270,9 +270,9 @@ export const supabaseRoleService = {
   },
 
   /**
-   * Actualiza la descripción de un rol
+   * Actualiza un rol
    */
-  async updateRole(roleId: number, updates: { descripcion?: string; activo?: boolean }): Promise<SupabaseRole | null> {
+  async updateRole(roleId: number, updates: { nombre?: string; descripcion?: string; activo?: boolean }): Promise<SupabaseRole | null> {
     const $supabase = getSupabase()
 
     try {

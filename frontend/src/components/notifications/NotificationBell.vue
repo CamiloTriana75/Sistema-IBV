@@ -157,9 +157,9 @@ onBeforeUnmount(() => {
           v-for="item in notifications"
           :key="item.id"
           class="w-full text-left px-4 sm:px-5 py-3 sm:py-3.5 border-b border-gray-100 hover:bg-gray-50 transition"
-          :class="{ 'bg-primary-50/30': !item.leida_en }"
+          :class="{ 'bg-primary-50/30': !item.leida_en && item.recipient_user_id !== null }"
           type="button"
-          @click="openNotification(item)"
+          @click="markAsRead(item)"
         >
           <div class="flex items-start gap-3">
             <span
@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
               <div class="flex items-start justify-between gap-2 mb-1">
                 <p
                   class="text-sm sm:text-base font-semibold flex-1 min-w-0"
-                  :class="item.leida_en ? 'text-gray-600' : 'text-gray-900'"
+                  :class="item.leida_en && item.recipient_user_id !== null ? 'text-gray-600' : 'text-gray-900'"
                   style="word-break: break-word;"
                 >
                   {{ item.titulo }}
@@ -183,19 +183,31 @@ onBeforeUnmount(() => {
                 {{ item.mensaje }}
               </p>
               <div class="flex items-center justify-between gap-2">
-                <span class="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-medium"
-                  :class="`${moduleConfig[item.modulo]?.dot.replace('bg-', 'bg-opacity-10 bg-')} ${moduleConfig[item.modulo]?.dot.replace('bg-', 'text-')}`"
+                <div class="flex items-center gap-2">
+                  <span class="text-[10px] sm:text-[11px] px-2 py-0.5 rounded-full font-medium"
+                    :class="`${moduleConfig[item.modulo]?.dot.replace('bg-', 'bg-opacity-10 bg-')} ${moduleConfig[item.modulo]?.dot.replace('bg-', 'text-')}`"
+                  >
+                    {{ moduleConfig[item.modulo]?.label || 'General' }}
+                  </span>
+                  <!-- Indicador de tipo de notificación -->
+                  <span 
+                    v-if="item.recipient_user_id === null" 
+                    class="text-[10px] px-1.5 py-0.5 rounded bg-gray-100 text-gray-500"
+                    title="Notificación de grupo"
+                  >
+                    <svg class="w-3 h-3 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
+                  </span>
+                </div>
+                <!-- Solo mostrar estado leída para notificaciones personales -->
+                <span 
+                  v-if="item.recipient_user_id !== null"
+                  class="text-[10px] px-2 py-0.5 rounded-full font-medium"
+                  :class="item.leida_en ? 'bg-gray-100 text-gray-500' : 'bg-primary-100 text-primary-600'"
                 >
-                  {{ moduleConfig[item.modulo]?.label || 'General' }}
+                  {{ item.leida_en ? 'Leída' : 'Nueva' }}
                 </span>
-                <button
-                  v-if="!item.leida_en"
-                  class="text-[10px] sm:text-[11px] text-primary-600 hover:text-primary-700 font-medium whitespace-nowrap"
-                  type="button"
-                  @click.stop="markAsRead(item)"
-                >
-                  Marcar leída
-                </button>
               </div>
             </div>
           </div>

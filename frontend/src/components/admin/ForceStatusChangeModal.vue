@@ -116,8 +116,20 @@ const close = () => {
 
 const submit = async () => {
   if (!formData.value.newStatus || !formData.value.reason || !props.vehiculoId) {
+    console.warn('Datos incompletos:', { 
+      newStatus: formData.value.newStatus, 
+      reason: formData.value.reason, 
+      vehiculoId: props.vehiculoId 
+    })
     return
   }
+
+  console.log('Enviando cambio de estado:', {
+    vehiculoId: props.vehiculoId,
+    currentStatus: props.currentStatus,
+    newStatus: formData.value.newStatus,
+    reason: formData.value.reason
+  })
 
   isLoading.value = true
   try {
@@ -128,15 +140,16 @@ const submit = async () => {
     })
 
     if (success) {
-      console.log('Status changed successfully')
+      console.log('✅ Estado cambiado exitosamente')
       close()
       emit('success')
     } else {
-      alert('Error al cambiar el estado')
+      console.error('❌ forceStatusChange retornó false')
+      alert('Error al cambiar el estado. Revisa la consola para más detalles.')
     }
   } catch (err) {
-    console.error('Error:', err)
-    alert('Error al cambiar el estado')
+    console.error('❌ Exception en submit:', err)
+    alert('Error al cambiar el estado: ' + (err instanceof Error ? err.message : 'Error desconocido'))
   } finally {
     isLoading.value = false
   }
