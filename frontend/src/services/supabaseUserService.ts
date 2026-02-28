@@ -157,7 +157,10 @@ export const supabaseUserService = {
       return response.user as SupabaseUser
     } catch (error: any) {
       console.error('Error actualizando usuario:', error)
-      throw new Error(error.data?.message || error.message || 'Error actualizando usuario')
+      // Extraer el mensaje detallado del servidor
+      const msg = error.data?.statusMessage || error.data?.message || error.statusMessage || error.message || 'Error actualizando usuario'
+      console.error('Detalle del error:', msg)
+      throw new Error(msg)
     }
   },
 

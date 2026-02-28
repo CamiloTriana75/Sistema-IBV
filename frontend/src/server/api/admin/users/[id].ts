@@ -67,80 +67,111 @@ export default defineEventHandler(async (event) => {
     // PATCH /api/admin/users/:id
     // ============================================
     if (method === 'PATCH') {
-      const body = await readBody(event)
-      
-      console.log('[PATCH /api/admin/users/:id] Body recibido:', body)
-      console.log('[PATCH /api/admin/users/:id] Usuario ID:', userIdNum)
-
-      const { data: currentUser, error: getError } = await $supabaseAdmin
-        .from('usuarios')
-        .select('*')
-        .eq('id', userIdNum)
-        .single()
-
-      if (getError || !currentUser) {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'Usuario no encontrado'
-        })
-      }
-      
-      console.log('[PATCH] Usuario actual:', currentUser)
-
-      // Preparar datos a actualizar
-      const updateData = {
-        nombres: body.nombres ?? currentUser.nombres,
-        apellidos: body.apellidos ?? currentUser.apellidos,
-        rol: body.rol ?? currentUser.rol,
-        activo: body.activo ?? currentUser.activo,
-      }
-      
-      console.log('[PATCH] Datos a actualizar:', updateData)
-
-      // Actualizar en tabla usuarios y obtener resultado
-      const { data: updatedUser, error: updateError } = await $supabaseAdmin
-        .from('usuarios')
-        .update(updateData)
-        .eq('id', userIdNum)
-        .select('*')
-        .maybeSingle()
-
-      console.log('[PATCH] Update result - error:', updateError, '| data:', updatedUser)
-
-      if (updateError) {
-        console.error('[PATCH] Error actualizando en BD:', updateError)
-        throw createError({
-          statusCode: 500,
-          statusMessage: `Error actualizando usuario: ${updateError.message}`
-        })
+      // Paso 1: Leer body
+      let body: any
+      try {
+        body = await readBody(event)
+      } catch (e: any) {
+        throw createError({ statusCode: 400, statusMessage: `Error leyendo body: ${e.message}` })
       }
 
-      if (!updatedUser) {
-        console.error('[PATCH] Update no retornó datos. Posible RLS bloqueando. UserID:', userIdNum)
-        throw createError({
-          statusCode: 500,
-          statusMessage: 'No se pudo actualizar el usuario. Verifica permisos RLS en Supabase.'
-        })
+      // Paso 2: Obtener usuario actual
+      let currentUser: any
+      try {
+        const { data, error } = await $supabaseAdmin
+          .from('usuarios')
+          .select('*')
+          .eq('id', userIdNum)
+          .single()
+        if (error) throw error
+        if (!data) throw new Error('No data returned')
+        currentUser = data
+      } catch (e: any) {
+        throw createError({ statusCode: 404, statusMessage: `Usuario ${userIdNum} no encontrado: ${e.message}` })
       }
-      
-      console.log('[PATCH] Usuario actualizado en BD:', updatedUser)
 
-      // Actualizar en Supabase Auth
-      const { data: authUsers, error: authGetError } = await $supabaseAdmin.auth.admin.listUsers()
-      if (!authGetError) {
-        const authUser = authUsers.users.find((u) => u.email === currentUser.correo)
-        if (authUser) {
-          const nombreCompleto = `${updatedUser.nombres} ${updatedUser.apellidos}`.trim()
-          await $supabaseAdmin.auth.admin.updateUserById(authUser.id, {
-            user_metadata: {
-              nombres: updatedUser.nombres,
-              apellidos: updatedUser.apellidos,
-              full_name: nombreCompleto,
-              display_name: nombreCompleto,
-              rol: updatedUser.rol,
-            },
+      // Paso 3: Preparar datos
+      const updateData: Record<string, any> = {}
+      if (body.nombres !== undefined) updateData.nombres = body.nombres
+      if (body.apellidos !== undefined) updateData.apellidos = body.apellidos
+      if (body.rol !== undefined) updateData.rol = body.rol
+      if (body.activo !== undefined) updateData.activo = body.activo
+
+      if (Object.keys(updateData).length === 0) {
+        return { success: true, message: 'Sin cambios', user: currentUser }
+      }
+
+      // Paso 4: Ejecutar UPDATE
+      let updatedUser: any
+      try {
+        const { data, error } = await $supabaseAdmin
+          .from('usuarios')
+          .update(updateData)
+          .eq('id', userIdNum)
+          .select('*')
+          .maybeSingle()
+
+        if (error) {
+          throw createError({
+            statusCode: 500,
+            statusMessage: `Supabase update error: ${error.message} | code: ${error.code} | details: ${error.details}`
           })
         }
+
+        if (!data) {
+          // Si maybeSingle devuelve null, intentar update sin select
+          const { error: err2 } = await $supabaseAdmin
+            .from('usuarios')
+            .update(updateData)
+            .eq('id', userIdNum)
+
+          if (err2) {
+            throw createError({
+              statusCode: 500,
+              statusMessage: `Fallback update error: ${err2.message}`
+            })
+          }
+
+          // Leer el usuario para verificar
+          const { data: reread } = await $supabaseAdmin
+            .from('usuarios')
+            .select('*')
+            .eq('id', userIdNum)
+            .single()
+
+          updatedUser = reread || { ...currentUser, ...updateData }
+        } else {
+          updatedUser = data
+        }
+      } catch (e: any) {
+        if (e.statusCode) throw e
+        throw createError({
+          statusCode: 500,
+          statusMessage: `Error en paso UPDATE: ${e.message}`
+        })
+      }
+
+      // Paso 5: Actualizar Auth metadata (opcional, no debe romper el flujo)
+      try {
+        const { data: authUsers } = await $supabaseAdmin.auth.admin.listUsers()
+        if (authUsers?.users) {
+          const authUser = authUsers.users.find((u: any) => u.email === currentUser.correo)
+          if (authUser) {
+            const nombreCompleto = `${updatedUser.nombres} ${updatedUser.apellidos}`.trim()
+            await $supabaseAdmin.auth.admin.updateUserById(authUser.id, {
+              user_metadata: {
+                nombres: updatedUser.nombres,
+                apellidos: updatedUser.apellidos,
+                full_name: nombreCompleto,
+                display_name: nombreCompleto,
+                rol: updatedUser.rol,
+              },
+            })
+          }
+        }
+      } catch (_authErr) {
+        // Auth update es opcional - no romper si falla
+        console.error('[PATCH] Error actualizando Auth (no crítico):', _authErr)
       }
 
       return {
@@ -213,7 +244,7 @@ export default defineEventHandler(async (event) => {
 
     throw createError({
       statusCode: 500,
-      statusMessage: err.message || 'Error procesando solicitud',
+      statusMessage: `[Server Error] ${err.message || 'Error desconocido'} | stack: ${(err.stack || '').substring(0, 200)}`,
     })
   }
 })
