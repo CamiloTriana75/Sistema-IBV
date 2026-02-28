@@ -97,24 +97,33 @@ export default defineEventHandler(async (event) => {
       
       console.log('[PATCH] Datos a actualizar:', updateData)
 
-      // Actualizar en tabla usuarios
-      const { data: updatedUser, error: updateError } = await $supabaseAdmin
+      // Actualizar en tabla usuarios (sin .select() para evitar problemas con PostgREST)
+      const { error: updateError } = await $supabaseAdmin
         .from('usuarios')
         .update(updateData)
         .eq('id', userIdNum)
-        .select()
-        .maybeSingle()
 
       if (updateError) {
         console.error('[PATCH] Error actualizando en BD:', updateError)
         throw new Error(`Error actualizando: ${updateError.message}`)
       }
 
-      if (!updatedUser) {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'No se pudo actualizar el usuario'
-        })
+      // Obtener usuario actualizado
+      const { data: updatedUser, error: refetchError } = await $supabaseAdmin
+        .from('usuarios')
+        .select('*')
+        .eq('id', userIdNum)
+        .single()
+
+      if (refetchError || !updatedUser) {
+        console.error('[PATCH] Error obteniendo usuario actualizado:', refetchError)
+        // El update sí fue exitoso, devolver los datos que teníamos
+        const fallbackUser = { ...currentUser, ...updateData }
+        return {
+          success: true,
+          message: 'Usuario actualizado',
+          user: fallbackUser,
+        }
       }
       
       console.log('[PATCH] Usuario actualizado en BD:', updatedUser)
