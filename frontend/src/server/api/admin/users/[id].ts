@@ -39,6 +39,14 @@ export default defineEventHandler(async (event) => {
     })
   }
 
+  const userIdNum = Number(userId)
+  if (isNaN(userIdNum)) {
+    throw createError({
+      statusCode: 400,
+      statusMessage: 'ID de usuario debe ser un número'
+    })
+  }
+
   try {
     // ============================================
     // GET /api/admin/users/:id
@@ -47,7 +55,7 @@ export default defineEventHandler(async (event) => {
       const { data, error } = await $supabaseAdmin
         .from('usuarios')
         .select('*')
-        .eq('id', userId)
+        .eq('id', userIdNum)
         .single()
 
       if (error) throw error
@@ -62,12 +70,12 @@ export default defineEventHandler(async (event) => {
       const body = await readBody(event)
       
       console.log('[PATCH /api/admin/users/:id] Body recibido:', body)
-      console.log('[PATCH /api/admin/users/:id] Usuario ID:', userId)
+      console.log('[PATCH /api/admin/users/:id] Usuario ID:', userIdNum)
 
       const { data: currentUser, error: getError } = await $supabaseAdmin
         .from('usuarios')
         .select('*')
-        .eq('id', userId)
+        .eq('id', userIdNum)
         .single()
 
       if (getError || !currentUser) {
@@ -93,13 +101,20 @@ export default defineEventHandler(async (event) => {
       const { data: updatedUser, error: updateError } = await $supabaseAdmin
         .from('usuarios')
         .update(updateData)
-        .eq('id', userId)
+        .eq('id', userIdNum)
         .select()
-        .single()
+        .maybeSingle()
 
       if (updateError) {
         console.error('[PATCH] Error actualizando en BD:', updateError)
         throw new Error(`Error actualizando: ${updateError.message}`)
+      }
+
+      if (!updatedUser) {
+        throw createError({
+          statusCode: 404,
+          statusMessage: 'No se pudo actualizar el usuario'
+        })
       }
       
       console.log('[PATCH] Usuario actualizado en BD:', updatedUser)
@@ -136,7 +151,7 @@ export default defineEventHandler(async (event) => {
       const { data: usuario, error: getError } = await $supabaseAdmin
         .from('usuarios')
         .select('correo')
-        .eq('id', userId)
+        .eq('id', userIdNum)
         .single()
 
       if (getError) {
@@ -167,7 +182,7 @@ export default defineEventHandler(async (event) => {
       const { error: deleteError } = await $supabaseAdmin
         .from('usuarios')
         .delete()
-        .eq('id', userId)
+        .eq('id', userIdNum)
 
       if (deleteError) {
         throw new Error(`Error en BD: ${deleteError.message}`)
