@@ -15,7 +15,11 @@ export const useNotificationStore = defineStore('notifications', () => {
   const error = ref<string | null>(null)
   const currentUserId = ref<number | null>(null)
 
-  const unreadCount = computed(() => notifications.value.filter((n) => !n.leida_en).length)
+  const unreadCount = computed(() => 
+    // Solo contar notificaciones personales no leídas
+    // (Las notificaciones de rol/general no se pueden marcar como leídas individualmente)
+    notifications.value.filter((n) => !n.leida_en && n.recipient_user_id !== null).length
+  )
 
   const resolveUserId = async () => {
     if (currentUserId.value) return currentUserId.value

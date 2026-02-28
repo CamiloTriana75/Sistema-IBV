@@ -132,24 +132,48 @@ const closeCreateModal = () => {
 }
 
 const submitCreateException = async () => {
-  if (!formData.value.vehiculoId || !formData.value.description) {
-    alert('Por favor completa todos los campos')
+  // Validación más robusta
+  if (!formData.value.vehiculoId || formData.value.vehiculoId === '') {
+    alert('Por favor selecciona un vehículo')
     return
   }
 
+  const vehiculoIdNum = parseInt(formData.value.vehiculoId, 10)
+  
+  if (isNaN(vehiculoIdNum) || vehiculoIdNum <= 0) {
+    alert(`ID de vehículo inválido: "${formData.value.vehiculoId}"`)
+    return
+  }
+
+  if (!formData.value.description.trim()) {
+    alert('Por favor escribe una descripción')
+    return
+  }
+
+  console.log('[submitCreateException] Enviando:', {
+    vehiculoId: vehiculoIdNum,
+    exceptionType: formData.value.exceptionType,
+    severity: formData.value.severity,
+    description: formData.value.description,
+  })
+
   try {
-    await createException({
-      vehiculoId: parseInt(formData.value.vehiculoId),
+    const result = await createException({
+      vehiculoId: vehiculoIdNum,
       exceptionType: formData.value.exceptionType,
       severity: formData.value.severity,
       description: formData.value.description,
     })
 
+    if (!result) {
+      throw new Error('No se pudo crear la excepción - revisa permisos RLS')
+    }
+
     closeCreateModal()
     await loadData()
   } catch (err) {
     console.error('Error creating exception:', err)
-    alert('Error al crear la excepción')
+    alert(`Error al crear la excepción: ${err instanceof Error ? err.message : 'Error desconocido'}`)
   }
 }
 
@@ -360,8 +384,8 @@ const recargar = () => {
                 class="w-full px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
               >
                 <option value="">Selecciona un vehículo</option>
-                <option v-for="vehiculo in vehiculoStore.vehiculos" :key="vehiculo.id" :value="vehiculo.id">
-                  {{ vehiculo.id }} - {{ vehiculo.vin }} ({{ vehiculo.placa }})
+                <option v-for="vehiculo in vehiculoStore.vehiculos" :key="vehiculo.id" :value="vehiculo.id.replace('vp-', '')">
+                  {{ vehiculo.vin }} - {{ vehiculo.placa }} ({{ vehiculo.marca }} {{ vehiculo.modelo }})
                 </option>
               </select>
             </div>

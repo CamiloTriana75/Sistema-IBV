@@ -32,22 +32,21 @@ const SYSTEM_ROLES = computed(() =>
   roles.value.map((r) => ({ value: r.nombre.toLowerCase(), label: r.nombre }))
 )
 
-const moduleOptions: Array<{ value: NotificationModule; label: string }> = [
-  { value: 'general', label: 'General' },
-  { value: 'admin', label: 'Admin' },
-  { value: 'recibidor', label: 'Recibidor' },
-  { value: 'inventario', label: 'Inventario' },
-  { value: 'despachador', label: 'Despachador' },
-  { value: 'porteria', label: 'Porteria' },
+const moduleOptions: Array<{ value: NotificationModule | 'personal'; label: string; description?: string }> = [
+  { value: 'personal', label: 'Personal', description: 'Enviar a un usuario específico' },
+  { value: 'general', label: 'General', description: 'Visible para todos los usuarios' },
+  { value: 'admin', label: 'Admin', description: 'Solo usuarios con rol Admin' },
+  { value: 'recibidor', label: 'Recibidor', description: 'Solo usuarios con rol Recibidor' },
+  { value: 'inventario', label: 'Inventario', description: 'Solo usuarios con rol Inventario' },
+  { value: 'despachador', label: 'Despachador', description: 'Solo usuarios con rol Despachador' },
+  { value: 'porteria', label: 'Porteria', description: 'Solo usuarios con rol Porteria' },
 ]
 
 const form = ref({
   titulo: '',
   mensaje: '',
-  modulo: 'general' as NotificationModule,
-  targetType: 'user',
+  modulo: 'personal' as NotificationModule | 'personal',
   targetUserId: '',
-  targetRole: 'recibidor',
   actionUrl: '',
 })
 
@@ -86,10 +85,6 @@ const loadRoles = async () => {
       activo: r.activo !== false,
       created_at: r.created_at,
     }))
-    // Establecer el primer rol como default si es necesario
-    if (roles.value.length > 0 && !roles.value.find((r) => r.nombre.toLowerCase() === form.value.targetRole)) {
-      form.value.targetRole = roles.value[0].nombre.toLowerCase()
-    }
   } catch (err) {
     console.error('Error cargando roles:', err)
   }
@@ -131,10 +126,11 @@ const markAsRead = async (item: NotificationItem) => {
 }
 
 const createForUser = async (recipientUserId: number, createdByUserId: number, createdByRole: string) => {
+  // Para notificaciones personales, usar 'general' como módulo por defecto
   return supabaseNotificationService.createNotification({
     titulo: form.value.titulo.trim(),
     mensaje: form.value.mensaje.trim(),
-    modulo: form.value.modulo,
+    modulo: 'general',
     recipientUserId,
     createdByUserId,
     createdByRole,
@@ -164,28 +160,43 @@ const createNotifications = async () => {
 
   saving.value = true
   try {
-    if (form.value.targetType === 'user') {
+    if (form.value.modulo === 'personal') {
+      // Notificación para usuario específico
       const target = Number(form.value.targetUserId)
       if (!target) {
-        formError.value = 'Selecciona un usuario destino'
+        formError.value = 'Selecciona un usuario destinatario'
         return
       }
       await createForUser(target, createdByUserId, createdByRole)
     } else {
-      const role = form.value.targetRole
-      const roleUsers = users.value.filter((u) => u.rol === role && u.activo)
-      if (!roleUsers.length) {
-        formError.value = 'No hay usuarios activos con ese rol'
-        return
+      // Notificación para rol/módulo o general: una sola notificación con recipient_user_id NULL
+      const modulo = form.value.modulo as NotificationModule
+      
+      // Validar que haya usuarios del rol si no es general
+      if (modulo !== 'general') {
+        const roleUsers = users.value.filter((u) => u.rol === modulo && u.activo)
+        if (!roleUsers.length) {
+          formError.value = `No hay usuarios activos con rol ${modulo}`
+          return
+        }
       }
-      for (const user of roleUsers) {
-        await createForUser(user.id, createdByUserId, createdByRole)
-      }
+      
+      // Crear una sola notificación con recipientUserId null y modulo correspondiente
+      await supabaseNotificationService.createNotification({
+        titulo: form.value.titulo.trim(),
+        mensaje: form.value.mensaje.trim(),
+        modulo: modulo,
+        recipientUserId: null,
+        createdByUserId,
+        createdByRole,
+        actionUrl: form.value.actionUrl?.trim() || null,
+      })
     }
 
     form.value.titulo = ''
     form.value.mensaje = ''
     form.value.actionUrl = ''
+    form.value.targetUserId = ''
     await loadNotifications()
   } catch (err: any) {
     formError.value = err?.message || 'Error al crear notificaciones'
@@ -239,7 +250,7 @@ onMounted(async () => {
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div class="lg:col-span-1 bg-white rounded-xl shadow-sm border border-gray-100 p-5">
           <h2 class="text-lg font-semibold text-gray-900">Crear notificacion</h2>
-          <p class="text-xs text-gray-500 mt-1">Envio directo por usuario o rol</p>
+          <p class="text-xs text-gray-500 mt-1">Personal, por rol o general para todos</p>
 
           <div class="mt-4 space-y-3">
             <div>
@@ -260,7 +271,7 @@ onMounted(async () => {
               />
             </div>
             <div>
-              <label class="text-sm font-medium text-gray-700">Modulo</label>
+              <label class="text-sm font-medium text-gray-700">Tipo de notificación</label>
               <select
                 v-model="form.modulo"
                 class="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -269,22 +280,12 @@ onMounted(async () => {
                   {{ opt.label }}
                 </option>
               </select>
+              <p class="text-xs text-gray-500 mt-1">
+                {{ moduleOptions.find(o => o.value === form.modulo)?.description }}
+              </p>
             </div>
-            <div>
-              <label class="text-sm font-medium text-gray-700">Destino</label>
-              <div class="mt-2 flex gap-3">
-                <label class="flex items-center gap-2 text-sm text-gray-600">
-                  <input v-model="form.targetType" type="radio" value="user" />
-                  Usuario
-                </label>
-                <label class="flex items-center gap-2 text-sm text-gray-600">
-                  <input v-model="form.targetType" type="radio" value="role" />
-                  Rol
-                </label>
-              </div>
-            </div>
-            <div v-if="form.targetType === 'user'">
-              <label class="text-sm font-medium text-gray-700">Usuario</label>
+            <div v-if="form.modulo === 'personal'">
+              <label class="text-sm font-medium text-gray-700">Usuario destinatario</label>
               <select
                 v-model="form.targetUserId"
                 class="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -292,17 +293,6 @@ onMounted(async () => {
                 <option value="">Selecciona un usuario</option>
                 <option v-for="user in users" :key="user.id" :value="String(user.id)">
                   {{ user.nombres }} {{ user.apellidos }} ({{ user.correo }})
-                </option>
-              </select>
-            </div>
-            <div v-else>
-              <label class="text-sm font-medium text-gray-700">Rol</label>
-              <select
-                v-model="form.targetRole"
-                class="mt-1 w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option v-for="role in SYSTEM_ROLES" :key="role.value" :value="role.value">
-                  {{ role.label }}
                 </option>
               </select>
             </div>
@@ -425,29 +415,50 @@ onMounted(async () => {
             <div v-else class="divide-y">
               <div v-for="item in filteredNotifications" :key="item.id" class="px-4 py-3">
                 <div class="flex items-start justify-between gap-4">
-                  <div>
-                    <p class="text-sm font-semibold" :class="item.leida_en ? 'text-gray-600' : 'text-gray-900'">
-                      {{ item.titulo }}
-                    </p>
+                  <div class="flex-1">
+                    <div class="flex items-start gap-2 mb-1">
+                      <p class="text-sm font-semibold flex-1" :class="item.leida_en && item.recipient_user_id !== null ? 'text-gray-600' : 'text-gray-900'">
+                        {{ item.titulo }}
+                      </p>
+                      <!-- Indicador de tipo -->
+                      <span 
+                        v-if="item.recipient_user_id === null" 
+                        class="text-[10px] px-2 py-0.5 rounded-full bg-blue-100 text-blue-600 whitespace-nowrap"
+                        title="Notificación de grupo (rol o general)"
+                      >
+                        Grupo
+                      </span>
+                      <span 
+                        v-else
+                        class="text-[10px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-600 whitespace-nowrap"
+                        title="Notificación personal"
+                      >
+                        Personal
+                      </span>
+                    </div>
                     <p class="text-xs text-gray-500 mt-1">{{ item.mensaje }}</p>
                     <div class="flex flex-wrap items-center gap-3 text-[11px] text-gray-400 mt-2">
                       <span>Modulo: {{ item.modulo }}</span>
-                      <span>Usuario: {{ getUserLabel(item.recipient_user_id) }}</span>
+                      <span v-if="item.recipient_user_id !== null">Usuario: {{ getUserLabel(item.recipient_user_id) }}</span>
+                      <span v-else>Destinatarios: {{ item.modulo === 'general' ? 'Todos' : `Rol ${item.modulo}` }}</span>
                       <span>Rol origen: {{ item.created_by_role }}</span>
                       <span>{{ item.created_at }}</span>
                     </div>
                   </div>
                   <div class="flex items-center gap-2">
+                    <!-- Solo permitir marcar como leída notificaciones personales -->
                     <button
-                      v-if="!item.leida_en"
-                      class="text-xs text-primary-600 hover:text-primary-700"
+                      v-if="!item.leida_en && item.recipient_user_id !== null"
+                      class="text-xs text-primary-600 hover:text-primary-700 whitespace-nowrap"
                       type="button"
                       @click="markAsRead(item)"
                     >
                       Marcar leida
                     </button>
+                    <!-- Solo mostrar estado leída para notificaciones personales -->
                     <span
-                      class="text-[10px] px-2 py-1 rounded-full"
+                      v-if="item.recipient_user_id !== null"
+                      class="text-[10px] px-2 py-1 rounded-full whitespace-nowrap"
                       :class="item.leida_en ? 'bg-gray-100 text-gray-500' : 'bg-success-100 text-success-600'"
                     >
                       {{ item.leida_en ? 'Leida' : 'Nueva' }}
