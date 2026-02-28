@@ -7,47 +7,34 @@
 import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
-  const config = useRuntimeConfig()
-  const supabaseUrl = config.supabaseUrl
-  const supabaseServiceKey = config.supabaseServiceKey
-
-  if (!supabaseUrl || !supabaseServiceKey) {
-    console.error('[Admin Users ID] Configuración faltante:', {
-      hasUrl: !!supabaseUrl,
-      hasKey: !!supabaseServiceKey,
-    })
-    throw createError({
-      statusCode: 500,
-      statusMessage: 'Supabase configuration missing on server. Set NUXT_SUPABASE_URL and NUXT_SUPABASE_SERVICE_KEY in Vercel.'
-    })
-  }
-
-  const $supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-    },
-  })
-
-  const method = getMethod(event)
-  const userId = getRouterParam(event, 'id')
-
-  if (!userId) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'ID de usuario requerido'
-    })
-  }
-
-  const userIdNum = Number(userId)
-  if (isNaN(userIdNum)) {
-    throw createError({
-      statusCode: 400,
-      statusMessage: 'ID de usuario debe ser un número'
-    })
-  }
-
   try {
+    const config = useRuntimeConfig()
+    const supabaseUrl = config.supabaseUrl
+    const supabaseServiceKey = config.supabaseServiceKey
+
+    if (!supabaseUrl || !supabaseServiceKey) {
+      setResponseStatus(event, 500)
+      return {
+        success: false,
+        error: 'CONFIG_MISSING',
+        message: `Supabase config missing. URL: ${!!supabaseUrl}, Key: ${!!supabaseServiceKey}`,
+      }
+    }
+
+    const $supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+      auth: { persistSession: false, autoRefreshToken: false },
+    })
+
+    const method = getMethod(event)
+    const userId = getRouterParam(event, 'id')
+
+    if (!userId || isNaN(Number(userId))) {
+      setResponseStatus(event, 400)
+      return { success: false, error: 'INVALID_ID', message: `ID inválido: ${userId}` }
+    }
+
+    const userIdNum = Number(userId)
+
     // ============================================
     // GET /api/admin/users/:id
     // ============================================
@@ -58,7 +45,10 @@ export default defineEventHandler(async (event) => {
         .eq('id', userIdNum)
         .single()
 
-      if (error) throw error
+      if (error) {
+        setResponseStatus(event, 404)
+        return { success: false, error: 'GET_ERROR', message: error.message }
+      }
 
       return { success: true, data }
     }
@@ -68,26 +58,26 @@ export default defineEventHandler(async (event) => {
     // ============================================
     if (method === 'PATCH') {
       // Paso 1: Leer body
-      let body: any
-      try {
-        body = await readBody(event)
-      } catch (e: any) {
-        throw createError({ statusCode: 400, statusMessage: `Error leyendo body: ${e.message}` })
+      const body = await readBody(event).catch((e: any) => null)
+      if (!body) {
+        setResponseStatus(event, 400)
+        return { success: false, error: 'NO_BODY', message: 'No se pudo leer el body de la petición' }
       }
 
       // Paso 2: Obtener usuario actual
-      let currentUser: any
-      try {
-        const { data, error } = await $supabaseAdmin
-          .from('usuarios')
-          .select('*')
-          .eq('id', userIdNum)
-          .single()
-        if (error) throw error
-        if (!data) throw new Error('No data returned')
-        currentUser = data
-      } catch (e: any) {
-        throw createError({ statusCode: 404, statusMessage: `Usuario ${userIdNum} no encontrado: ${e.message}` })
+      const { data: currentUser, error: getError } = await $supabaseAdmin
+        .from('usuarios')
+        .select('*')
+        .eq('id', userIdNum)
+        .single()
+
+      if (getError || !currentUser) {
+        setResponseStatus(event, 404)
+        return {
+          success: false,
+          error: 'USER_NOT_FOUND',
+          message: `Usuario ${userIdNum} no encontrado: ${getError?.message || 'sin datos'}`,
+        }
       }
 
       // Paso 3: Preparar datos
@@ -101,84 +91,77 @@ export default defineEventHandler(async (event) => {
         return { success: true, message: 'Sin cambios', user: currentUser }
       }
 
-      // Paso 4: Ejecutar UPDATE
-      let updatedUser: any
-      try {
-        const { data, error } = await $supabaseAdmin
+      // Paso 4: UPDATE con select
+      const { data: updatedData, error: updateError } = await $supabaseAdmin
+        .from('usuarios')
+        .update(updateData)
+        .eq('id', userIdNum)
+        .select('*')
+        .maybeSingle()
+
+      if (updateError) {
+        setResponseStatus(event, 500)
+        return {
+          success: false,
+          error: 'UPDATE_ERROR',
+          message: updateError.message,
+          code: updateError.code,
+          details: updateError.details,
+          hint: updateError.hint,
+        }
+      }
+
+      // Si maybeSingle devolvió null, intentar sin select
+      let finalUser = updatedData
+      if (!finalUser) {
+        const { error: err2 } = await $supabaseAdmin
           .from('usuarios')
           .update(updateData)
           .eq('id', userIdNum)
-          .select('*')
-          .maybeSingle()
 
-        if (error) {
-          throw createError({
-            statusCode: 500,
-            statusMessage: `Supabase update error: ${error.message} | code: ${error.code} | details: ${error.details}`
-          })
-        }
-
-        if (!data) {
-          // Si maybeSingle devuelve null, intentar update sin select
-          const { error: err2 } = await $supabaseAdmin
-            .from('usuarios')
-            .update(updateData)
-            .eq('id', userIdNum)
-
-          if (err2) {
-            throw createError({
-              statusCode: 500,
-              statusMessage: `Fallback update error: ${err2.message}`
-            })
+        if (err2) {
+          setResponseStatus(event, 500)
+          return {
+            success: false,
+            error: 'FALLBACK_UPDATE_ERROR',
+            message: err2.message,
+            code: err2.code,
           }
-
-          // Leer el usuario para verificar
-          const { data: reread } = await $supabaseAdmin
-            .from('usuarios')
-            .select('*')
-            .eq('id', userIdNum)
-            .single()
-
-          updatedUser = reread || { ...currentUser, ...updateData }
-        } else {
-          updatedUser = data
         }
-      } catch (e: any) {
-        if (e.statusCode) throw e
-        throw createError({
-          statusCode: 500,
-          statusMessage: `Error en paso UPDATE: ${e.message}`
-        })
+
+        // Releer para confirmar
+        const { data: reread } = await $supabaseAdmin
+          .from('usuarios')
+          .select('*')
+          .eq('id', userIdNum)
+          .single()
+
+        finalUser = reread || { ...currentUser, ...updateData }
       }
 
-      // Paso 5: Actualizar Auth metadata (opcional, no debe romper el flujo)
+      // Paso 5: Actualizar Auth metadata (no crítico)
       try {
         const { data: authUsers } = await $supabaseAdmin.auth.admin.listUsers()
         if (authUsers?.users) {
           const authUser = authUsers.users.find((u: any) => u.email === currentUser.correo)
           if (authUser) {
-            const nombreCompleto = `${updatedUser.nombres} ${updatedUser.apellidos}`.trim()
+            const nombreCompleto = `${finalUser.nombres} ${finalUser.apellidos}`.trim()
             await $supabaseAdmin.auth.admin.updateUserById(authUser.id, {
               user_metadata: {
-                nombres: updatedUser.nombres,
-                apellidos: updatedUser.apellidos,
+                nombres: finalUser.nombres,
+                apellidos: finalUser.apellidos,
                 full_name: nombreCompleto,
                 display_name: nombreCompleto,
-                rol: updatedUser.rol,
+                rol: finalUser.rol,
               },
             })
           }
         }
       } catch (_authErr) {
-        // Auth update es opcional - no romper si falla
-        console.error('[PATCH] Error actualizando Auth (no crítico):', _authErr)
+        console.error('[PATCH] Auth update failed (non-critical):', _authErr)
       }
 
-      return {
-        success: true,
-        message: 'Usuario actualizado',
-        user: updatedUser,
-      }
+      return { success: true, message: 'Usuario actualizado', user: finalUser }
     }
 
     // ============================================
@@ -191,27 +174,21 @@ export default defineEventHandler(async (event) => {
         .eq('id', userIdNum)
         .single()
 
-      if (getError) {
-        throw createError({
-          statusCode: 404,
-          statusMessage: 'Usuario no encontrado'
-        })
+      if (getError || !usuario) {
+        setResponseStatus(event, 404)
+        return { success: false, error: 'USER_NOT_FOUND', message: 'Usuario no encontrado' }
       }
-
-      // Obtener auth users
-      const { data: authUsers, error: authGetError } = await $supabaseAdmin.auth.admin.listUsers()
-
-      if (authGetError) {
-        throw new Error('Error consultando Auth')
-      }
-
-      const authUser = authUsers.users.find((u) => u.email === usuario.correo)
 
       // Eliminar de Auth
-      if (authUser) {
-        const { error: authDeleteError } = await $supabaseAdmin.auth.admin.deleteUser(authUser.id)
-        if (authDeleteError) {
-          throw new Error(`Error en Auth: ${authDeleteError.message}`)
+      const { data: authUsers } = await $supabaseAdmin.auth.admin.listUsers()
+      if (authUsers?.users) {
+        const authUser = authUsers.users.find((u: any) => u.email === usuario.correo)
+        if (authUser) {
+          const { error: authDeleteError } = await $supabaseAdmin.auth.admin.deleteUser(authUser.id)
+          if (authDeleteError) {
+            setResponseStatus(event, 500)
+            return { success: false, error: 'AUTH_DELETE_ERROR', message: authDeleteError.message }
+          }
         }
       }
 
@@ -222,29 +199,24 @@ export default defineEventHandler(async (event) => {
         .eq('id', userIdNum)
 
       if (deleteError) {
-        throw new Error(`Error en BD: ${deleteError.message}`)
+        setResponseStatus(event, 500)
+        return { success: false, error: 'DB_DELETE_ERROR', message: deleteError.message }
       }
 
-      return {
-        success: true,
-        message: 'Usuario eliminado',
-      }
+      return { success: true, message: 'Usuario eliminado' }
     }
 
-    throw createError({
-      statusCode: 405,
-      statusMessage: 'Método no permitido',
-    })
+    setResponseStatus(event, 405)
+    return { success: false, error: 'METHOD_NOT_ALLOWED', message: `Método ${method} no permitido` }
+
   } catch (err: any) {
-    console.error('[Admin Users Dynamic]', err)
-
-    if (err.statusCode) {
-      throw err
+    console.error('[Admin Users Dynamic] Unhandled error:', err)
+    setResponseStatus(event, 500)
+    return {
+      success: false,
+      error: 'UNHANDLED_ERROR',
+      message: err.message || 'Error desconocido',
+      stack: (err.stack || '').substring(0, 300),
     }
-
-    throw createError({
-      statusCode: 500,
-      statusMessage: `[Server Error] ${err.message || 'Error desconocido'} | stack: ${(err.stack || '').substring(0, 200)}`,
-    })
   }
 })
