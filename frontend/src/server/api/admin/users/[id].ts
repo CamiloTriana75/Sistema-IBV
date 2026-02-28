@@ -9,9 +9,10 @@ import { createClient } from '@supabase/supabase-js'
 export default defineEventHandler(async (event) => {
   try {
     const config = useRuntimeConfig()
-    // Limpiar URL y Key de espacios/saltos de línea invisibles
-    const supabaseUrl = (config.supabaseUrl || '').toString().trim()
-    const supabaseServiceKey = (config.supabaseServiceKey || '').toString().trim()
+    // Limpiar URL y Key de espacios, saltos de línea y caracteres unicode invisibles
+    const stripInvisible = (s: string) => s.replace(/[\u200B-\u200F\u200C\u200D\uFEFF\u00A0\u2060]/g, '').trim()
+    const supabaseUrl = stripInvisible((config.supabaseUrl || '').toString())
+    const supabaseServiceKey = stripInvisible((config.supabaseServiceKey || '').toString())
 
     if (!supabaseUrl || !supabaseServiceKey) {
       setResponseStatus(event, 500)
