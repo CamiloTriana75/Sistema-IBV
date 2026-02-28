@@ -7,8 +7,8 @@ import { createClient } from '@supabase/supabase-js'
 
 export default defineEventHandler(async (event) => {
   const config = useRuntimeConfig()
-  const supabaseUrl = config.supabaseUrl
-  const supabaseServiceKey = config.supabaseServiceKey
+  const supabaseUrl = (config.supabaseUrl || '').toString().trim()
+  const supabaseServiceKey = (config.supabaseServiceKey || '').toString().trim()
 
   if (!supabaseUrl || !supabaseServiceKey) {
     console.error('[Admin Users Index] Configuración faltante:', {
@@ -17,11 +17,16 @@ export default defineEventHandler(async (event) => {
     })
     throw createError({
       statusCode: 500,
-      statusMessage: 'Supabase configuration missing on server. Set NUXT_SUPABASE_URL and NUXT_SUPABASE_SERVICE_KEY in Vercel.'
+      statusMessage: 'Supabase configuration missing on server.'
     })
   }
 
-  const $supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+  // Limpiar URL
+  let cleanUrl = supabaseUrl
+  if (!cleanUrl.startsWith('http')) cleanUrl = `https://${cleanUrl}`
+  cleanUrl = cleanUrl.replace(/\/+$/, '')
+
+  const $supabaseAdmin = createClient(cleanUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,

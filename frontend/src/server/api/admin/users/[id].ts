@@ -9,19 +9,43 @@ import { createClient } from '@supabase/supabase-js'
 export default defineEventHandler(async (event) => {
   try {
     const config = useRuntimeConfig()
-    const supabaseUrl = config.supabaseUrl
-    const supabaseServiceKey = config.supabaseServiceKey
+    // Limpiar URL y Key de espacios/saltos de línea invisibles
+    const supabaseUrl = (config.supabaseUrl || '').toString().trim()
+    const supabaseServiceKey = (config.supabaseServiceKey || '').toString().trim()
 
     if (!supabaseUrl || !supabaseServiceKey) {
       setResponseStatus(event, 500)
       return {
         success: false,
         error: 'CONFIG_MISSING',
-        message: `Supabase config missing. URL: ${!!supabaseUrl}, Key: ${!!supabaseServiceKey}`,
+        message: `Supabase config missing. URL: ${!!supabaseUrl} (len:${supabaseUrl.length}), Key: ${!!supabaseServiceKey} (len:${supabaseServiceKey.length})`,
       }
     }
 
-    const $supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    // Validar que la URL es válida
+    let cleanUrl = supabaseUrl
+    try {
+      new URL(cleanUrl)
+    } catch {
+      // Intentar forzar https si falta
+      if (!cleanUrl.startsWith('http')) {
+        cleanUrl = `https://${cleanUrl}`
+      }
+      // Quitar trailing slash
+      cleanUrl = cleanUrl.replace(/\/+$/, '')
+      try {
+        new URL(cleanUrl)
+      } catch {
+        setResponseStatus(event, 500)
+        return {
+          success: false,
+          error: 'INVALID_URL',
+          message: `URL inválida: "${supabaseUrl}" (limpia: "${cleanUrl}")`,
+        }
+      }
+    }
+
+    const $supabaseAdmin = createClient(cleanUrl, supabaseServiceKey, {
       auth: { persistSession: false, autoRefreshToken: false },
     })
 
