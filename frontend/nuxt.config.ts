@@ -34,6 +34,10 @@ export default defineNuxtConfig({
     strict: true,
   },
 
+  nitro: {
+    preset: 'vercel',
+  },
+
   postcss: {
     plugins: {
       tailwindcss: {},

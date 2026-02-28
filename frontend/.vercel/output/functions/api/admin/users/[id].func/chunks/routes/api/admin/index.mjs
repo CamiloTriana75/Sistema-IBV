@@ -1,0 +1,100 @@
+import { d as defineEventHandler, c as createError, a as getMethod, r as readBody, e as useRuntimeConfig } from '../../../_/nitro.mjs';
+import { createClient } from '@supabase/supabase-js';
+import 'node:http';
+import 'node:https';
+import 'node:events';
+import 'node:buffer';
+import 'node:fs';
+import 'node:path';
+import 'node:crypto';
+
+const index = defineEventHandler(async (event) => {
+  var _a;
+  const config = useRuntimeConfig();
+  const supabaseUrl = config.supabaseUrl;
+  const supabaseServiceKey = config.supabaseServiceKey;
+  if (!supabaseUrl || !supabaseServiceKey) {
+    console.error("[Admin Users Index] Configuraci\xF3n faltante:", {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseServiceKey
+    });
+    throw createError({
+      statusCode: 500,
+      statusMessage: "Supabase configuration missing on server. Set NUXT_SUPABASE_URL and NUXT_SUPABASE_SERVICE_KEY in Vercel."
+    });
+  }
+  const $supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false
+    }
+  });
+  const method = getMethod(event);
+  try {
+    if (method === "GET") {
+      const { data, error } = await $supabaseAdmin.from("usuarios").select("*").order("fecha_registro", { ascending: false });
+      if (error) throw error;
+      return { success: true, data };
+    }
+    if (method === "POST") {
+      const body = await readBody(event);
+      if (!body.correo || !body.nombres || !body.password) {
+        throw createError({
+          statusCode: 400,
+          statusMessage: "Email, nombres y password son requeridos"
+        });
+      }
+      const nombreCompleto = `${body.nombres} ${body.apellidos || ""}`.trim();
+      const { data: authUser, error: authError } = await $supabaseAdmin.auth.admin.createUser({
+        email: body.correo,
+        password: body.password,
+        email_confirm: true,
+        user_metadata: {
+          nombres: body.nombres,
+          apellidos: body.apellidos || "",
+          full_name: nombreCompleto,
+          display_name: nombreCompleto,
+          rol: body.rol || "cliente"
+        }
+      });
+      if (authError) {
+        throw new Error(`Error en Auth: ${authError.message}`);
+      }
+      const { data: user, error: userError } = await $supabaseAdmin.from("usuarios").insert({
+        correo: body.correo,
+        nombres: body.nombres,
+        apellidos: body.apellidos || "",
+        rol: body.rol || "cliente",
+        activo: (_a = body.activo) != null ? _a : true,
+        es_superusuario: body.rol === "admin",
+        es_personal: true,
+        fecha_registro: (/* @__PURE__ */ new Date()).toISOString()
+      }).select().single();
+      if (userError) {
+        await $supabaseAdmin.auth.admin.deleteUser(authUser.user.id);
+        throw new Error(`Error en BD: ${userError.message}`);
+      }
+      return {
+        success: true,
+        message: "Usuario creado exitosamente",
+        user
+      };
+    }
+    throw createError({
+      statusCode: 405,
+      statusMessage: "M\xE9todo no permitido"
+    });
+  } catch (err) {
+    console.error("[Admin Users GET/POST]", err);
+    if (err.statusCode) {
+      throw err;
+    }
+    throw createError({
+      statusCode: 500,
+      statusMessage: err.message || "Error procesando solicitud"
+    });
+  }
+});
+
+export { index as default };
+//# sourceMappingURL=index.mjs.map

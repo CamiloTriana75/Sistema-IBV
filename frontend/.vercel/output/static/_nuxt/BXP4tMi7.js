@@ -1,0 +1,1 @@
+import{R as a,S as o,U as s}from"./DapfKbp4.js";import{u as i}from"./ppEALLqT.js";import"./BFyDKY58.js";const m=a(async()=>{let e,r;const t=i();if(!t.isAuthenticated&&!([e,r]=o(()=>t.restoreSession()),e=await e,r(),e))return s("/login");if(t.user||([e,r]=o(()=>t.loadUser()),await e,r()),t.user?.role!=="admin")return s("/")});export{m as default};
