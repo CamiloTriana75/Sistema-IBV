@@ -1,6 +1,11 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { supabase } from '~/plugins/supabase'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+const getSupabase = (): SupabaseClient => {
+  const { $supabase } = useNuxtApp()
+  return $supabase as SupabaseClient
+}
 
 /**
  * DESPACHADOR STORE
@@ -63,7 +68,7 @@ export const useDespachadorStore = defineStore('despachador', () => {
     loading.value = true
     error.value = null
     try {
-      const { data, error: err } = await supabase
+      const { data, error: err } = await getSupabase()
         .from('vehiculos')
         .select(
           `
@@ -139,7 +144,7 @@ export const useDespachadorStore = defineStore('despachador', () => {
       }
 
       // Actualizar estado del vehículo a 'despachado'
-      const { error: err } = await (supabase as any)
+      const { error: err } = await (getSupabase() as any)
         .from('vehiculos')
         .update({ estado: 'despachado' })
         .eq('id', vehiculoId)

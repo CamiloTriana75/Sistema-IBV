@@ -9,8 +9,9 @@ export default defineNuxtPlugin(() => {
   const supabaseAnonKey = config.public.supabaseAnonKey
 
   if (!supabaseUrl || !supabaseAnonKey) {
-    console.error('Supabase URL o ANON_KEY no están configurados')
-    throw new Error('Configuración de Supabase incompleta')
+    console.warn('[Supabase Plugin] URL o ANON_KEY no configurados. supabaseUrl:', !!supabaseUrl, 'anonKey:', !!supabaseAnonKey)
+    // No lanzar error para no romper SSR — el cliente se inicializará después
+    return
   }
 
   supabase = createClient(supabaseUrl, supabaseAnonKey, {
