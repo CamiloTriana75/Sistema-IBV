@@ -156,7 +156,7 @@ const createNotifications = async () => {
     return
   }
 
-  const createdByRole = authStore.user?.role || 'admin'
+  const createdByRole = 'admin'
 
   saving.value = true
   try {
