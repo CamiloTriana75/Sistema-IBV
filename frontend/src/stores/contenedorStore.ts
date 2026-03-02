@@ -2,29 +2,39 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 
 export interface VehiculoContenedor {
-  vin: string
-  marca: string
+  cliente: string
   modelo: string
-  anio: string
-  color: string
-  codigoImpronta: string // Código QR que trae cada vehículo
+  bl: string
+  origen: string
+  vin: string
+  destino: string
+  agAduanas: string
+  peso: string
+  volumen: string
   escaneado: boolean
-  improntaId?: string // Referencia a la impronta creada
+  improntaId?: string
+  codigoImpronta?: string
 }
 
 export interface Contenedor {
   id: string
-  codigo: string // Código QR del contenedor
-  origen: string
-  transportista: string
-  placaCamion: string
+  codigo: string
   fechaLlegada: string
-  horaLlegada: string
+  agenteNaviero: string
+  motonave: string
+  viaje: string
+  operadorPortuario: string
+  tipoOperacion: 'TRANSITO' | 'REESTIBA'
   vehiculosEsperados: number
   vehiculos: VehiculoContenedor[]
   estado: 'pendiente' | 'en_recepcion' | 'completado'
   recibidoPor: string
   observaciones: string
+  // Campos opcionales para compatibilidad
+  origen?: string
+  transportista?: string
+  placaCamion?: string
+  horaLlegada?: string
 }
 
 const STORAGE_KEY = 'ibv_contenedores'
@@ -33,38 +43,48 @@ const INITIAL_CONTENEDORES: Contenedor[] = [
   {
     id: '1',
     codigo: 'CONT-2026-0001',
-    origen: 'Planta Toyota - La Victoria',
-    transportista: 'Transportes Zulia C.A.',
-    placaCamion: 'A12BC3D',
     fechaLlegada: '2026-02-23',
-    horaLlegada: '08:30',
+    agenteNaviero: 'MSC Mediterranean Shipping Company',
+    motonave: 'MSC REEF',
+    viaje: 'EP426A',
+    operadorPortuario: 'Sociedad Portuaria Buenaventura',
+    tipoOperacion: 'TRANSITO',
     vehiculosEsperados: 3,
     vehiculos: [
       {
+        cliente: 'TOYOTA',
+        modelo: 'COROLLA',
+        bl: 'MEDUBB123456',
+        origen: 'JAPON',
         vin: '1HGBH41JXMN109186',
-        marca: 'Toyota',
-        modelo: 'Corolla',
-        anio: '2024',
-        color: 'Blanco Perla',
-        codigoImpronta: 'IMP-VH-001',
+        destino: 'VENEZUELA',
+        agAduanas: 'AGENCIA MARITIMA VENEZOLANA',
+        peso: '1200',
+        volumen: '15',
         escaneado: false,
       },
       {
+        cliente: 'TOYOTA',
+        modelo: 'HILUX',
+        bl: 'MEDUBB123457',
+        origen: 'JAPON',
         vin: '3VWDX7AJ5BM123456',
-        marca: 'Toyota',
-        modelo: 'Hilux',
-        anio: '2024',
-        color: 'Gris Oscuro',
-        codigoImpronta: 'IMP-VH-002',
+        destino: 'VENEZUELA',
+        agAduanas: 'AGENCIA MARITIMA VENEZOLANA',
+        peso: '1800',
+        volumen: '20',
         escaneado: false,
       },
       {
+        cliente: 'TOYOTA',
+        modelo: 'YARIS',
+        bl: 'MEDUBB123458',
+        origen: 'JAPON',
         vin: 'JTDKN3DU5A0123789',
-        marca: 'Toyota',
-        modelo: 'Yaris',
-        anio: '2025',
-        color: 'Rojo',
-        codigoImpronta: 'IMP-VH-003',
+        destino: 'VENEZUELA',
+        agAduanas: 'AGENCIA MARITIMA VENEZOLANA',
+        peso: '1000',
+        volumen: '12',
         escaneado: false,
       },
     ],
@@ -75,29 +95,36 @@ const INITIAL_CONTENEDORES: Contenedor[] = [
   {
     id: '2',
     codigo: 'CONT-2026-0002',
-    origen: 'Puerto La Guaira - Importados',
-    transportista: 'Logística Nacional S.A.',
-    placaCamion: 'B45DE6F',
     fechaLlegada: '2026-02-23',
-    horaLlegada: '10:15',
+    agenteNaviero: 'HAPAG-LLOYD',
+    motonave: 'TOKYO EXPRESS',
+    viaje: 'TE202W',
+    operadorPortuario: 'Sociedad Portuaria Buenaventura',
+    tipoOperacion: 'REESTIBA',
     vehiculosEsperados: 2,
     vehiculos: [
       {
+        cliente: 'CHEVROLET',
+        modelo: 'SPARK',
+        bl: 'HLCUBB987654',
+        origen: 'COREA',
         vin: 'WBA3A5G59DNP12345',
-        marca: 'Chevrolet',
-        modelo: 'Spark',
-        anio: '2023',
-        color: 'Azul Eléctrico',
-        codigoImpronta: 'IMP-VH-004',
+        destino: 'VENEZUELA',
+        agAduanas: 'SERVIPORT',
+        peso: '950',
+        volumen: '10',
         escaneado: false,
       },
       {
+        cliente: 'CHEVROLET',
+        modelo: 'AVEO',
+        bl: 'HLCUBB987655',
+        origen: 'COREA',
         vin: '5YJSA1DNXDFP67890',
-        marca: 'Chevrolet',
-        modelo: 'Aveo',
-        anio: '2024',
-        color: 'Negro',
-        codigoImpronta: 'IMP-VH-005',
+        destino: 'VENEZUELA',
+        agAduanas: 'SERVIPORT',
+        peso: '1050',
+        volumen: '11',
         escaneado: false,
       },
     ],
@@ -108,32 +135,41 @@ const INITIAL_CONTENEDORES: Contenedor[] = [
   {
     id: '3',
     codigo: 'CONT-2026-0003',
-    origen: 'Planta Ford - Valencia',
-    transportista: 'Transportes Rápido C.A.',
-    placaCamion: 'C78GH9J',
     fechaLlegada: '2026-02-22',
-    horaLlegada: '14:00',
+    agenteNaviero: 'MAERSK LINE',
+    motonave: 'MAERSK ATLANTA',
+    viaje: 'MA305E',
+    operadorPortuario: 'Sociedad Portuaria Buenaventura',
+    tipoOperacion: 'TRANSITO',
     vehiculosEsperados: 2,
     vehiculos: [
       {
+        cliente: 'FORD',
+        modelo: 'EXPLORER',
+        bl: 'MAEUBB456789',
+        origen: 'USA',
         vin: '1FADP3F29JL234567',
-        marca: 'Ford',
-        modelo: 'Explorer',
-        anio: '2025',
-        color: 'Blanco Oxford',
-        codigoImpronta: 'IMP-VH-006',
+        destino: 'VENEZUELA',
+        agAduanas: 'AGENCIA MARITIMA DEL CARIBE',
+        peso: '2200',
+        volumen: '25',
         escaneado: true,
         improntaId: '1',
+        codigoImpronta: 'IMP-VH-006',
       },
       {
+        cliente: 'FORD',
+        modelo: 'ESCAPE',
+        bl: 'MAEUBB456790',
+        origen: 'USA',
         vin: '3FA6P0HD7LR890123',
-        marca: 'Ford',
-        modelo: 'Escape',
-        anio: '2024',
-        color: 'Plata Estelar',
-        codigoImpronta: 'IMP-VH-007',
+        destino: 'VENEZUELA',
+        agAduanas: 'AGENCIA MARITIMA DEL CARIBE',
+        peso: '1700',
+        volumen: '18',
         escaneado: true,
         improntaId: '2',
+        codigoImpronta: 'IMP-VH-007',
       },
     ],
     estado: 'completado',
@@ -199,7 +235,7 @@ export const useContenedorStore = defineStore('contenedor', () => {
   ): { contenedor: Contenedor; vehiculo: VehiculoContenedor } | undefined => {
     for (const cont of contenedores.value) {
       const veh = cont.vehiculos.find(
-        (v) => v.codigoImpronta.toLowerCase() === codigoImpronta.toLowerCase()
+        (v) => v.codigoImpronta && v.codigoImpronta.toLowerCase() === codigoImpronta.toLowerCase()
       )
       if (veh) return { contenedor: cont, vehiculo: veh }
     }
@@ -233,7 +269,7 @@ export const useContenedorStore = defineStore('contenedor', () => {
     const cont = contenedores.value.find((c) => c.id === contenedorId)
     if (cont) {
       const veh = cont.vehiculos.find(
-        (v) => v.codigoImpronta.toLowerCase() === codigoImpronta.toLowerCase()
+        (v) => v.codigoImpronta && v.codigoImpronta.toLowerCase() === codigoImpronta.toLowerCase()
       )
       if (veh) {
         veh.escaneado = true
@@ -256,6 +292,19 @@ export const useContenedorStore = defineStore('contenedor', () => {
     }
   }
 
+  const updateContenedor = (contenedor: Contenedor) => {
+    const idx = contenedores.value.findIndex((c) => c.id === contenedor.id)
+    if (idx !== -1) {
+      contenedores.value[idx] = contenedor
+      persist()
+    }
+  }
+
+  const agregarContenedor = (contenedor: Contenedor) => {
+    contenedores.value.push(contenedor)
+    persist()
+  }
+
   // Init on creation
   init()
 
@@ -274,6 +323,9 @@ export const useContenedorStore = defineStore('contenedor', () => {
     iniciarRecepcion,
     marcarVehiculoEscaneado,
     completarRecepcion,
+    updateContenedor,
+    agregarContenedor,
+    init,
     persist,
   }
 })
