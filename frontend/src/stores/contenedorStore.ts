@@ -38,11 +38,16 @@ export interface Contenedor {
 interface ContenedorRow {
   id: string
   codigo: string
-  origen: string
-  transportista: string
-  placa_camion: string
+  origen: string | null
+  transportista: string | null
+  placa_camion: string | null
   fecha_llegada: string
   hora_llegada: string | null
+  agente_naviero: string | null
+  motonave: string | null
+  viaje: string | null
+  operador_portuario: string | null
+  tipo_operacion: string | null
   vehiculos_esperados: number
   estado: 'pendiente' | 'en_recepcion' | 'completado'
   recibido_por: string | null
@@ -70,11 +75,16 @@ function mapRowToContenedor(
   return {
     id: row.id,
     codigo: row.codigo,
-    origen: row.origen,
-    transportista: row.transportista,
-    placaCamion: row.placa_camion,
+    origen: row.origen || '',
+    transportista: row.transportista || '',
+    placaCamion: row.placa_camion || '',
     fechaLlegada: row.fecha_llegada,
     horaLlegada: row.hora_llegada?.substring(0, 5) || '',
+    agenteNaviero: row.agente_naviero || '',
+    motonave: row.motonave || '',
+    viaje: row.viaje || '',
+    operadorPortuario: row.operador_portuario || '',
+    tipoOperacion: (row.tipo_operacion as 'TRANSITO' | 'REESTIBA') || 'TRANSITO',
     vehiculosEsperados: row.vehiculos_esperados,
     vehiculos: vehiculosRows.map(mapRowToVehiculo),
     estado: row.estado,
@@ -146,8 +156,16 @@ export const useContenedorStore = defineStore('contenedor', () => {
           .in('contenedor_id', ids)
           .order('created_at', { ascending: true })
 
-        if (vehErr) throw vehErr
-        vehRows = data || []
+        // Si la tabla no existe (PGRST205), simplemente no cargar vehículos
+        if (vehErr) {
+          if (vehErr.code === 'PGRST205') {
+            console.warn('[contenedorStore] Tabla contenedor_vehiculos no existe, cargando contenedores sin vehículos')
+          } else {
+            throw vehErr
+          }
+        } else {
+          vehRows = data || []
+        }
       }
 
       const vehMap: Record<string, VehiculoContenedorRow[]> = {}
@@ -237,8 +255,11 @@ export const useContenedorStore = defineStore('contenedor', () => {
       .eq('id', veh.id)
 
     if (err) {
-      console.error('Error marcarVehiculoEscaneado:', err)
-      return
+      // Si la tabla no existe, solo actualizar en memoria
+      if (err.code !== 'PGRST205') {
+        console.error('Error marcarVehiculoEscaneado:', err)
+        return
+      }
     }
 
     veh.escaneado = true
@@ -332,6 +353,28 @@ export const useContenedorStore = defineStore('contenedor', () => {
       .single()
 
     if (err) {
+      // Si la tabla no existe, crear vehículo solo en memoria
+      if (err.code === 'PGRST205') {
+        const nuevoVeh: VehiculoContenedor = {
+          id: crypto.randomUUID(),
+          contenedor_id: contenedorId,
+          vin: data.vin,
+          marca: data.marca,
+          modelo: data.modelo,
+          anio: data.anio,
+          color: data.color,
+          codigoImpronta: data.codigoImpronta,
+          escaneado: true,
+        }
+        const cont = contenedores.value.find((c) => c.id === contenedorId)
+        if (cont) {
+          cont.vehiculos.push(nuevoVeh)
+          if (cont.vehiculos.length > cont.vehiculosEsperados) {
+            cont.vehiculosEsperados = cont.vehiculos.length
+          }
+        }
+        return nuevoVeh
+      }
       console.error('Error agregarVehiculoEscaneado:', err)
       return null
     }
