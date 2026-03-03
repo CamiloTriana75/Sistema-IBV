@@ -22,12 +22,17 @@ export interface Contenedor {
   transportista: string
   placaCamion: string
   fechaLlegada: string
-  horaLlegada: string
+  agenteNaviero: string
+  motonave: string
+  viaje: string
+  operadorPortuario: string
+  tipoOperacion: 'TRANSITO' | 'REESTIBA'
   vehiculosEsperados: number
   vehiculos: VehiculoContenedor[]
   estado: 'pendiente' | 'en_recepcion' | 'completado'
   recibidoPor: string
   observaciones: string
+  horaLlegada?: string
 }
 
 interface ContenedorRow {
@@ -174,7 +179,7 @@ export const useContenedorStore = defineStore('contenedor', () => {
   ): { contenedor: Contenedor; vehiculo: VehiculoContenedor } | undefined => {
     for (const cont of contenedores.value) {
       const veh = cont.vehiculos.find(
-        (v) => v.codigoImpronta.toLowerCase() === codigoImpronta.toLowerCase()
+        (v) => v.codigoImpronta && v.codigoImpronta.toLowerCase() === codigoImpronta.toLowerCase()
       )
       if (veh) return { contenedor: cont, vehiculo: veh }
     }

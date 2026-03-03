@@ -1,3 +1,74 @@
+<script setup lang="ts">
+import { ref } from 'vue'
+import { forceStatusChange } from '~/services/supabaseAuditService'
+
+interface Props {
+  isOpen: boolean
+  vehiculoId: number | null
+  currentStatus: string
+}
+
+interface Emits {
+  (e: 'close'): void
+  (e: 'success'): void
+}
+
+const props = defineProps<Props>()
+const emit = defineEmits<Emits>()
+
+const isLoading = ref(false)
+const formData = ref({
+  newStatus: '',
+  reason: '',
+})
+
+const close = () => {
+  formData.value = { newStatus: '', reason: '' }
+  emit('close')
+}
+
+const submit = async () => {
+  if (!formData.value.newStatus || !formData.value.reason || !props.vehiculoId) {
+    console.warn('Datos incompletos:', { 
+      newStatus: formData.value.newStatus, 
+      reason: formData.value.reason, 
+      vehiculoId: props.vehiculoId 
+    })
+    return
+  }
+
+  console.log('Enviando cambio de estado:', {
+    vehiculoId: props.vehiculoId,
+    currentStatus: props.currentStatus,
+    newStatus: formData.value.newStatus,
+    reason: formData.value.reason
+  })
+
+  isLoading.value = true
+  try {
+    const success = await forceStatusChange({
+      vehiculoId: props.vehiculoId,
+      newStatus: formData.value.newStatus,
+      reason: formData.value.reason,
+    })
+
+    if (success) {
+      console.log('✅ Estado cambiado exitosamente')
+      close()
+      emit('success')
+    } else {
+      console.error('❌ forceStatusChange retornó false')
+      alert('Error al cambiar el estado. Revisa la consola para más detalles.')
+    }
+  } catch (err) {
+    console.error('❌ Exception en submit:', err)
+    alert('Error al cambiar el estado: ' + (err instanceof Error ? err.message : 'Error desconocido'))
+  } finally {
+    isLoading.value = false
+  }
+}
+</script>
+
 <template>
   <Teleport to="body">
     <div
@@ -84,61 +155,3 @@
     </div>
   </Teleport>
 </template>
-
-<script setup lang="ts">
-import { ref } from 'vue'
-import { forceStatusChange } from '~/services/supabaseAuditService'
-
-interface Props {
-  isOpen: boolean
-  vehiculoId: number | null
-  currentStatus: string
-}
-
-interface Emits {
-  (e: 'close'): void
-  (e: 'success'): void
-}
-
-const props = defineProps<Props>()
-const emit = defineEmits<Emits>()
-
-const isLoading = ref(false)
-const formData = ref({
-  newStatus: '',
-  reason: '',
-})
-
-const close = () => {
-  formData.value = { newStatus: '', reason: '' }
-  emit('close')
-}
-
-const submit = async () => {
-  if (!formData.value.newStatus || !formData.value.reason || !props.vehiculoId) {
-    return
-  }
-
-  isLoading.value = true
-  try {
-    const success = await forceStatusChange({
-      vehiculoId: props.vehiculoId,
-      newStatus: formData.value.newStatus,
-      reason: formData.value.reason,
-    })
-
-    if (success) {
-      console.log('Status changed successfully')
-      close()
-      emit('success')
-    } else {
-      alert('Error al cambiar el estado')
-    }
-  } catch (err) {
-    console.error('Error:', err)
-    alert('Error al cambiar el estado')
-  } finally {
-    isLoading.value = false
-  }
-}
-</script>

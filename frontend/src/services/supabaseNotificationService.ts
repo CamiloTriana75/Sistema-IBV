@@ -67,10 +67,14 @@ export const supabaseNotificationService = {
       .order('created_at', { ascending: false })
       .limit(limit)
 
+    // RLS se encargará del filtrado de visibilidad automáticamente
+    // Solo aplicamos filtros adicionales si se solicitan
+
     if (onlyUnread) {
       query = query.is('leida_en', null)
     }
 
+    // Filtro por usuario específico solo si se solicita explícitamente (para admin)
     if (typeof recipientUserId === 'number') {
       query = query.eq('recipient_user_id', recipientUserId)
     }
@@ -101,12 +105,21 @@ export const supabaseNotificationService = {
   async markAsRead(id: number): Promise<void> {
     const $supabase = getSupabase()
 
+    // NOTA: Las políticas RLS permiten UPDATE solo para:
+    // 1. Admin (puede actualizar todas)
+    // 2. Usuario destinatario (solo notificaciones personales donde recipient_user_id = su ID)
+    // Las notificaciones de rol/generales (recipient_user_id NULL) no se pueden marcar como leídas por usuarios normales
     const { error } = await $supabase
       .from('notificaciones')
       .update({ leida_en: new Date().toISOString() })
       .eq('id', id)
 
     if (error) {
+      // Si falla por RLS (notificación de rol/general), no lanzar error
+      if (error.code === 'PGRST116' || error.message.includes('row-level security')) {
+        console.info('No se puede marcar como leída: notificación de rol/general')
+        return
+      }
       console.error('Error marcando notificacion como leida:', error)
       throw new Error(error.message)
     }
@@ -115,6 +128,8 @@ export const supabaseNotificationService = {
   async markAllAsReadForUser(userId: number): Promise<void> {
     const $supabase = getSupabase()
 
+    // Solo marca como leídas las notificaciones PERSONALES del usuario
+    // (Las notificaciones de rol/generales no se marcan como leídas individualmente)
     const { error } = await $supabase
       .from('notificaciones')
       .update({ leida_en: new Date().toISOString() })
@@ -130,24 +145,21 @@ export const supabaseNotificationService = {
   async createNotification(input: NotificationInput): Promise<NotificationItem | null> {
     const $supabase = getSupabase()
 
-    const { data, error } = await $supabase
-      .from('notificaciones')
-      .insert({
-        titulo: input.titulo,
-        mensaje: input.mensaje,
-        modulo: input.modulo,
-        recipient_user_id: input.recipientUserId,
-        created_by_user_id: input.createdByUserId,
-        created_by_role: input.createdByRole,
-        action_url: input.actionUrl ?? null,
-        metadata: input.metadata ?? {},
-      })
-      .select()
-      .single()
+    const { data, error } = await $supabase.rpc('create_notification_admin', {
+      p_titulo: input.titulo,
+      p_mensaje: input.mensaje,
+      p_modulo: input.modulo,
+      p_recipient_user_id: input.recipientUserId,
+      p_created_by_user_id: input.createdByUserId,
+      p_created_by_role: input.createdByRole,
+      p_action_url: input.actionUrl ?? null,
+      p_metadata: input.metadata ?? {},
+    })
 
     if (error) {
       console.error('Error creando notificacion:', error)
-      throw new Error(error.message)
+      const detail = [error.code, error.message, error.details, error.hint].filter(Boolean).join(' | ')
+      throw new Error(detail || 'Error creando notificación')
     }
 
     return data as NotificationItem

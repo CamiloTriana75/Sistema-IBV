@@ -23,6 +23,7 @@ export type EstadoVehiculo =
 
 export interface VehiculoPipeline {
   id: string
+  dbId: number // ID numérico de la tabla vehiculos en Supabase
   bin?: string
   vin: string
   placa: string
@@ -69,6 +70,7 @@ const STORAGE_KEY = 'ibv_vehiculos_pipeline'
 const INITIAL_VEHICULOS: VehiculoPipeline[] = [
   {
     id: 'vp-1',
+    dbId: 1,
     vin: '1HGBH41JXMN109186',
     placa: 'ABC-1234',
     marca: 'Toyota',
@@ -94,6 +96,7 @@ const INITIAL_VEHICULOS: VehiculoPipeline[] = [
   },
   {
     id: 'vp-2',
+    dbId: 2,
     vin: '3VWDX7AJ5BM123456',
     placa: 'XYZ-5678',
     marca: 'Chevrolet',
@@ -125,6 +128,7 @@ const INITIAL_VEHICULOS: VehiculoPipeline[] = [
   },
   {
     id: 'vp-3',
+    dbId: 3,
     vin: 'WVWZZZ3CZWE123789',
     placa: 'DEF-9012',
     marca: 'Nissan',
@@ -144,6 +148,7 @@ const INITIAL_VEHICULOS: VehiculoPipeline[] = [
   },
   {
     id: 'vp-4',
+    dbId: 4,
     vin: 'KNDJP3A53H7654321',
     placa: 'GHI-3456',
     marca: 'Kia',
@@ -164,6 +169,7 @@ const INITIAL_VEHICULOS: VehiculoPipeline[] = [
   },
   {
     id: 'vp-5',
+    dbId: 5,
     vin: 'KMHDN46D09U987654',
     placa: 'JKL-7890',
     marca: 'Hyundai',
@@ -185,6 +191,7 @@ const INITIAL_VEHICULOS: VehiculoPipeline[] = [
   // Vehículo ya despachado
   {
     id: 'vp-6',
+    dbId: 6,
     vin: '1FADP3F29JL234567',
     placa: 'MNO-4567',
     marca: 'Ford',
@@ -494,6 +501,9 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
         return false
       }
 
+      // DEBUG: Log primer vehículo para ver estructura de datos
+      console.log('[loadFromSupabase] Primer vehículo recibido:', JSON.stringify(data[0], null, 2))
+
       const latestByVehiculo = <T extends { vehiculo_id: number; fecha?: string }>(items: T[]) => {
         const map = new Map<number, T>()
         for (const item of items) {
@@ -586,6 +596,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
 
         return {
           id: `vp-${v.id}`,
+          dbId: v.id, // Guardar el ID numérico original de la tabla
           bin: v.bin || undefined,
           // En Supabase se usa bin/qr_codigo como identificador
           vin: v.bin || v.qr_codigo || '',

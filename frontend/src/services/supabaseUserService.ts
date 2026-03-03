@@ -154,10 +154,25 @@ export const supabaseUserService = {
       }) as any
       
       console.log('[supabaseUserService.updateUser] Response:', response)
+      
+      // Verificar respuesta JSON en vez de confiar en HTTP status
+      if (response.success === false) {
+        throw new Error(`[${response.error}] ${response.message}`)
+      }
+      
       return response.user as SupabaseUser
     } catch (error: any) {
       console.error('Error actualizando usuario:', error)
-      throw new Error(error.data?.message || error.message || 'Error actualizando usuario')
+      // Si la respuesta viene con datos JSON de error
+      const errorData = error.data || error.response?._data
+      if (errorData?.error) {
+        const msg = `[${errorData.error}] ${errorData.message}`
+        console.error('Detalle del error:', msg)
+        throw new Error(msg)
+      }
+      const msg = error.data?.statusMessage || error.data?.message || error.statusMessage || error.message || 'Error actualizando usuario'
+      console.error('Detalle del error:', msg)
+      throw new Error(msg)
     }
   },
 

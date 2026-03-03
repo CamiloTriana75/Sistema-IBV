@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useVehiculoStore } from '~/stores/vehiculoStore'
-import { getAuditLogs, getActiveLocks, getVehicleExceptions, unlockVehicle } from '~/services/supabaseAuditService'
+import { getAuditLogs, getActiveLocks, getVehicleExceptions, unlockVehicle, lockVehicle } from '~/services/supabaseAuditService'
 import type { AuditLog, VehicleLock, VehicleException } from '~/services/supabaseAuditService'
 
 definePageMeta({ layout: 'admin', middleware: ['auth', 'admin'] })
@@ -14,6 +14,15 @@ const loading = ref(false)
 const searchTerm = ref('')
 const filterType = ref<'all' | 'cambio_estado' | 'anulacion_admin' | 'desbloqueo_manual' | 'escalacion'>('all')
 const tab = ref<'logs' | 'locks' | 'exceptions'>('logs')
+
+// Modal de bloqueo
+const showLockModal = ref(false)
+const lockFormData = ref({
+  vehiculoId: '',
+  reason: 'otra' as 'bloqueada_en_estado' | 'esperando_revision_manual' | 'escalacion_pendiente' | 'mantenimiento' | 'otra',
+  description: '',
+})
+const lockingVehicleId = ref<number | null>(null)
 
 const filteredLogs = computed(() => {
   let logs = auditLogs.value
@@ -127,6 +136,60 @@ const recargar = () => {
 const getVehicleInfo = (vehiculoId: number) => {
   return vehiculoStore.vehiculos.find((v) => Number(v.id) === vehiculoId)
 }
+
+const openLockModal = (vehiculoId: number) => {
+  lockingVehicleId.value = vehiculoId
+  lockFormData.value = {
+    vehiculoId: vehiculoId.toString(),
+    reason: 'otra',
+    description: '',
+  }
+  showLockModal.value = true
+}
+
+const closeLockModal = () => {
+  showLockModal.value = false
+  lockingVehicleId.value = null
+}
+
+const handleUnlock = async (lockId: number) => {
+  try {
+    const success = await unlockVehicle(lockId)
+    if (success) {
+      console.log('[Auditoria] Vehículo desbloqueado exitosamente')
+      await loadData() // Recargar datos
+    } else {
+      console.error('[Auditoria] Error desbloqueando vehículo')
+    }
+  } catch (error) {
+    console.error('[Auditoria] Exception desbloqueando:', error)
+  }
+}
+
+const handleLock = async () => {
+  if (!lockFormData.value.vehiculoId || !lockFormData.value.description) {
+    console.warn('[Auditoria] ID vehículo y descripción son requeridos')
+    return
+  }
+
+  try {
+    const result = await lockVehicle({
+      vehiculoId: parseInt(lockFormData.value.vehiculoId, 10),
+      reason: lockFormData.value.reason,
+      description: lockFormData.value.description,
+    })
+
+    if (result) {
+      console.log('[Auditoria] Vehículo bloqueado exitosamente')
+      await loadData() // Recargar datos
+      closeLockModal()
+    } else {
+      console.error('[Auditoria] Error bloqueando vehículo')
+    }
+  } catch (error) {
+    console.error('[Auditoria] Exception bloqueando:', error)
+  }
+}
 </script>
 
 <template>
@@ -136,22 +199,35 @@ const getVehicleInfo = (vehiculoId: number) => {
         <h1 class="text-2xl font-bold text-gray-900">Auditoría y Control</h1>
         <p class="text-sm text-gray-500 mt-1">Registro completo de cambios, bloqueos y excepciones</p>
       </div>
-      <button
-        class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
-        type="button"
-        @click="recargar"
-        :disabled="loading"
-      >
-        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M4 4v5h.582m15.356 2A8 8 0 104.582 9"
-          />
-        </svg>
-        Recargar
-      </button>
+      <div class="flex gap-2">
+        <button
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          @click="showLockModal = true"
+          :disabled="loading"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Bloquear Vehículo
+        </button>
+        <button
+          class="inline-flex items-center gap-2 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          type="button"
+          @click="recargar"
+          :disabled="loading"
+        >
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M4 4v5h.582m15.356 2A8 8 0 104.582 9"
+            />
+          </svg>
+          Recargar
+        </button>
+      </div>
     </div>
 
     <!-- Stats -->
@@ -305,7 +381,7 @@ const getVehicleInfo = (vehiculoId: number) => {
               <td class="px-6 py-4">
                 <button
                   class="px-3 py-1 bg-red-50 text-red-700 text-xs font-semibold rounded-lg hover:bg-red-100"
-                  @click="unlockVehicle(lock.id)"
+                  @click="handleUnlock(lock.id)"
                 >
                   Desbloquear
                 </button>
@@ -378,6 +454,78 @@ const getVehicleInfo = (vehiculoId: number) => {
       </div>
       <div v-if="vehicleExceptions.length === 0" class="px-6 py-12 text-center">
         <p class="text-gray-500">No hay excepciones registradas</p>
+      </div>
+    </div>
+
+    <!-- Lock Modal -->
+    <div v-if="showLockModal" class="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div class="bg-white rounded-xl shadow-xl max-w-md w-full">
+        <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+          <h3 class="text-lg font-semibold text-gray-900">Bloquear Vehículo</h3>
+          <button
+            @click="closeLockModal"
+            class="text-gray-500 hover:text-gray-700 transition"
+          >
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <div class="px-6 py-4 space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Seleccionar Vehículo</label>
+            <select
+              v-model="lockFormData.vehiculoId"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="">-- Selecciona un vehículo --</option>
+              <option v-for="v in vehiculoStore.vehiculos" :key="v.id" :value="v.dbId.toString()">
+                {{ v.vin || v.placa }} (ID: {{ v.dbId }})
+              </option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Razón del Bloqueo</label>
+            <select
+              v-model="lockFormData.reason"
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            >
+              <option value="bloqueada_en_estado">Atrapado en Estado</option>
+              <option value="esperando_revision_manual">Esperando Revisión Manual</option>
+              <option value="escalacion_pendiente">Escalada Pendiente</option>
+              <option value="mantenimiento">Mantenimiento</option>
+              <option value="otra">Otro</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+            <textarea
+              v-model="lockFormData.description"
+              rows="3"
+              placeholder="Explica la razón del bloqueo..."
+              class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
+            />
+          </div>
+        </div>
+
+        <div class="px-6 py-4 border-t border-gray-100 flex gap-2 justify-end">
+          <button
+            @click="closeLockModal"
+            class="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition"
+          >
+            Cancelar
+          </button>
+          <button
+            @click="handleLock"
+            :disabled="!lockFormData.vehiculoId || !lockFormData.description"
+            class="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Bloquear
+          </button>
+        </div>
       </div>
     </div>
   </div>

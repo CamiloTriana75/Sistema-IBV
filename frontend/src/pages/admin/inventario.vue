@@ -59,6 +59,7 @@ const recargar = async () => {
 }
 
 const openForceModal = (vehiculo: any) => {
+  console.log('Vehículo seleccionado:', vehiculo)
   selectedVehiculo.value = vehiculo
   showForceModal.value = true
 }
@@ -67,6 +68,16 @@ const closeForceModal = () => {
   showForceModal.value = false
   selectedVehiculo.value = null
 }
+
+const selectedVehiculoDbId = computed(() => {
+  if (!selectedVehiculo.value) return null
+  if (selectedVehiculo.value.dbId) return selectedVehiculo.value.dbId
+  if (selectedVehiculo.value.id) {
+    const match = selectedVehiculo.value.id.match(/vp-(\d+)/)
+    if (match) return parseInt(match[1], 10)
+  }
+  return null
+})
 
 const handleForceSuccess = () => {
   vehiculoStore.loadFromSupabase()
@@ -283,7 +294,7 @@ onMounted(async () => {
     <ForceStatusChangeModal
       v-if="selectedVehiculo"
       :is-open="showForceModal"
-      :vehiculo-id="selectedVehiculo.id"
+      :vehiculo-id="selectedVehiculoDbId"
       :current-status="selectedVehiculo.estado"
       @close="closeForceModal"
       @success="handleForceSuccess"

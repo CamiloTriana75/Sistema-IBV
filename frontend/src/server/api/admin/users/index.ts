@@ -5,28 +5,36 @@
  */
 import { createClient } from '@supabase/supabase-js'
 
-const getSupabaseAdmin = () => {
-  const supabaseUrl = process.env.SUPABASE_URL
-  const supabaseServiceKey = process.env.SUPABASE_SERVICE_KEY
+export default defineEventHandler(async (event) => {
+  const config = useRuntimeConfig()
+  const stripInvisible = (s: string) => s.replace(/[\u200B-\u200F\uFEFF\u00A0\u2060]/g, '').trim()
+  const supabaseUrl = stripInvisible((config.supabaseUrl || '').toString())
+  const supabaseServiceKey = stripInvisible((config.supabaseServiceKey || '').toString())
 
   if (!supabaseUrl || !supabaseServiceKey) {
+    console.error('[Admin Users Index] Configuración faltante:', {
+      hasUrl: !!supabaseUrl,
+      hasKey: !!supabaseServiceKey,
+    })
     throw createError({
       statusCode: 500,
-      statusMessage: 'Supabase configuration missing on server'
+      statusMessage: 'Supabase configuration missing on server.'
     })
   }
 
-  return createClient(supabaseUrl, supabaseServiceKey, {
+  // Limpiar URL
+  let cleanUrl = supabaseUrl
+  if (!cleanUrl.startsWith('http')) cleanUrl = `https://${cleanUrl}`
+  cleanUrl = cleanUrl.replace(/\/+$/, '')
+
+  const $supabaseAdmin = createClient(cleanUrl, supabaseServiceKey, {
     auth: {
       persistSession: false,
       autoRefreshToken: false,
     },
   })
-}
 
-export default defineEventHandler(async (event) => {
   const method = getMethod(event)
-  const $supabaseAdmin = getSupabaseAdmin()
 
   try {
     // ============================================

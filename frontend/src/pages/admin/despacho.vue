@@ -78,6 +78,7 @@ const recargar = async () => {
 }
 
 const openForceModal = (vehiculo: any) => {
+  console.log('Vehículo seleccionado:', vehiculo)
   selectedVehiculo.value = vehiculo
   showForceModal.value = true
 }
@@ -87,19 +88,41 @@ const closeForceModal = () => {
   selectedVehiculo.value = null
 }
 
+const selectedVehiculoDbId = computed(() => {
+  if (!selectedVehiculo.value) return null
+  
+  // Si tiene dbId directamente, usarlo
+  if (selectedVehiculo.value.dbId) {
+    return selectedVehiculo.value.dbId
+  }
+  
+  // Si no, extraer del id con formato 'vp-49' -> 49
+  if (selectedVehiculo.value.id) {
+    const match = selectedVehiculo.value.id.match(/vp-(\d+)/)
+    if (match) {
+      return parseInt(match[1], 10)
+    }
+  }
+  
+  return null
+})
+
 const handleForceSuccess = () => {
   vehiculoStore.loadFromSupabase()
   closeForceModal()
 }
 
 onMounted(async () => {
-  if (vehiculoStore.vehiculos.length === 0) {
-    loading.value = true
-    try {
-      await vehiculoStore.loadFromSupabase()
-    } finally {
-      loading.value = false
-    }
+  console.log('[Despacho] onMounted - vehiculos.length:', vehiculoStore.vehiculos.length)
+  console.log('[Despacho] Siempre cargando de Supabase para asegurar datos frescos...')
+  loading.value = true
+  try {
+    await vehiculoStore.loadFromSupabase()
+    console.log('[Despacho] Cargados:', vehiculoStore.vehiculos.length)
+  } catch (e) {
+    console.error('[Despacho] Error cargando:', e)
+  } finally {
+    loading.value = false
   }
 })
 </script>
@@ -383,7 +406,7 @@ onMounted(async () => {
     <ForceStatusChangeModal
       v-if="selectedVehiculo"
       :is-open="showForceModal"
-      :vehiculo-id="selectedVehiculo.id"
+      :vehiculo-id="selectedVehiculoDbId"
       :current-status="selectedVehiculo.estado"
       @close="closeForceModal"
       @success="handleForceSuccess"
