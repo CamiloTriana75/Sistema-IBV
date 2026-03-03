@@ -433,7 +433,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
     interface SbDespachoVeh {
       vehiculo_id: number
       despacho_id: number
-      fecha_escaneo: string
+      fecha: string
     }
     interface SbDespacho {
       id: number
@@ -483,7 +483,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
           sb
             .from('inventarios')
             .select('id, vehiculo_id, fecha, completo, usuario:usuarios(id, nombres, apellidos)'),
-          sb.from('despacho_vehiculos').select('vehiculo_id, despacho_id, fecha_escaneo'),
+          sb.from('recibos').select('vehiculo_id, despacho_id, fecha'),
           sb
             .from('despachos')
             .select('id, fecha, estado, usuario:usuarios(id, nombres, apellidos)'),
@@ -531,8 +531,8 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
           despachoVehMap.set(dv.vehiculo_id, dv)
           continue
         }
-        const currDate = new Date(current.fecha_escaneo).getTime()
-        const nextDate = new Date(dv.fecha_escaneo).getTime()
+        const currDate = new Date(current.fecha).getTime()
+        const nextDate = new Date(dv.fecha).getTime()
         if (nextDate >= currDate) {
           despachoVehMap.set(dv.vehiculo_id, dv)
         }
