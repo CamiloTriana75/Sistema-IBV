@@ -296,6 +296,72 @@ const confirmarAgregarVehiculo = async () => {
       creadoPor: authStore.user?.name || 'Recibidor',
     })
 
+    // 2.5️⃣ Insertar en tablas legacy (vehiculos + improntas) para panel de inventario
+    try {
+      const sb = useNuxtApp().$supabase as import('@supabase/supabase-js').SupabaseClient
+
+      // Verificar si ya existe en tabla vehiculos
+      const { data: vehExistente } = await sb
+        .from('vehiculos')
+        .select('id')
+        .eq('bin', vinTrimmed)
+        .maybeSingle()
+
+      if (!vehExistente) {
+        // Buscar o crear modelo en modelos_vehiculo
+        let modeloId: number | null = null
+        const { data: modeloExistente } = await sb
+          .from('modelos_vehiculo')
+          .select('id')
+          .eq('marca', marcaTrimmed)
+          .eq('modelo', modeloTrimmed)
+          .limit(1)
+          .maybeSingle()
+
+        if (modeloExistente) {
+          modeloId = modeloExistente.id
+        } else {
+          const { data: nuevoModelo } = await sb
+            .from('modelos_vehiculo')
+            .insert({
+              marca: marcaTrimmed,
+              modelo: modeloTrimmed,
+              anio: parseInt(anioTrimmed) || new Date().getFullYear(),
+            })
+            .select('id')
+            .single()
+          modeloId = nuevoModelo?.id ?? null
+        }
+
+        // Insertar vehículo en tabla vehiculos
+        const { data: vehCreado } = await sb
+          .from('vehiculos')
+          .insert({
+            bin: vinTrimmed,
+            qr_codigo: vinTrimmed,
+            placa: placaTrimmed || null,
+            color: colorTrimmed,
+            estado: 'impronta_completada',
+            fecha_registro: new Date().toISOString(),
+            modelo_id: modeloId,
+          })
+          .select('id')
+          .single()
+
+        // Crear registro en tabla improntas (legacy) vinculado al vehículo
+        if (vehCreado?.id) {
+          await sb.from('improntas').insert({
+            vehiculo_id: vehCreado.id,
+            estado: 'completada',
+            fecha: new Date().toISOString(),
+          })
+        }
+      }
+    } catch (legacyErr) {
+      // No bloquear el flujo principal si falla la inserción legacy
+      console.warn('Error insertando en tablas legacy (vehiculos/improntas):', legacyErr)
+    }
+
     // 3️⃣ Registrar vehículo en el pipeline
     await vehiculoStore.registrarRecepcion({
       vin: vinTrimmed,
