@@ -263,8 +263,9 @@ const confirmarAgregarVehiculo = async () => {
     // 1️⃣ Agregar vehículo al contenedor
     const nuevoVeh = await contStore.agregarVehiculoEscaneado(cont.id, {
       vin: vinTrimmed,
-      marca: marcaTrimmed,
       modelo: modeloTrimmed,
+      cliente: formVehiculo.cliente?.trim() || '',
+      marca: marcaTrimmed,
       anio: anioTrimmed,
       color: colorTrimmed,
       codigoImpronta: vinTrimmed,
@@ -375,9 +376,9 @@ const imprimirResumen = () => {
       <tr style="border-bottom:1px solid #e5e7eb;">
         <td style="padding:8px 12px;text-align:center;font-weight:600;">${i + 1}</td>
         <td style="padding:8px 12px;font-family:monospace;font-size:11px;">${v.vin}</td>
-        <td style="padding:8px 12px;font-weight:600;">${v.marca} ${v.modelo}</td>
-        <td style="padding:8px 12px;text-align:center;">${v.anio}</td>
-        <td style="padding:8px 12px;">${v.color}</td>
+        <td style="padding:8px 12px;font-weight:600;">${v.marca || ''} ${v.modelo}</td>
+        <td style="padding:8px 12px;text-align:center;">${v.anio || ''}</td>
+        <td style="padding:8px 12px;">${v.color || ''}</td>
         <td style="padding:8px 12px;text-align:center;font-family:monospace;font-size:11px;">${v.codigoImpronta}</td>
         <td style="padding:8px 12px;text-align:center;">
           <span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;${v.escaneado ? 'background:#dcfce7;color:#15803d;' : 'background:#fef9c3;color:#a16207;'}">
@@ -857,10 +858,10 @@ const imprimirResumen = () => {
                 <!-- Info -->
                 <div class="flex-1 min-w-0">
                   <p class="text-sm font-semibold text-gray-900">
-                    {{ veh.marca }} {{ veh.modelo }} {{ veh.anio }}
+                    {{ veh.marca || '' }} {{ veh.modelo }} {{ veh.anio || '' }}
                   </p>
                   <p class="text-xs text-gray-500 font-mono">
-                    VIN: {{ veh.vin.slice(-8) }} · {{ veh.color }}
+                    VIN: {{ veh.vin.slice(-8) }} · {{ veh.color || '' }}
                   </p>
                 </div>
 
@@ -882,7 +883,7 @@ const imprimirResumen = () => {
                 <!-- Acción -->
                 <NuxtLink
                   v-if="veh.escaneado && !veh.improntaId"
-                  :to="`/recibidor/impronta?vin=${veh.vin}&marca=${veh.marca}&modelo=${veh.modelo}&anio=${veh.anio}&color=${veh.color}`"
+                  :to="`/recibidor/impronta?vin=${veh.vin}&marca=${veh.marca || ''}&modelo=${veh.modelo}&anio=${veh.anio || ''}&color=${veh.color || ''}`"
                   class="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-primary-700 bg-primary-50 hover:bg-primary-100 rounded-lg transition shrink-0"
                 >
                   <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -6,13 +6,21 @@ export interface VehiculoContenedor {
   id?: string
   contenedor_id?: string
   vin: string
-  marca: string
   modelo: string
-  anio: string
-  color: string
+  cliente: string
+  bl: string
+  origen: string
+  destino: string
+  agAduanas: string
+  peso: string
+  volumen: string
   codigoImpronta: string
   escaneado: boolean
   improntaId?: string
+  /** Campos de conveniencia (no existen en BD, se llenan desde el form) */
+  marca?: string
+  anio?: string
+  color?: string
 }
 
 export interface Contenedor {
@@ -58,14 +66,19 @@ interface VehiculoContenedorRow {
   id: string
   contenedor_id: string
   vin: string
-  marca: string
   modelo: string
-  anio: string
-  color: string
-  codigo_impronta: string
+  cliente: string | null
+  bl: string | null
+  origen: string | null
+  destino: string | null
+  ag_aduanas: string | null
+  peso: string | null
+  volumen: string | null
+  codigo_impronta: string | null
   escaneado: boolean
   impronta_id: string | null
   created_at: string | null
+  updated_at: string | null
 }
 
 function mapRowToContenedor(
@@ -98,11 +111,15 @@ function mapRowToVehiculo(row: VehiculoContenedorRow): VehiculoContenedor {
     id: row.id,
     contenedor_id: row.contenedor_id,
     vin: row.vin,
-    marca: row.marca,
     modelo: row.modelo,
-    anio: row.anio,
-    color: row.color,
-    codigoImpronta: row.codigo_impronta,
+    cliente: row.cliente || '',
+    bl: row.bl || '',
+    origen: row.origen || '',
+    destino: row.destino || '',
+    agAduanas: row.ag_aduanas || '',
+    peso: row.peso || '',
+    volumen: row.volumen || '',
+    codigoImpronta: row.codigo_impronta || '',
     escaneado: row.escaneado,
     improntaId: row.impronta_id || undefined,
   }
@@ -151,21 +168,13 @@ export const useContenedorStore = defineStore('contenedor', () => {
       let vehRows: VehiculoContenedorRow[] = []
       if (ids.length > 0) {
         const { data, error: vehErr } = await supabase
-          .from('contenedor_vehiculos')
+          .from('vehiculos_contenedor')
           .select('*')
           .in('contenedor_id', ids)
           .order('created_at', { ascending: true })
 
-        // Si la tabla no existe (PGRST205), simplemente no cargar vehículos
-        if (vehErr) {
-          if (vehErr.code === 'PGRST205') {
-            console.warn('[contenedorStore] Tabla contenedor_vehiculos no existe, cargando contenedores sin vehículos')
-          } else {
-            throw vehErr
-          }
-        } else {
-          vehRows = data || []
-        }
+        if (vehErr) throw vehErr
+        vehRows = data || []
       }
 
       const vehMap: Record<string, VehiculoContenedorRow[]> = {}
@@ -250,16 +259,13 @@ export const useContenedorStore = defineStore('contenedor', () => {
     if (improntaId) updateData.impronta_id = improntaId
 
     const { error: err } = await supabase
-      .from('contenedor_vehiculos')
+      .from('vehiculos_contenedor')
       .update(updateData)
       .eq('id', veh.id)
 
     if (err) {
-      // Si la tabla no existe, solo actualizar en memoria
-      if (err.code !== 'PGRST205') {
-        console.error('Error marcarVehiculoEscaneado:', err)
-        return
-      }
+      console.error('Error marcarVehiculoEscaneado:', err)
+      return
     }
 
     veh.escaneado = true
@@ -330,22 +336,28 @@ export const useContenedorStore = defineStore('contenedor', () => {
     contenedorId: string,
     data: {
       vin: string
-      marca: string
       modelo: string
-      anio: string
-      color: string
+      cliente?: string
+      bl?: string
+      origen?: string
+      destino?: string
       codigoImpronta: string
+      /** Campos extra para mantener en memoria */
+      marca?: string
+      anio?: string
+      color?: string
     }
   ): Promise<VehiculoContenedor | null> => {
     const { data: row, error: err } = await supabase
-      .from('contenedor_vehiculos')
+      .from('vehiculos_contenedor')
       .insert({
         contenedor_id: contenedorId,
         vin: data.vin,
-        marca: data.marca,
         modelo: data.modelo,
-        anio: data.anio,
-        color: data.color,
+        cliente: data.cliente || '',
+        bl: data.bl || '',
+        origen: data.origen || '',
+        destino: data.destino || '',
         codigo_impronta: data.codigoImpronta,
         escaneado: true,
       })
@@ -353,33 +365,15 @@ export const useContenedorStore = defineStore('contenedor', () => {
       .single()
 
     if (err) {
-      // Si la tabla no existe, crear vehículo solo en memoria
-      if (err.code === 'PGRST205') {
-        const nuevoVeh: VehiculoContenedor = {
-          id: crypto.randomUUID(),
-          contenedor_id: contenedorId,
-          vin: data.vin,
-          marca: data.marca,
-          modelo: data.modelo,
-          anio: data.anio,
-          color: data.color,
-          codigoImpronta: data.codigoImpronta,
-          escaneado: true,
-        }
-        const cont = contenedores.value.find((c) => c.id === contenedorId)
-        if (cont) {
-          cont.vehiculos.push(nuevoVeh)
-          if (cont.vehiculos.length > cont.vehiculosEsperados) {
-            cont.vehiculosEsperados = cont.vehiculos.length
-          }
-        }
-        return nuevoVeh
-      }
       console.error('Error agregarVehiculoEscaneado:', err)
       return null
     }
 
     const nuevoVeh = mapRowToVehiculo(row)
+    // Preservar campos extra que no vienen de la BD
+    if (data.marca) nuevoVeh.marca = data.marca
+    if (data.anio) nuevoVeh.anio = data.anio
+    if (data.color) nuevoVeh.color = data.color
     const cont = contenedores.value.find((c) => c.id === contenedorId)
     if (cont) {
       cont.vehiculos.push(nuevoVeh)

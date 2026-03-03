@@ -23,7 +23,7 @@ const filteredContenedores = computed(() => {
         c.vehiculos.some(
           (v: VehiculoContenedor) =>
             v.vin.toLowerCase().includes(q) ||
-            v.marca.toLowerCase().includes(q) ||
+            (v.marca || '').toLowerCase().includes(q) ||
             v.modelo.toLowerCase().includes(q)
         )
     )
@@ -93,9 +93,9 @@ const imprimirRecepcion = (contId: string) => {
       <tr style="border-bottom:1px solid #e5e7eb;">
         <td style="padding:8px 12px;text-align:center;font-weight:600;">${i + 1}</td>
         <td style="padding:8px 12px;font-family:monospace;font-size:11px;">${v.vin}</td>
-        <td style="padding:8px 12px;font-weight:600;">${v.marca} ${v.modelo}</td>
-        <td style="padding:8px 12px;text-align:center;">${v.anio}</td>
-        <td style="padding:8px 12px;">${v.color}</td>
+        <td style="padding:8px 12px;font-weight:600;">${v.marca || ''} ${v.modelo}</td>
+        <td style="padding:8px 12px;text-align:center;">${v.anio || ''}</td>
+        <td style="padding:8px 12px;">${v.color || ''}</td>
         <td style="padding:8px 12px;text-align:center;font-family:monospace;font-size:11px;">${v.codigoImpronta}</td>
         <td style="padding:8px 12px;text-align:center;">
           <span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;${v.escaneado ? 'background:#dcfce7;color:#15803d;' : 'background:#fef9c3;color:#a16207;'}">
