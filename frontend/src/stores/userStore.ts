@@ -131,7 +131,9 @@ export const useUserStore = defineStore('user', () => {
   const error = ref<string | null>(null)
 
   const userCount = computed(() => users.value.length)
-  const activeUsers = computed(() => users.value.filter((u) => u.status === 'active').length)
+  const activeUsers = computed(
+    () => users.value.filter((u: StoreUser) => u.status === 'active').length
+  )
 
   const getRoleInfo = (roleValue: string) => {
     return SYSTEM_ROLES.find((r) => r.value === roleValue) || SYSTEM_ROLES[0]
@@ -156,7 +158,9 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
     try {
       // Verificar email duplicado
-      const exists = users.value.some((u) => u.email.toLowerCase() === userData.email.toLowerCase())
+      const exists = users.value.some(
+        (u: StoreUser) => u.email.toLowerCase() === userData.email.toLowerCase()
+      )
       if (exists) {
         throw new Error('Ya existe un usuario con ese email')
       }
@@ -181,12 +185,12 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
     try {
       await new Promise((resolve) => setTimeout(resolve, 300))
-      const index = users.value.findIndex((u) => u.id === id)
+      const index = users.value.findIndex((u: StoreUser) => u.id === id)
       if (index === -1) throw new Error('Usuario no encontrado')
       // Verificar email duplicado (excluyendo el usuario actual)
       if (userData.email) {
         const emailExists = users.value.some(
-          (u) => u.id !== id && u.email.toLowerCase() === userData.email!.toLowerCase()
+          (u: StoreUser) => u.id !== id && u.email.toLowerCase() === userData.email!.toLowerCase()
         )
         if (emailExists) throw new Error('Ya existe un usuario con ese email')
       }
@@ -206,7 +210,7 @@ export const useUserStore = defineStore('user', () => {
     error.value = null
     try {
       await new Promise((resolve) => setTimeout(resolve, 300))
-      users.value = users.value.filter((u) => u.id !== id)
+      users.value = users.value.filter((u: StoreUser) => u.id !== id)
       persistUsers(users.value)
     } catch (err: unknown) {
       error.value = (err as Error).message || 'Error al eliminar usuario'
@@ -217,7 +221,7 @@ export const useUserStore = defineStore('user', () => {
   }
 
   const toggleStatus = async (id: string) => {
-    const user = users.value.find((u) => u.id === id)
+    const user = users.value.find((u: StoreUser) => u.id === id)
     if (!user) return
     const newStatus = user.status === 'active' ? 'inactive' : 'active'
     return updateUser(id, { status: newStatus })

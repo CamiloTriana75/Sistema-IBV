@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
 import { useInventarioStore, type InventarioVehiculo } from '~/stores/inventarioStore'
+import { useAuthStore } from '~/stores/auth'
 
 definePageMeta({ layout: 'admin' })
 
 const vehiculoStore = useInventarioStore()
+const authStore = useAuthStore()
 const route = useRoute()
 const router = useRouter()
 
@@ -29,7 +31,7 @@ const vehiculosDisponibles = computed(() => {
   if (vehicleSearch.value) {
     const q = vehicleSearch.value.toLowerCase()
     list = list.filter(
-      (v) =>
+      (v: InventarioVehiculo) =>
         v.vin.toLowerCase().includes(q) ||
         v.placa.toLowerCase().includes(q) ||
         v.marca.toLowerCase().includes(q) ||
@@ -51,7 +53,7 @@ const vehiculoActual = computed(() => {
   const first = vehiculoStore.getPendientesInventario[0]
   if (first) return first
   return {
-    id: '',
+    id: 0,
     vin: '—',
     placa: '',
     marca: '—',
@@ -62,6 +64,7 @@ const vehiculoActual = computed(() => {
     fechaRecepcion: '',
     horaRecepcion: '',
     improntaCompletada: false,
+    improntaRechazada: false,
     inventarioCompletado: false,
     inventarioAprobado: false,
     despachado: false,
@@ -69,12 +72,12 @@ const vehiculoActual = computed(() => {
   } as InventarioVehiculo
 })
 
-const seleccionarVehiculo = (v: VehiculoPipeline) => {
+const seleccionarVehiculo = (v: InventarioVehiculo) => {
   selectedVin.value = v.vin
   showVehicleSelector.value = false
   // Reset checklist when switching vehicle
-  categorias.forEach((cat) => {
-    cat.items.forEach((item) => {
+  categorias.forEach((cat: Categoria) => {
+    cat.items.forEach((item: Item) => {
       item.estado = 'pendiente'
       item.nota = ''
     })
@@ -243,15 +246,17 @@ const categorias = reactive<Categoria[]>([
   },
 ])
 
-const todosLosItems = computed(() => categorias.flatMap((c) => c.items))
-const totalOk = computed(() => todosLosItems.value.filter((i) => i.estado === 'ok').length)
-const totalFallas = computed(() => todosLosItems.value.filter((i) => i.estado === 'falla').length)
-const totalNa = computed(() => todosLosItems.value.filter((i) => i.estado === 'na').length)
+const todosLosItems = computed(() => categorias.flatMap((c: Categoria) => c.items))
+const totalOk = computed(() => todosLosItems.value.filter((i: Item) => i.estado === 'ok').length)
+const totalFallas = computed(
+  () => todosLosItems.value.filter((i: Item) => i.estado === 'falla').length
+)
+const totalNa = computed(() => todosLosItems.value.filter((i: Item) => i.estado === 'na').length)
 const totalPendientes = computed(
-  () => todosLosItems.value.filter((i) => i.estado === 'pendiente').length
+  () => todosLosItems.value.filter((i: Item) => i.estado === 'pendiente').length
 )
 const progresoGlobal = computed(() => {
-  const resueltos = todosLosItems.value.filter((i) => i.estado !== 'pendiente').length
+  const resueltos = todosLosItems.value.filter((i: Item) => i.estado !== 'pendiente').length
   return Math.round((resueltos / todosLosItems.value.length) * 100)
 })
 
@@ -274,30 +279,6 @@ const mostrarToast = (tipo: 'ok' | 'error', mensaje: string) => {
   }, 3000)
 }
 
-const buildChecklistJson = (resultado: {
-  totalItems: number
-  aprobados: number
-  fallas: number
-  na: number
-  nota?: string
-}) => {
-  return {
-    resumen: resultado,
-    categorias: categorias.map((cat) => ({
-      id: cat.id,
-      nombre: cat.nombre,
-      descripcion: cat.descripcion,
-      items: cat.items.map((item) => ({
-        id: item.id,
-        nombre: item.nombre,
-        descripcion: item.descripcion,
-        estado: item.estado,
-        nota: item.nota || '',
-      })),
-    })),
-  }
-}
-
 const aprobar = async () => {
   if (!puedeAprobar.value) return
   const v = vehiculoActual.value
@@ -310,9 +291,9 @@ const aprobar = async () => {
     na: totalNa.value,
     nota: notaInspector.value || undefined,
   }
+  const inspector = authStore.user?.name || 'Inspector'
   try {
-    const checklistJson = buildChecklistJson(resultado)
-    await vehiculoStore.aprobarInventario(v.vin, resultado, checklistJson)
+    await vehiculoStore.aprobarInventario(v.vin, resultado, inspector)
     mostrarToast('ok', `Inventario aprobado — ${v.marca} ${v.modelo} listo para despacho`)
     setTimeout(() => router.push('/inventario'), 1500)
   } catch (err) {
@@ -329,14 +310,15 @@ const confirmarRechazo = async () => {
   const v = vehiculoActual.value
   if (v && v.vin && v.vin !== '—') {
     try {
-      const checklistJson = buildChecklistJson({
-        totalItems: todosLosItems.value.length,
-        aprobados: totalOk.value,
-        fallas: totalFallas.value,
-        na: totalNa.value,
-        nota: motivoRechazo.value || undefined,
+      await vehiculoStore.rechazarInventario(v.vin, motivoRechazo.value, {
+        resumen: {
+          totalItems: todosLosItems.value.length,
+          aprobados: totalOk.value,
+          fallas: totalFallas.value,
+          na: totalNa.value,
+        },
+        motivo: motivoRechazo.value,
       })
-      await vehiculoStore.rechazarInventario(v.vin, motivoRechazo.value, checklistJson)
     } catch (err) {
       console.error('Error rechazando inventario:', err)
       mostrarToast('error', 'No se pudo guardar el rechazo')
@@ -541,7 +523,7 @@ const confirmarRechazo = async () => {
               :key="item.id"
               class="px-5 py-3 flex items-start gap-4 transition-colors"
               :class="[
-                idx < categoria.items.length - 1 ? 'border-b border-gray-50' : '',
+                Number(idx) < categoria.items.length - 1 ? 'border-b border-gray-50' : '',
                 item.estado === 'falla'
                   ? 'bg-danger-50'
                   : item.estado === 'ok'

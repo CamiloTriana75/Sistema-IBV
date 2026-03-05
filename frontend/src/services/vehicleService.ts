@@ -86,10 +86,7 @@ export const vehicleService = {
 
   async markAsInventory(vehicleId: number, data: any) {
     const apiClient = getApiClient()
-    const response = await apiClient.post(
-      `/vehicles/${vehicleId}/verificar-inventario/`,
-      data,
-    )
+    const response = await apiClient.post(`/vehicles/${vehicleId}/verificar-inventario/`, data)
     return response.data
   },
 

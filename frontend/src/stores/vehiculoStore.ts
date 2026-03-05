@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**
  * Store central del ciclo de vida de cada vehículo en el sistema IBV.
@@ -410,7 +411,50 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
    * Si la carga falla, mantiene los datos locales
    */
   const loadFromSupabase = async () => {
-    console.log('[loadFromSupabase] ✅ INICIANDO CARGA')
+    interface SbUsuario {
+      id: number
+      nombres: string
+      apellidos: string
+    }
+    interface SbImpronta {
+      id: number
+      vehiculo_id: number
+      fecha: string
+      estado: string
+      usuario: SbUsuario[] | SbUsuario | null
+    }
+    interface SbInventario {
+      id: number
+      vehiculo_id: number
+      fecha: string
+      completo: boolean
+      usuario: SbUsuario[] | SbUsuario | null
+    }
+    interface SbDespachoVeh {
+      vehiculo_id: number
+      despacho_id: number
+      fecha: string
+    }
+    interface SbDespacho {
+      id: number
+      fecha: string
+      estado: string
+      usuario: SbUsuario[] | SbUsuario | null
+    }
+    interface SbVehiculo {
+      id: number
+      bin: string
+      qr_codigo: string
+      placa: string | null
+      color: string | null
+      estado: string | null
+      fecha_registro: string | null
+      created_at: string | null
+      modelo: { marca: string; modelo: string; anio: number | null; tipo: string | null } | null
+      buque: { nombre: string; identificacion: string } | null
+      usuario_recibe: { id: number; nombres: string; apellidos: string } | null
+    }
+
     try {
       const { $supabase } = useNuxtApp()
       if (!$supabase) {
@@ -418,7 +462,9 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
         return false
       }
 
-      const vehiculosQuery = ($supabase as any)
+      const sb = $supabase as SupabaseClient
+
+      const vehiculosQuery = sb
         .from('vehiculos')
         .select(
           `id, bin, qr_codigo, placa, color, estado, fecha_registro, created_at,
@@ -431,16 +477,14 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
       const [vehiculosRes, improntasRes, inventariosRes, despachoVehRes, despachosRes] =
         await Promise.all([
           vehiculosQuery,
-          ($supabase as any)
+          sb
             .from('improntas')
             .select('id, vehiculo_id, fecha, estado, usuario:usuarios(id, nombres, apellidos)'),
-          ($supabase as any)
+          sb
             .from('inventarios')
             .select('id, vehiculo_id, fecha, completo, usuario:usuarios(id, nombres, apellidos)'),
-          ($supabase as any)
-            .from('despacho_vehiculos')
-            .select('vehiculo_id, despacho_id, fecha_escaneo'),
-          ($supabase as any)
+          sb.from('recibos').select('vehiculo_id, despacho_id, fecha'),
+          sb
             .from('despachos')
             .select('id, fecha, estado, usuario:usuarios(id, nombres, apellidos)'),
         ])
@@ -477,25 +521,25 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
         return map
       }
 
-      const improntasMap = latestByVehiculo(improntasRes.data || [])
-      const inventariosMap = latestByVehiculo(inventariosRes.data || [])
+      const improntasMap = latestByVehiculo((improntasRes.data || []) as SbImpronta[])
+      const inventariosMap = latestByVehiculo((inventariosRes.data || []) as SbInventario[])
 
-      const despachoVehMap = new Map<number, { despacho_id: number; fecha_escaneo: string }>()
-      for (const dv of despachoVehRes.data || []) {
+      const despachoVehMap = new Map<number, SbDespachoVeh>()
+      for (const dv of (despachoVehRes.data || []) as SbDespachoVeh[]) {
         const current = despachoVehMap.get(dv.vehiculo_id)
         if (!current) {
           despachoVehMap.set(dv.vehiculo_id, dv)
           continue
         }
-        const currDate = new Date(current.fecha_escaneo).getTime()
-        const nextDate = new Date(dv.fecha_escaneo).getTime()
+        const currDate = new Date(current.fecha).getTime()
+        const nextDate = new Date(dv.fecha).getTime()
         if (nextDate >= currDate) {
           despachoVehMap.set(dv.vehiculo_id, dv)
         }
       }
 
-      const despachosMap = new Map<number, any>()
-      for (const d of despachosRes.data || []) {
+      const despachosMap = new Map<number, SbDespacho>()
+      for (const d of (despachosRes.data || []) as SbDespacho[]) {
         despachosMap.set(d.id, d)
       }
 
@@ -513,8 +557,13 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
         return 'recibido'
       }
 
+      const resolveUsuario = (u: SbUsuario[] | SbUsuario | null | undefined): SbUsuario | null => {
+        if (!u) return null
+        return Array.isArray(u) ? (u[0] ?? null) : u
+      }
+
       // Mapear datos de Supabase a formato local
-      vehiculos.value = data.map((v: any) => {
+      vehiculos.value = (data as unknown as SbVehiculo[]).map((v) => {
         const impronta = improntasMap.get(v.id)
         const inventario = inventariosMap.get(v.id)
         const despachoVeh = despachoVehMap.get(v.id)
@@ -524,27 +573,19 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
           impronta?.estado === 'completada' || impronta?.estado === 'completado'
         const inventarioCompletado = Boolean(inventario)
         const inventarioAprobado = inventario?.completo === true
-        const despachado =
-          (v.estado || '').toLowerCase() === 'despachado' || Boolean(despachoVeh)
+        const despachado = (v.estado || '').toLowerCase() === 'despachado' || Boolean(despachoVeh)
 
         const fechaBase = v.fecha_registro || v.created_at
-        const fechaRecepcion = fechaBase
-          ? new Date(fechaBase).toISOString().split('T')[0]
-          : ''
+        const fechaRecepcion = fechaBase ? new Date(fechaBase).toISOString().split('T')[0] : ''
         const horaRecepcion = fechaBase ? new Date(fechaBase).toLocaleTimeString('es-VE') : ''
 
-        const modelo = v.modelo || {}
+        const modelo = v.modelo || { marca: '', modelo: '', anio: null, tipo: null }
         const usuarioRecibe = v.usuario_recibe
           ? `${v.usuario_recibe.nombres || ''} ${v.usuario_recibe.apellidos || ''}`.trim()
           : ''
 
-        // DEBUG: Log modelo para ver si tiene datos
-        if (!modelo.marca && !modelo.modelo) {
-          console.warn(`[loadFromSupabase] Vehículo ${v.id} (${v.bin}) sin modelo:`, { 
-            modelo_id: v.modelo_id, 
-            modelo: v.modelo 
-          })
-        }
+        const invUsuario = resolveUsuario(inventario?.usuario)
+        const despUsuario = resolveUsuario(despacho?.usuario)
 
         const estado = toEstado(
           despachado,
@@ -572,14 +613,16 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
           improntaId: impronta?.id ? String(impronta.id) : undefined,
           improntaFolio: impronta?.id ? `IMP-${impronta.id}` : undefined,
           improntaCompletada: Boolean(improntaCompletada),
-          fechaImpronta: impronta?.fecha ? new Date(impronta.fecha).toISOString().split('T')[0] : undefined,
+          fechaImpronta: impronta?.fecha
+            ? new Date(impronta.fecha).toISOString().split('T')[0]
+            : undefined,
           inventarioCompletado,
           inventarioAprobado,
           inventarioFecha: inventario?.fecha
             ? new Date(inventario.fecha).toISOString().split('T')[0]
             : undefined,
-          inventarioInspector: inventario?.usuario
-            ? `${inventario.usuario.nombres || ''} ${inventario.usuario.apellidos || ''}`.trim()
+          inventarioInspector: invUsuario
+            ? `${invUsuario.nombres || ''} ${invUsuario.apellidos || ''}`.trim()
             : undefined,
           despachado,
           fechaDespacho: despacho?.fecha
@@ -589,8 +632,8 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
             ? new Date(despacho.fecha).toLocaleTimeString('es-VE')
             : undefined,
           lotDespacho: despacho?.id ? `LT-${String(despacho.id).padStart(4, '0')}` : undefined,
-          despachador: despacho?.usuario
-            ? `${despacho.usuario.nombres || ''} ${despacho.usuario.apellidos || ''}`.trim()
+          despachador: despUsuario
+            ? `${despUsuario.nombres || ''} ${despUsuario.apellidos || ''}`.trim()
             : undefined,
           estado,
         }
@@ -599,7 +642,7 @@ export const useVehiculoStore = defineStore('vehiculo', () => {
       console.log(`[loadFromSupabase] Cargados ${vehiculos.value.length} vehículos de Supabase`)
       persist()
       return true
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('[loadFromSupabase] Error:', err)
       return false
     }

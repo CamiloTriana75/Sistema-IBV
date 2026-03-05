@@ -33,7 +33,7 @@ interface VehiculoLote {
 // Cargar vehículos al montar
 onMounted(async () => {
   await despachadorStore.load()
-  
+
   // Si viene bin en query, pre-seleccionar ese vehículo
   const binParam = route.query.bin as string
   if (binParam) {
@@ -71,8 +71,11 @@ const progressPorcentaje = computed(() =>
 )
 
 const vehiculosFiltrados = computed(() => {
-  return vehiculosPendientes.value
+  if (filtroEstado.value === 'pendiente') return vehiculosPendientes.value
+  return vehiculosLote.value
 })
+
+const filtroEstado = ref<'todos' | 'pendiente'>('todos')
 
 /**
  * Procesa un BIN escaneado desde el QR scanner o entrada manual
@@ -118,20 +121,21 @@ const simularEscaneo = () => {
 
 const finalizarLote = async () => {
   // Despachar todos los vehículos escaneados
+  const _despachador = authStore.user?.name || 'Despachador'
   let despachosExitosos = 0
-  let despachosError = 0
+  let _despachosError = 0
 
   for (const v of vehiculosEscaneados.value) {
     const result = await despachadorStore.despacharVehiculo(v.id, loteActual)
     if (result.success) {
       despachosExitosos++
     } else {
-      despachosError++
-      console.error(`Error despachando ${v.bin}: ${result.error}`)
+      _despachosError++
+      console.error(`Error despachando ${v.bin}`)
     }
   }
 
-  // Mostrar resumen y navegar
+  // Navegar si hubo al menos un despacho exitoso
   if (despachosExitosos > 0) {
     router.push(`/despachador/planilla?lote=${loteActual}`)
   } else {

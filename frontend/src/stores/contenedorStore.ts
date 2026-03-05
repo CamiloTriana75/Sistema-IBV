@@ -1,24 +1,34 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface VehiculoContenedor {
-  cliente: string
+  id?: string
+  contenedor_id?: string
+  vin: string
   modelo: string
+  cliente: string
   bl: string
   origen: string
-  vin: string
   destino: string
   agAduanas: string
   peso: string
   volumen: string
+  codigoImpronta: string
   escaneado: boolean
   improntaId?: string
-  codigoImpronta?: string
+  /** Campos de conveniencia (no existen en BD, se llenan desde el form) */
+  marca?: string
+  anio?: string
+  color?: string
 }
 
 export interface Contenedor {
   id: string
   codigo: string
+  origen: string
+  transportista: string
+  placaCamion: string
   fechaLlegada: string
   agenteNaviero: string
   motonave: string
@@ -30,180 +40,99 @@ export interface Contenedor {
   estado: 'pendiente' | 'en_recepcion' | 'completado'
   recibidoPor: string
   observaciones: string
-  // Campos opcionales para compatibilidad
-  origen?: string
-  transportista?: string
-  placaCamion?: string
   horaLlegada?: string
 }
 
-const STORAGE_KEY = 'ibv_contenedores'
+interface ContenedorRow {
+  id: string
+  codigo: string
+  origen: string | null
+  transportista: string | null
+  placa_camion: string | null
+  fecha_llegada: string
+  hora_llegada: string | null
+  agente_naviero: string | null
+  motonave: string | null
+  viaje: string | null
+  operador_portuario: string | null
+  tipo_operacion: string | null
+  vehiculos_esperados: number
+  estado: 'pendiente' | 'en_recepcion' | 'completado'
+  recibido_por: string | null
+  observaciones: string | null
+}
 
-const INITIAL_CONTENEDORES: Contenedor[] = [
-  {
-    id: '1',
-    codigo: 'CONT-2026-0001',
-    fechaLlegada: '2026-02-23',
-    agenteNaviero: 'MSC Mediterranean Shipping Company',
-    motonave: 'MSC REEF',
-    viaje: 'EP426A',
-    operadorPortuario: 'Sociedad Portuaria Buenaventura',
-    tipoOperacion: 'TRANSITO',
-    vehiculosEsperados: 3,
-    vehiculos: [
-      {
-        cliente: 'TOYOTA',
-        modelo: 'COROLLA',
-        bl: 'MEDUBB123456',
-        origen: 'JAPON',
-        vin: '1HGBH41JXMN109186',
-        destino: 'VENEZUELA',
-        agAduanas: 'AGENCIA MARITIMA VENEZOLANA',
-        peso: '1200',
-        volumen: '15',
-        escaneado: false,
-      },
-      {
-        cliente: 'TOYOTA',
-        modelo: 'HILUX',
-        bl: 'MEDUBB123457',
-        origen: 'JAPON',
-        vin: '3VWDX7AJ5BM123456',
-        destino: 'VENEZUELA',
-        agAduanas: 'AGENCIA MARITIMA VENEZOLANA',
-        peso: '1800',
-        volumen: '20',
-        escaneado: false,
-      },
-      {
-        cliente: 'TOYOTA',
-        modelo: 'YARIS',
-        bl: 'MEDUBB123458',
-        origen: 'JAPON',
-        vin: 'JTDKN3DU5A0123789',
-        destino: 'VENEZUELA',
-        agAduanas: 'AGENCIA MARITIMA VENEZOLANA',
-        peso: '1000',
-        volumen: '12',
-        escaneado: false,
-      },
-    ],
-    estado: 'pendiente',
-    recibidoPor: '',
-    observaciones: '',
-  },
-  {
-    id: '2',
-    codigo: 'CONT-2026-0002',
-    fechaLlegada: '2026-02-23',
-    agenteNaviero: 'HAPAG-LLOYD',
-    motonave: 'TOKYO EXPRESS',
-    viaje: 'TE202W',
-    operadorPortuario: 'Sociedad Portuaria Buenaventura',
-    tipoOperacion: 'REESTIBA',
-    vehiculosEsperados: 2,
-    vehiculos: [
-      {
-        cliente: 'CHEVROLET',
-        modelo: 'SPARK',
-        bl: 'HLCUBB987654',
-        origen: 'COREA',
-        vin: 'WBA3A5G59DNP12345',
-        destino: 'VENEZUELA',
-        agAduanas: 'SERVIPORT',
-        peso: '950',
-        volumen: '10',
-        escaneado: false,
-      },
-      {
-        cliente: 'CHEVROLET',
-        modelo: 'AVEO',
-        bl: 'HLCUBB987655',
-        origen: 'COREA',
-        vin: '5YJSA1DNXDFP67890',
-        destino: 'VENEZUELA',
-        agAduanas: 'SERVIPORT',
-        peso: '1050',
-        volumen: '11',
-        escaneado: false,
-      },
-    ],
-    estado: 'pendiente',
-    recibidoPor: '',
-    observaciones: '',
-  },
-  {
-    id: '3',
-    codigo: 'CONT-2026-0003',
-    fechaLlegada: '2026-02-22',
-    agenteNaviero: 'MAERSK LINE',
-    motonave: 'MAERSK ATLANTA',
-    viaje: 'MA305E',
-    operadorPortuario: 'Sociedad Portuaria Buenaventura',
-    tipoOperacion: 'TRANSITO',
-    vehiculosEsperados: 2,
-    vehiculos: [
-      {
-        cliente: 'FORD',
-        modelo: 'EXPLORER',
-        bl: 'MAEUBB456789',
-        origen: 'USA',
-        vin: '1FADP3F29JL234567',
-        destino: 'VENEZUELA',
-        agAduanas: 'AGENCIA MARITIMA DEL CARIBE',
-        peso: '2200',
-        volumen: '25',
-        escaneado: true,
-        improntaId: '1',
-        codigoImpronta: 'IMP-VH-006',
-      },
-      {
-        cliente: 'FORD',
-        modelo: 'ESCAPE',
-        bl: 'MAEUBB456790',
-        origen: 'USA',
-        vin: '3FA6P0HD7LR890123',
-        destino: 'VENEZUELA',
-        agAduanas: 'AGENCIA MARITIMA DEL CARIBE',
-        peso: '1700',
-        volumen: '18',
-        escaneado: true,
-        improntaId: '2',
-        codigoImpronta: 'IMP-VH-007',
-      },
-    ],
-    estado: 'completado',
-    recibidoPor: 'María Recibidora',
-    observaciones: 'Recepción sin novedades.',
-  },
-]
+interface VehiculoContenedorRow {
+  id: string
+  contenedor_id: string
+  vin: string
+  modelo: string
+  cliente: string | null
+  bl: string | null
+  origen: string | null
+  destino: string | null
+  ag_aduanas: string | null
+  peso: string | null
+  volumen: string | null
+  codigo_impronta: string | null
+  escaneado: boolean
+  impronta_id: string | null
+  created_at: string | null
+  updated_at: string | null
+}
+
+function mapRowToContenedor(
+  row: ContenedorRow,
+  vehiculosRows: VehiculoContenedorRow[] = []
+): Contenedor {
+  return {
+    id: row.id,
+    codigo: row.codigo,
+    origen: row.origen || '',
+    transportista: row.transportista || '',
+    placaCamion: row.placa_camion || '',
+    fechaLlegada: row.fecha_llegada,
+    horaLlegada: row.hora_llegada?.substring(0, 5) || '',
+    agenteNaviero: row.agente_naviero || '',
+    motonave: row.motonave || '',
+    viaje: row.viaje || '',
+    operadorPortuario: row.operador_portuario || '',
+    tipoOperacion: (row.tipo_operacion as 'TRANSITO' | 'REESTIBA') || 'TRANSITO',
+    vehiculosEsperados: row.vehiculos_esperados,
+    vehiculos: vehiculosRows.map(mapRowToVehiculo),
+    estado: row.estado,
+    recibidoPor: row.recibido_por || '',
+    observaciones: row.observaciones || '',
+  }
+}
+
+function mapRowToVehiculo(row: VehiculoContenedorRow): VehiculoContenedor {
+  return {
+    id: row.id,
+    contenedor_id: row.contenedor_id,
+    vin: row.vin,
+    modelo: row.modelo,
+    cliente: row.cliente || '',
+    bl: row.bl || '',
+    origen: row.origen || '',
+    destino: row.destino || '',
+    agAduanas: row.ag_aduanas || '',
+    peso: row.peso || '',
+    volumen: row.volumen || '',
+    codigoImpronta: row.codigo_impronta || '',
+    escaneado: row.escaneado,
+    improntaId: row.impronta_id || undefined,
+  }
+}
 
 export const useContenedorStore = defineStore('contenedor', () => {
+  const { $supabase } = useNuxtApp()
+  const supabase = $supabase as SupabaseClient
+
   // State
   const contenedores = ref<Contenedor[]>([])
   const loading = ref(false)
-
-  // Initialize
-  const init = () => {
-    if (typeof window === 'undefined') return
-    const stored = localStorage.getItem(STORAGE_KEY)
-    if (stored) {
-      try {
-        contenedores.value = JSON.parse(stored)
-      } catch {
-        contenedores.value = [...INITIAL_CONTENEDORES]
-        persist()
-      }
-    } else {
-      contenedores.value = JSON.parse(JSON.stringify(INITIAL_CONTENEDORES))
-      persist()
-    }
-  }
-
-  const persist = () => {
-    if (typeof window === 'undefined') return
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(contenedores.value))
-  }
+  const error = ref<string | null>(null)
 
   // Computed
   const totalContenedores = computed(() => contenedores.value.length)
@@ -223,7 +152,49 @@ export const useContenedorStore = defineStore('contenedor', () => {
       .reduce((sum, c) => sum + c.vehiculosEsperados, 0)
   })
 
-  // Actions
+  // ===== Fetch all contenedores with their vehiculos =====
+  const fetchContenedores = async () => {
+    loading.value = true
+    error.value = null
+    try {
+      const { data: contRows, error: contErr } = await supabase
+        .from('contenedores')
+        .select('*')
+        .order('fecha_llegada', { ascending: false })
+
+      if (contErr) throw contErr
+
+      const ids = (contRows || []).map((c: ContenedorRow) => c.id)
+      let vehRows: VehiculoContenedorRow[] = []
+      if (ids.length > 0) {
+        const { data, error: vehErr } = await supabase
+          .from('vehiculos_contenedor')
+          .select('*')
+          .in('contenedor_id', ids)
+          .order('created_at', { ascending: true })
+
+        if (vehErr) throw vehErr
+        vehRows = data || []
+      }
+
+      const vehMap: Record<string, VehiculoContenedorRow[]> = {}
+      for (const v of vehRows) {
+        if (!vehMap[v.contenedor_id]) vehMap[v.contenedor_id] = []
+        vehMap[v.contenedor_id].push(v)
+      }
+
+      contenedores.value = (contRows || []).map((row: ContenedorRow) =>
+        mapRowToContenedor(row, vehMap[row.id] || [])
+      )
+    } catch (err: unknown) {
+      error.value = err instanceof Error ? err.message : 'Error al cargar contenedores'
+      console.error('Error fetchContenedores:', err)
+    } finally {
+      loading.value = false
+    }
+  }
+
+  // ===== Getters =====
   const getById = (id: string) => contenedores.value.find((c) => c.id === id)
 
   const getByCodigo = (codigo: string): Contenedor | undefined => {
@@ -252,70 +223,181 @@ export const useContenedorStore = defineStore('contenedor', () => {
     return undefined
   }
 
-  const iniciarRecepcion = (id: string, recibidor: string) => {
+  // ===== Actions =====
+  const iniciarRecepcion = async (id: string, recibidor: string) => {
+    const { error: err } = await supabase
+      .from('contenedores')
+      .update({ estado: 'en_recepcion', recibido_por: recibidor })
+      .eq('id', id)
+
+    if (err) {
+      console.error('Error iniciarRecepcion:', err)
+      return
+    }
+
     const cont = contenedores.value.find((c) => c.id === id)
     if (cont) {
       cont.estado = 'en_recepcion'
       cont.recibidoPor = recibidor
-      persist()
     }
   }
 
-  const marcarVehiculoEscaneado = (
+  const marcarVehiculoEscaneado = async (
     contenedorId: string,
     codigoImpronta: string,
     improntaId?: string
   ) => {
     const cont = contenedores.value.find((c) => c.id === contenedorId)
-    if (cont) {
-      const veh = cont.vehiculos.find(
-        (v) => v.codigoImpronta && v.codigoImpronta.toLowerCase() === codigoImpronta.toLowerCase()
-      )
-      if (veh) {
-        veh.escaneado = true
-        if (improntaId) veh.improntaId = improntaId
-        // Check if all vehicles are scanned
-        if (cont.vehiculos.every((v) => v.escaneado)) {
-          cont.estado = 'completado'
-        }
-        persist()
-      }
+    if (!cont) return
+
+    const veh = cont.vehiculos.find(
+      (v) => v.codigoImpronta.toLowerCase() === codigoImpronta.toLowerCase()
+    )
+    if (!veh || !veh.id) return
+
+    const updateData: Record<string, string | boolean> = { escaneado: true }
+    if (improntaId) updateData.impronta_id = improntaId
+
+    const { error: err } = await supabase
+      .from('vehiculos_contenedor')
+      .update(updateData)
+      .eq('id', veh.id)
+
+    if (err) {
+      console.error('Error marcarVehiculoEscaneado:', err)
+      return
+    }
+
+    veh.escaneado = true
+    if (improntaId) veh.improntaId = improntaId
+
+    if (cont.vehiculos.every((v) => v.escaneado)) {
+      await completarRecepcion(contenedorId)
     }
   }
 
-  const completarRecepcion = (id: string, observaciones?: string) => {
+  const completarRecepcion = async (id: string, observaciones?: string) => {
+    const updateData: Record<string, string> = { estado: 'completado' }
+    if (observaciones) updateData.observaciones = observaciones
+
+    const { error: err } = await supabase.from('contenedores').update(updateData).eq('id', id)
+
+    if (err) {
+      console.error('Error completarRecepcion:', err)
+      return
+    }
+
     const cont = contenedores.value.find((c) => c.id === id)
     if (cont) {
       cont.estado = 'completado'
       if (observaciones) cont.observaciones = observaciones
-      persist()
     }
   }
 
-  const updateContenedor = (contenedor: Contenedor) => {
-    const idx = contenedores.value.findIndex((c) => c.id === contenedor.id)
-    if (idx !== -1) {
-      contenedores.value[idx] = contenedor
-      persist()
+  // ===== Crear contenedor al registrar llegada =====
+  const crearContenedor = async (data: {
+    codigo: string
+    origen: string
+    transportista: string
+    placaCamion: string
+    fechaLlegada: string
+    horaLlegada: string
+    vehiculosEsperados: number
+    recibidoPor?: string
+  }): Promise<Contenedor | null> => {
+    const { data: row, error: err } = await supabase
+      .from('contenedores')
+      .insert({
+        codigo: data.codigo,
+        origen: data.origen,
+        transportista: data.transportista,
+        placa_camion: data.placaCamion,
+        fecha_llegada: data.fechaLlegada,
+        hora_llegada: data.horaLlegada || null,
+        vehiculos_esperados: data.vehiculosEsperados,
+        recibido_por: data.recibidoPor || null,
+        estado: 'en_recepcion',
+      })
+      .select()
+      .single()
+
+    if (err) {
+      console.error('Error crearContenedor:', err)
+      return null
     }
+
+    const nuevo = mapRowToContenedor(row, [])
+    contenedores.value.unshift(nuevo)
+    return nuevo
   }
 
-  const agregarContenedor = (contenedor: Contenedor) => {
-    contenedores.value.push(contenedor)
-    persist()
+  // ===== Agregar vehículo escaneado al contenedor =====
+  const agregarVehiculoEscaneado = async (
+    contenedorId: string,
+    data: {
+      vin: string
+      modelo: string
+      cliente?: string
+      bl?: string
+      origen?: string
+      destino?: string
+      codigoImpronta: string
+      /** Campos extra para mantener en memoria */
+      marca?: string
+      anio?: string
+      color?: string
+    }
+  ): Promise<VehiculoContenedor | null> => {
+    const { data: row, error: err } = await supabase
+      .from('vehiculos_contenedor')
+      .insert({
+        contenedor_id: contenedorId,
+        vin: data.vin,
+        modelo: data.modelo,
+        cliente: data.cliente || '',
+        bl: data.bl || '',
+        origen: data.origen || '',
+        destino: data.destino || '',
+        codigo_impronta: data.codigoImpronta,
+        escaneado: true,
+      })
+      .select()
+      .single()
+
+    if (err) {
+      console.error('Error agregarVehiculoEscaneado:', err)
+      return null
+    }
+
+    const nuevoVeh = mapRowToVehiculo(row)
+    // Preservar campos extra que no vienen de la BD
+    if (data.marca) nuevoVeh.marca = data.marca
+    if (data.anio) nuevoVeh.anio = data.anio
+    if (data.color) nuevoVeh.color = data.color
+    const cont = contenedores.value.find((c) => c.id === contenedorId)
+    if (cont) {
+      cont.vehiculos.push(nuevoVeh)
+      // Expand expected count if we scan more than expected
+      if (cont.vehiculos.length > cont.vehiculosEsperados) {
+        cont.vehiculosEsperados = cont.vehiculos.length
+      }
+    }
+    return nuevoVeh
   }
 
   // Init on creation
-  init()
+  fetchContenedores()
 
   return {
     contenedores,
     loading,
+    error,
     totalContenedores,
     pendientes,
     enRecepcion,
     completados,
     totalVehiculosHoy,
+    fetchContenedores,
     getById,
     getByCodigo,
     buscarVehiculoPorCodigo,
@@ -323,9 +405,7 @@ export const useContenedorStore = defineStore('contenedor', () => {
     iniciarRecepcion,
     marcarVehiculoEscaneado,
     completarRecepcion,
-    updateContenedor,
-    agregarContenedor,
-    init,
-    persist,
+    crearContenedor,
+    agregarVehiculoEscaneado,
   }
 })

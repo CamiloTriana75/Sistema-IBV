@@ -41,11 +41,36 @@ const features = [
 const roles = ['Administrador', 'Recibidor', 'Inventario', 'Despachador', 'Portería']
 
 const demoCredentials = [
-  { email: 'admin1@ibv.com', label: 'Administrador', color: 'from-violet-500 to-purple-600', password: 'Admin@2026Secure' },
-  { email: 'recibidor1@ibv.com', label: 'Recibidor', color: 'from-cyan-500 to-blue-600', password: 'Recibidor@2026Secure' },
-  { email: 'inventario1@ibv.com', label: 'Inventario', color: 'from-emerald-500 to-green-600', password: 'Inventario@2026Secure' },
-  { email: 'despacho1@ibv.com', label: 'Despachador', color: 'from-amber-500 to-orange-600', password: 'Despachador@2026Secure' },
-  { email: 'porteria1@ibv.com', label: 'Portería', color: 'from-rose-500 to-red-600', password: 'Porteria@2026Secure' },
+  {
+    email: 'admin1@ibv.com',
+    label: 'Administrador',
+    color: 'from-violet-500 to-purple-600',
+    password: 'Admin@2026Secure',
+  },
+  {
+    email: 'recibidor1@ibv.com',
+    label: 'Recibidor',
+    color: 'from-cyan-500 to-blue-600',
+    password: 'Recibidor@2026Secure',
+  },
+  {
+    email: 'inventario1@ibv.com',
+    label: 'Inventario',
+    color: 'from-emerald-500 to-green-600',
+    password: 'Inventario@2026Secure',
+  },
+  {
+    email: 'despacho1@ibv.com',
+    label: 'Despachador',
+    color: 'from-amber-500 to-orange-600',
+    password: 'Despachador@2026Secure',
+  },
+  {
+    email: 'porteria1@ibv.com',
+    label: 'Portería',
+    color: 'from-rose-500 to-red-600',
+    password: 'Porteria@2026Secure',
+  },
 ]
 
 const fillDemo = (demo: (typeof demoCredentials)[0], idx: number) => {
@@ -58,7 +83,7 @@ const fillDemo = (demo: (typeof demoCredentials)[0], idx: number) => {
   gsap.fromTo(
     '.js-submit-btn',
     { scale: 1 },
-    { scale: 1.04, duration: 0.15, yoyo: true, repeat: 1 },
+    { scale: 1.04, duration: 0.15, yoyo: true, repeat: 1 }
   )
 }
 
@@ -71,11 +96,7 @@ const handleLogin = async () => {
     await router.push(redirect)
   } catch (e: unknown) {
     error.value = (e as Error).message || 'Credenciales inválidas'
-    gsap.fromTo(
-      '.js-card-inner',
-      { x: -8 },
-      { x: 0, duration: 0.5, ease: 'elastic.out(1, 0.3)' },
-    )
+    gsap.fromTo('.js-card-inner', { x: -8 }, { x: 0, duration: 0.5, ease: 'elastic.out(1, 0.3)' })
   } finally {
     loading.value = false
   }
@@ -87,22 +108,52 @@ onMounted(() => {
     const main = gsap.timeline({ defaults: { ease: 'power4.out' } })
     main
       .fromTo('.js-hero', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.6 })
-      .fromTo('.js-title', { autoAlpha: 0, y: 30 }, { autoAlpha: 1, y: 0, duration: 0.7, clearProps: 'y' }, '-=0.3')
+      .fromTo(
+        '.js-title',
+        { autoAlpha: 0, y: 30 },
+        { autoAlpha: 1, y: 0, duration: 0.7, clearProps: 'y' },
+        '-=0.3'
+      )
       .fromTo('.js-subtitle', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.5 }, '-=0.3')
-      .fromTo('.js-stat', { autoAlpha: 0, y: 20 }, { autoAlpha: 1, y: 0, stagger: 0.1, duration: 0.5, clearProps: 'y' }, '-=0.2')
-      .fromTo('.js-feature', { autoAlpha: 0, x: -20 }, { autoAlpha: 1, x: 0, stagger: 0.1, duration: 0.5, clearProps: 'x' }, '-=0.3')
-      .fromTo('.js-chip', { autoAlpha: 0, scale: 0.7 }, { autoAlpha: 1, scale: 1, stagger: 0.06, duration: 0.4, clearProps: 'scale' }, '-=0.3')
+      .fromTo(
+        '.js-stat',
+        { autoAlpha: 0, y: 20 },
+        { autoAlpha: 1, y: 0, stagger: 0.1, duration: 0.5, clearProps: 'y' },
+        '-=0.2'
+      )
+      .fromTo(
+        '.js-feature',
+        { autoAlpha: 0, x: -20 },
+        { autoAlpha: 1, x: 0, stagger: 0.1, duration: 0.5, clearProps: 'x' },
+        '-=0.3'
+      )
+      .fromTo(
+        '.js-chip',
+        { autoAlpha: 0, scale: 0.7 },
+        { autoAlpha: 1, scale: 1, stagger: 0.06, duration: 0.4, clearProps: 'scale' },
+        '-=0.3'
+      )
 
     // ─── Right panel timeline ───
     const card = gsap.timeline({ defaults: { ease: 'power3.out' }, delay: 0.2 })
     card
       .fromTo('.js-back', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4 })
       .fromTo('.js-mobile-logo', { autoAlpha: 0 }, { autoAlpha: 1, duration: 0.4 }, '<')
-      .fromTo('.js-card', { autoAlpha: 0, y: 40 }, { autoAlpha: 1, y: 0, duration: 0.8, clearProps: 'y' }, '-=0.2')
-      .fromTo('.js-demo', { autoAlpha: 0, y: 16 }, { autoAlpha: 1, y: 0, duration: 0.5, clearProps: 'y' }, '-=0.4')
+      .fromTo(
+        '.js-card',
+        { autoAlpha: 0, y: 40 },
+        { autoAlpha: 1, y: 0, duration: 0.8, clearProps: 'y' },
+        '-=0.2'
+      )
+      .fromTo(
+        '.js-demo',
+        { autoAlpha: 0, y: 16 },
+        { autoAlpha: 1, y: 0, duration: 0.5, clearProps: 'y' },
+        '-=0.4'
+      )
 
     // ─── Floating orbs ───
-    gsap.utils.toArray<HTMLElement>('.js-orb').forEach((el, i) => {
+    gsap.utils.toArray<HTMLElement>('.js-orb').forEach((el: HTMLElement, i: number) => {
       gsap.to(el, {
         y: `random(-14, 14)`,
         x: `random(-8, 8)`,
@@ -142,10 +193,18 @@ onUnmounted(() => {
       />
 
       <!-- Orbs decorativos -->
-      <div class="js-orb absolute -top-24 -left-24 w-96 h-96 bg-white/[0.07] rounded-full blur-xl" />
-      <div class="js-orb absolute -bottom-10 right-10 w-[420px] h-[420px] bg-cyan-400/[0.08] rounded-full blur-2xl" />
-      <div class="js-orb absolute top-1/3 left-1/3 w-56 h-56 bg-indigo-300/[0.06] rounded-full blur-xl" />
-      <div class="js-orb absolute bottom-20 left-16 w-32 h-32 bg-sky-200/[0.08] rounded-full blur-lg" />
+      <div
+        class="js-orb absolute -top-24 -left-24 w-96 h-96 bg-white/[0.07] rounded-full blur-xl"
+      />
+      <div
+        class="js-orb absolute -bottom-10 right-10 w-[420px] h-[420px] bg-cyan-400/[0.08] rounded-full blur-2xl"
+      />
+      <div
+        class="js-orb absolute top-1/3 left-1/3 w-56 h-56 bg-indigo-300/[0.06] rounded-full blur-xl"
+      />
+      <div
+        class="js-orb absolute bottom-20 left-16 w-32 h-32 bg-sky-200/[0.08] rounded-full blur-lg"
+      />
 
       <!-- Contenido superior -->
       <div class="relative z-10">
@@ -168,7 +227,9 @@ onUnmounted(() => {
           </div>
         </div>
 
-        <h1 class="js-title text-4xl xl:text-5xl font-extrabold text-white leading-[1.1] tracking-tight">
+        <h1
+          class="js-title text-4xl xl:text-5xl font-extrabold text-white leading-[1.1] tracking-tight"
+        >
           Flujo total
           <br />
           <span class="bg-gradient-to-r from-cyan-200 to-sky-100 bg-clip-text text-transparent">
@@ -181,15 +242,21 @@ onUnmounted(() => {
 
         <!-- Stats -->
         <div class="flex gap-3 mt-8">
-          <div class="js-stat flex-1 bg-white/[0.08] backdrop-blur-sm rounded-2xl py-3 border border-white/[0.15] hover:bg-white/[0.14] transition-colors cursor-default text-center">
+          <div
+            class="js-stat flex-1 bg-white/[0.08] backdrop-blur-sm rounded-2xl py-3 border border-white/[0.15] hover:bg-white/[0.14] transition-colors cursor-default text-center"
+          >
             <p class="text-white text-xl font-bold leading-none">100%</p>
             <p class="text-sky-200/80 text-xs font-medium mt-1">Trazabilidad</p>
           </div>
-          <div class="js-stat flex-1 bg-white/[0.08] backdrop-blur-sm rounded-2xl py-3 border border-white/[0.15] hover:bg-white/[0.14] transition-colors cursor-default text-center">
+          <div
+            class="js-stat flex-1 bg-white/[0.08] backdrop-blur-sm rounded-2xl py-3 border border-white/[0.15] hover:bg-white/[0.14] transition-colors cursor-default text-center"
+          >
             <p class="text-white text-xl font-bold leading-none">24/7</p>
             <p class="text-sky-200/80 text-xs font-medium mt-1">Operativo</p>
           </div>
-          <div class="js-stat flex-1 bg-white/[0.08] backdrop-blur-sm rounded-2xl py-3 border border-white/[0.15] hover:bg-white/[0.14] transition-colors cursor-default text-center">
+          <div
+            class="js-stat flex-1 bg-white/[0.08] backdrop-blur-sm rounded-2xl py-3 border border-white/[0.15] hover:bg-white/[0.14] transition-colors cursor-default text-center"
+          >
             <p class="text-white text-xl font-bold leading-none">5</p>
             <p class="text-sky-200/80 text-xs font-medium mt-1">Módulos</p>
           </div>
@@ -208,13 +275,20 @@ onUnmounted(() => {
             :class="feat.color"
           >
             <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="feat.icon" />
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                :d="feat.icon"
+              />
             </svg>
           </div>
           <div class="flex-1 min-w-0">
             <span class="text-white text-sm font-medium">{{ feat.label }}</span>
           </div>
-          <span class="text-[10px] uppercase tracking-widest text-sky-300/70 font-semibold shrink-0 ml-auto pl-6">
+          <span
+            class="text-[10px] uppercase tracking-widest text-sky-300/70 font-semibold shrink-0 ml-auto pl-6"
+          >
             {{ feat.tag }}
           </span>
         </div>
@@ -241,8 +315,12 @@ onUnmounted(() => {
     <div
       class="w-full lg:w-1/2 flex flex-col items-center justify-center p-6 sm:p-10 xl:p-16 bg-gradient-to-bl from-slate-50 via-white to-sky-50/40 relative"
     >
-      <div class="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-sky-400/[0.04] to-transparent rounded-full blur-3xl -translate-y-1/3 translate-x-1/3" />
-      <div class="absolute bottom-0 left-0 w-72 h-72 bg-gradient-to-tr from-blue-500/[0.06] to-transparent rounded-full blur-3xl translate-y-1/3 -translate-x-1/4" />
+      <div
+        class="absolute top-0 right-0 w-96 h-96 bg-gradient-to-bl from-sky-400/[0.04] to-transparent rounded-full blur-3xl -translate-y-1/3 translate-x-1/3"
+      />
+      <div
+        class="absolute bottom-0 left-0 w-72 h-72 bg-gradient-to-tr from-blue-500/[0.06] to-transparent rounded-full blur-3xl translate-y-1/3 -translate-x-1/4"
+      />
 
       <div class="w-full max-w-[420px] mx-auto relative z-10">
         <!-- Botón volver -->
@@ -256,14 +334,21 @@ onUnmounted(() => {
             stroke="currentColor"
             viewBox="0 0 24 24"
           >
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M15 19l-7-7 7-7"
+            />
           </svg>
           Volver al inicio
         </button>
 
         <!-- Logo mobile -->
         <div class="js-mobile-logo flex items-center gap-3 mb-8 lg:hidden">
-          <div class="w-11 h-11 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
+          <div
+            class="w-11 h-11 bg-gradient-to-br from-primary-600 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25"
+          >
             <svg class="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
                 stroke-linecap="round"
@@ -310,8 +395,15 @@ onUnmounted(() => {
                   v-if="error"
                   class="flex items-center gap-3 p-4 mb-6 bg-red-50 border border-red-200 rounded-2xl text-red-700 text-sm font-medium"
                 >
-                  <div class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0">
-                    <svg class="w-4 h-4 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div
+                    class="w-8 h-8 rounded-full bg-red-100 flex items-center justify-center shrink-0"
+                  >
+                    <svg
+                      class="w-4 h-4 text-red-500"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         stroke-linecap="round"
                         stroke-linejoin="round"
@@ -328,13 +420,27 @@ onUnmounted(() => {
               <form class="space-y-5" @submit.prevent="handleLogin">
                 <!-- Email -->
                 <div class="group">
-                  <label class="block text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2 group-focus-within:text-primary-600 transition-colors">
+                  <label
+                    class="block text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2 group-focus-within:text-primary-600 transition-colors"
+                  >
                     Correo electrónico
                   </label>
                   <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-300 group-focus-within:text-primary-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
+                    <div
+                      class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+                    >
+                      <svg
+                        class="w-5 h-5 text-gray-300 group-focus-within:text-primary-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207"
+                        />
                       </svg>
                     </div>
                     <input
@@ -350,13 +456,27 @@ onUnmounted(() => {
 
                 <!-- Password -->
                 <div class="group">
-                  <label class="block text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2 group-focus-within:text-primary-600 transition-colors">
+                  <label
+                    class="block text-xs uppercase tracking-wider font-semibold text-gray-500 mb-2 group-focus-within:text-primary-600 transition-colors"
+                  >
                     Contraseña
                   </label>
                   <div class="relative">
-                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg class="w-5 h-5 text-gray-300 group-focus-within:text-primary-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                    <div
+                      class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none"
+                    >
+                      <svg
+                        class="w-5 h-5 text-gray-300 group-focus-within:text-primary-500 transition-colors"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                        />
                       </svg>
                     </div>
                     <input
@@ -372,12 +492,39 @@ onUnmounted(() => {
                       class="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-300 hover:text-gray-500 transition-colors"
                       @click="showPass = !showPass"
                     >
-                      <svg v-if="!showPass" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                      <svg
+                        v-if="!showPass"
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                        />
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                        />
                       </svg>
-                      <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                      <svg
+                        v-else
+                        class="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21"
+                        />
                       </svg>
                     </button>
                   </div>
@@ -390,11 +537,27 @@ onUnmounted(() => {
                   class="js-submit-btn w-full flex items-center justify-center gap-2.5 py-3.5 bg-gradient-to-r from-primary-600 to-primary-700 hover:from-primary-700 hover:to-primary-600 text-white font-bold rounded-2xl transition-all duration-300 shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/40 active:scale-[0.98] text-sm tracking-wide disabled:opacity-60 disabled:cursor-not-allowed"
                 >
                   <svg v-if="loading" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
-                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    <circle
+                      class="opacity-25"
+                      cx="12"
+                      cy="12"
+                      r="10"
+                      stroke="currentColor"
+                      stroke-width="4"
+                    />
+                    <path
+                      class="opacity-75"
+                      fill="currentColor"
+                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                    />
                   </svg>
                   <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1"
+                    />
                   </svg>
                   {{ loading ? 'Verificando...' : 'Iniciar sesión' }}
                 </button>
@@ -405,7 +568,9 @@ onUnmounted(() => {
 
         <!-- ─── Credenciales demo ─── -->
         <div class="js-demo mt-8">
-          <p class="text-[10px] text-gray-400 font-semibold uppercase tracking-[0.2em] mb-3 text-center">
+          <p
+            class="text-[10px] text-gray-400 font-semibold uppercase tracking-[0.2em] mb-3 text-center"
+          >
             Acceso rápido de prueba
           </p>
           <div class="grid grid-cols-1 gap-1.5">
@@ -428,13 +593,25 @@ onUnmounted(() => {
                 {{ demo.label[0] }}
               </div>
               <div class="flex-1 text-left">
-                <p class="text-xs font-semibold text-gray-700 group-hover:text-primary-700 transition-colors">
+                <p
+                  class="text-xs font-semibold text-gray-700 group-hover:text-primary-700 transition-colors"
+                >
                   {{ demo.label }}
                 </p>
                 <p class="text-[10px] text-gray-400 font-medium">{{ demo.email }}</p>
               </div>
-              <svg class="w-4 h-4 text-gray-300 group-hover:text-primary-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+              <svg
+                class="w-4 h-4 text-gray-300 group-hover:text-primary-400 transition-colors"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M9 5l7 7-7 7"
+                />
               </svg>
             </button>
           </div>

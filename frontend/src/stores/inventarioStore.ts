@@ -54,44 +54,54 @@ export interface InventarioVehiculo {
   estado: EstadoVehiculo
 }
 
-interface VehiculoRow {
-  id: number
-  bin: string
-  qr_codigo: string
+/**
+ * Fila de improntas_registro — tabla real donde el recibidor/impronta guarda datos.
+ */
+interface ImprontaRegistroRow {
+  id: string
+  folio: string
+  vin: string
+  placa: string | null
+  marca: string
+  modelo: string
+  anio: string | null
   color: string | null
-  estado: string | null
-  fecha_registro: string | null
+  km: string | null
+  cliente: string | null
+  condicion: string | null
+  estado: string
+  creado_por: string | null
+  fecha_creacion: string
+  hora_creacion: string | null
   created_at: string | null
   updated_at: string | null
-  modelo?:
-    | { marca: string; modelo: string; anio: number | null; tipo: string | null }
-    | Array<{ marca: string; modelo: string; anio: number | null; tipo: string | null }>
-    | null
-  improntas?: Array<{ id: number; estado: string | null; fecha: string | null; created_at: string | null }>
-  inventarios?: Array<{
-    id: number
-    completo: boolean
-    fecha: string | null
-    checklist_json: any
-    usuario?: { nombres: string; apellidos: string } | null
-  }>
+}
+
+/**
+ * Fila ligera de la tabla vehiculos (solo para obtener el ID numérico usado como FK
+ * en la tabla inventarios).
+ */
+interface VehiculoLegacyRow {
+  id: number
+  bin: string
+  estado: string | null
+}
+
+/**
+ * Fila de la tabla inventarios.
+ */
+interface InventarioRow {
+  id: number
+  vehiculo_id: number
+  completo: boolean
+  fecha: string | null
+  checklist_json: Record<string, unknown> | null
+  usuario?: { nombres: string; apellidos: string } | null
 }
 
 const getSupabase = (): SupabaseClient => {
   const { $supabase } = useNuxtApp()
   return $supabase as SupabaseClient
-}
-
-const normalizeEstado = (value?: string | null) => (value || '').toLowerCase()
-
-const isImprontaCompletada = (estado?: string | null) => {
-  const normalized = normalizeEstado(estado)
-  return normalized === 'completada' || normalized === 'revisada'
-}
-
-const isImprontaRechazada = (estado?: string | null) => {
-  const normalized = normalizeEstado(estado)
-  return normalized === 'rechazado' || normalized === 'rechazada'
 }
 
 const toDateOnly = (value?: string | null) => {
@@ -104,7 +114,7 @@ const calcularEstado = (v: Omit<InventarioVehiculo, 'estado'>): EstadoVehiculo =
   if (v.inventarioAprobado && v.improntaCompletada) return 'listo_despacho'
   if (v.inventarioCompletado) return 'inventario_pendiente'
   if (v.improntaCompletada) return 'inventario_pendiente'
-  if (v.improntaRechazada) return 'recibido'  // impronta rechazada → vuelve al inicio
+  if (v.improntaRechazada) return 'recibido'
   if (v.improntaId) return 'impronta_pendiente'
   return 'recibido'
 }
@@ -116,8 +126,8 @@ export const useInventarioStore = defineStore('inventario', () => {
 
   const total = computed(() => vehiculos.value.length)
   const conImpronta = computed(() => vehiculos.value.filter((v) => v.improntaCompletada).length)
-  const listosDespacho = computed(() =>
-    vehiculos.value.filter((v) => v.inventarioAprobado && !v.despachado).length
+  const listosDespacho = computed(
+    () => vehiculos.value.filter((v) => v.inventarioAprobado && !v.despachado).length
   )
   const despachados = computed(() => vehiculos.value.filter((v) => v.despachado).length)
   const pendientesInventario = computed(
@@ -130,75 +140,21 @@ export const useInventarioStore = defineStore('inventario', () => {
     vehiculos.value.find((v) => v.vin.toLowerCase() === vin.toLowerCase())
 
   const getListosParaDespacho = computed(() =>
-    vehiculos.value.filter((v) => v.improntaCompletada && v.inventarioAprobado && !v.despachado && !v.improntaRechazada)
+    vehiculos.value.filter(
+      (v) => v.improntaCompletada && v.inventarioAprobado && !v.despachado && !v.improntaRechazada
+    )
   )
 
   const getPendientesInventario = computed(() =>
-    vehiculos.value.filter((v) => v.improntaCompletada && !v.inventarioAprobado && !v.despachado && !v.improntaRechazada)
+    vehiculos.value.filter(
+      (v) => v.improntaCompletada && !v.inventarioAprobado && !v.despachado && !v.improntaRechazada
+    )
   )
 
-  const mapVehiculo = (row: VehiculoRow): InventarioVehiculo => {
-    const improntas = Array.isArray(row.improntas) ? row.improntas : []
-    const inventarios = Array.isArray(row.inventarios) ? row.inventarios : []
-
-    const improntaLatest = [...improntas].sort((a, b) => {
-      return new Date(b.fecha || b.created_at || 0).getTime() - new Date(a.fecha || a.created_at || 0).getTime()
-    })[0]
-
-    const inventarioLatest = [...inventarios].sort((a, b) => {
-      return new Date(b.fecha || 0).getTime() - new Date(a.fecha || 0).getTime()
-    })[0]
-
-    const vehiculoEstadoDB = normalizeEstado(row.estado)
-    const vehiculoRechazadoDB = vehiculoEstadoDB === 'rechazado'
-
-    const improntaRechazada = vehiculoRechazadoDB || (improntaLatest ? isImprontaRechazada(improntaLatest.estado) : false)
-    const improntaCompletada = !improntaRechazada && improntaLatest
-      ? isImprontaCompletada(improntaLatest.estado)
-      : false
-    const inventarioCompletado = !!inventarioLatest
-    const inventarioAprobado = inventarioLatest?.completo ?? false
-
-    const inspectorName = inventarioLatest?.usuario
-      ? `${inventarioLatest.usuario.nombres} ${inventarioLatest.usuario.apellidos}`.trim()
-      : ''
-
-    const resultado = inventarioLatest?.checklist_json?.resumen as
-      | InventarioResultado
-      | undefined
-
-    const modelo = Array.isArray(row.modelo) ? row.modelo[0] : row.modelo
-
-    const vehiculoBase: Omit<InventarioVehiculo, 'estado'> = {
-      id: row.id,
-      vin: row.bin || row.qr_codigo,
-      placa: '',
-      marca: modelo?.marca || '—',
-      modelo: modelo?.modelo || '',
-      anio: modelo?.anio ? String(modelo.anio) : '',
-      color: row.color || '—',
-      cliente: '',
-      fechaRecepcion: toDateOnly(row.fecha_registro || row.created_at),
-      horaRecepcion: '',
-      improntaId: improntaLatest ? String(improntaLatest.id) : undefined,
-      improntaFolio: improntaLatest ? `IMP-${String(improntaLatest.id).padStart(4, '0')}` : undefined,
-      improntaCompletada,
-      improntaRechazada,
-      fechaImpronta: improntaLatest?.fecha ? toDateOnly(improntaLatest.fecha) : undefined,
-      inventarioCompletado,
-      inventarioAprobado,
-      inventarioFecha: inventarioLatest?.fecha ? toDateOnly(inventarioLatest.fecha) : undefined,
-      inventarioInspector: inspectorName || undefined,
-      inventarioResultado: resultado,
-      despachado: normalizeEstado(row.estado) === 'despachado',
-    }
-
-    return {
-      ...vehiculoBase,
-      estado: calcularEstado(vehiculoBase),
-    }
-  }
-
+  // =========================================================================
+  // load() — lee de improntas_registro (fuente real) y cruza con vehiculos +
+  //          inventarios para saber el estado de inventario de cada vehículo.
+  // =========================================================================
   const load = async () => {
     if (process.server) return
     loading.value = true
@@ -206,37 +162,109 @@ export const useInventarioStore = defineStore('inventario', () => {
 
     try {
       const $supabase = getSupabase()
-      const { data, error: fetchError } = await $supabase
-        .from('vehiculos')
-        .select(
-          `
-          id,
-          bin,
-          qr_codigo,
-          color,
-          estado,
-          fecha_registro,
-          created_at,
-          updated_at,
-          modelo:modelos_vehiculo(marca, modelo, anio, tipo),
-          improntas:improntas(id, estado, fecha, created_at),
-          inventarios:inventarios(id, completo, fecha, checklist_json, usuario:usuarios!inventarios_usuario_id_fkey(nombres, apellidos))
-        `,
-        )
+
+      // 1. Improntas completadas/revisadas — FUENTE PRINCIPAL de vehículos
+      const { data: improntasData, error: impErr } = await $supabase
+        .from('improntas_registro')
+        .select('*')
+        .in('estado', ['completada', 'revisada'])
         .order('created_at', { ascending: false })
 
-      if (fetchError) throw fetchError
+      if (impErr) throw impErr
 
-      const list = (data || []) as unknown as VehiculoRow[]
-      vehiculos.value = list.map(mapVehiculo)
-    } catch (err: any) {
+      const improntas = (improntasData || []) as ImprontaRegistroRow[]
+
+      // 2. Tabla vehiculos (legacy) — necesitamos el id numérico para cruzar con inventarios
+      const { data: vehData } = await $supabase
+        .from('vehiculos')
+        .select('id, bin, estado')
+
+      const vehByVin = new Map<string, VehiculoLegacyRow>()
+      for (const v of (vehData || []) as VehiculoLegacyRow[]) {
+        if (v.bin) vehByVin.set(v.bin.toLowerCase(), v)
+      }
+
+      // 3. Inventarios (un registro por vehículo aprobado/rechazado)
+      const { data: invData } = await $supabase
+        .from('inventarios')
+        .select(
+          'id, vehiculo_id, completo, fecha, checklist_json, usuario:usuarios!inventarios_usuario_id_fkey(nombres, apellidos)'
+        )
+
+      // Mapa: vehiculo_id → inventario más reciente
+      const invByVehId = new Map<number, InventarioRow>()
+      for (const row of (invData || []) as InventarioRow[]) {
+        const existing = invByVehId.get(row.vehiculo_id)
+        if (!existing || new Date(row.fecha || 0) > new Date(existing.fecha || 0)) {
+          invByVehId.set(row.vehiculo_id, row)
+        }
+      }
+
+      // 4. Mapear improntas → InventarioVehiculo
+      // Deduplicar por VIN (quedarnos con la impronta más reciente de cada VIN)
+      const seenVins = new Set<string>()
+      const result: InventarioVehiculo[] = []
+
+      for (const imp of improntas) {
+        const vinKey = imp.vin.toLowerCase()
+        if (seenVins.has(vinKey)) continue
+        seenVins.add(vinKey)
+
+        const vehLegacy = vehByVin.get(vinKey)
+        const inv = vehLegacy ? invByVehId.get(vehLegacy.id) : undefined
+
+        const improntaCompletada = imp.estado === 'completada' || imp.estado === 'revisada'
+        const improntaRechazada = imp.estado === 'rechazado' || imp.estado === 'rechazada'
+        const inventarioCompletado = !!inv
+        const inventarioAprobado = inv?.completo ?? false
+        const vehEstado = (vehLegacy?.estado || '').toLowerCase()
+        const esDespachado = vehEstado === 'despachado'
+
+        const inspectorName = inv?.usuario
+          ? `${inv.usuario.nombres} ${inv.usuario.apellidos}`.trim()
+          : ''
+        const resultado = inv?.checklist_json?.resumen as InventarioResultado | undefined
+
+        const base: Omit<InventarioVehiculo, 'estado'> = {
+          id: vehLegacy?.id ?? 0,
+          vin: imp.vin,
+          placa: imp.placa || '',
+          marca: imp.marca || '—',
+          modelo: imp.modelo || '',
+          anio: imp.anio || '',
+          color: imp.color || '—',
+          cliente: imp.cliente || '',
+          fechaRecepcion: toDateOnly(imp.fecha_creacion || imp.created_at),
+          horaRecepcion: imp.hora_creacion?.substring(0, 5) || '',
+          improntaId: imp.id,
+          improntaFolio: imp.folio,
+          improntaCompletada,
+          improntaRechazada,
+          fechaImpronta: toDateOnly(imp.fecha_creacion),
+          inventarioCompletado,
+          inventarioAprobado,
+          inventarioFecha: inv?.fecha ? toDateOnly(inv.fecha) : undefined,
+          inventarioInspector: inspectorName || undefined,
+          inventarioResultado: resultado,
+          despachado: esDespachado,
+        }
+
+        result.push({ ...base, estado: calcularEstado(base) })
+      }
+
+      vehiculos.value = result
+    } catch (err: unknown) {
       console.error('Error cargando inventario:', err)
-      error.value = err?.message || 'Error cargando inventario'
+      error.value = err instanceof Error ? err.message : 'Error cargando inventario'
       vehiculos.value = []
     } finally {
       loading.value = false
     }
   }
+
+  // =========================================================================
+  // Helpers para aprobar / rechazar
+  // =========================================================================
 
   const getUsuarioId = async () => {
     const authStore = useAuthStore()
@@ -246,10 +274,78 @@ export const useInventarioStore = defineStore('inventario', () => {
     return profile?.id ?? null
   }
 
+  /**
+   * Asegura que el vehículo exista en la tabla legacy `vehiculos` (necesaria
+   * para la FK vehiculo_id de la tabla inventarios). Si no existe lo crea.
+   * Retorna el id numérico.
+   */
+  const ensureVehiculoLegacy = async (
+    $supabase: SupabaseClient,
+    v: InventarioVehiculo
+  ): Promise<number> => {
+    if (v.id && v.id > 0) return v.id
+
+    // Buscar por VIN
+    const { data: existing } = await $supabase
+      .from('vehiculos')
+      .select('id')
+      .eq('bin', v.vin)
+      .maybeSingle()
+
+    if (existing?.id) {
+      v.id = existing.id
+      return existing.id
+    }
+
+    // Buscar/crear modelo
+    let modeloId: number | null = null
+    const { data: mod } = await $supabase
+      .from('modelos_vehiculo')
+      .select('id')
+      .eq('marca', v.marca)
+      .eq('modelo', v.modelo)
+      .limit(1)
+      .maybeSingle()
+
+    if (mod) {
+      modeloId = mod.id
+    } else {
+      const { data: nuevoMod } = await $supabase
+        .from('modelos_vehiculo')
+        .insert({
+          marca: v.marca,
+          modelo: v.modelo,
+          anio: parseInt(v.anio) || new Date().getFullYear(),
+        })
+        .select('id')
+        .single()
+      modeloId = nuevoMod?.id ?? null
+    }
+
+    // Crear vehículo legacy
+    const { data: nuevoVeh } = await $supabase
+      .from('vehiculos')
+      .insert({
+        bin: v.vin,
+        qr_codigo: v.vin,
+        placa: v.placa || null,
+        color: v.color,
+        estado: 'impronta_completada',
+        fecha_registro: new Date().toISOString(),
+        modelo_id: modeloId,
+      })
+      .select('id')
+      .single()
+
+    const newId = nuevoVeh?.id ?? 0
+    v.id = newId
+    return newId
+  }
+
   const aprobarInventario = async (
     vin: string,
     resultado: InventarioResultado,
-    checklistJson: any,
+    checklistJson: unknown
   ) => {
     const vehiculo = getByVin(vin)
     if (!vehiculo) return
@@ -258,37 +354,38 @@ export const useInventarioStore = defineStore('inventario', () => {
     const usuarioId = await getUsuarioId()
     const now = new Date().toISOString()
 
-    const payload = {
-      vehiculo_id: vehiculo.id,
+    // Asegurar que existe en tabla vehiculos (FK)
+    const vehiculoId = await ensureVehiculoLegacy($supabase, vehiculo)
+    if (!vehiculoId) throw new Error('No se pudo crear el vehículo en la tabla vehiculos')
+
+    // Insertar inventario
+    const { error: invError } = await $supabase.from('inventarios').insert({
+      vehiculo_id: vehiculoId,
       checklist_json: checklistJson,
       completo: true,
       usuario_id: usuarioId,
       fecha: now,
-    }
-
-    const { error: invError } = await $supabase.from('inventarios').insert(payload)
+    })
     if (invError) {
       console.error('Error guardando inventario:', invError)
       throw new Error(invError.message)
     }
 
-    const { error: vehError } = await $supabase
+    // Actualizar estado en vehiculos legacy
+    await $supabase
       .from('vehiculos')
       .update({ estado: 'listo_despacho', updated_at: now })
-      .eq('id', vehiculo.id)
+      .eq('id', vehiculoId)
 
-    if (vehError) {
-      console.error('Error actualizando vehiculo:', vehError)
-      throw new Error(vehError.message)
-    }
-
+    // Actualizar estado local
     vehiculo.inventarioCompletado = true
     vehiculo.inventarioAprobado = true
     vehiculo.inventarioFecha = toDateOnly(now)
     vehiculo.inventarioResultado = resultado
+    vehiculo.estado = calcularEstado(vehiculo)
   }
 
-  const rechazarInventario = async (vin: string, motivo: string, checklistJson: any) => {
+  const rechazarInventario = async (vin: string, motivo: string, checklistJson: unknown) => {
     const vehiculo = getByVin(vin)
     if (!vehiculo) return
 
@@ -296,38 +393,38 @@ export const useInventarioStore = defineStore('inventario', () => {
     const usuarioId = await getUsuarioId()
     const now = new Date().toISOString()
 
-    const payload = {
-      vehiculo_id: vehiculo.id,
+    // Asegurar que existe en tabla vehiculos (FK)
+    const vehiculoId = await ensureVehiculoLegacy($supabase, vehiculo)
+    if (!vehiculoId) throw new Error('No se pudo crear el vehículo en la tabla vehiculos')
+
+    // Insertar inventario rechazado
+    const { error: invError } = await $supabase.from('inventarios').insert({
+      vehiculo_id: vehiculoId,
       checklist_json: checklistJson,
       completo: false,
       usuario_id: usuarioId,
       fecha: now,
-    }
-
-    const { error: invError } = await $supabase.from('inventarios').insert(payload)
+    })
     if (invError) {
       console.error('Error guardando inventario:', invError)
       throw new Error(invError.message)
     }
 
-    const { error: vehError } = await $supabase
+    // Actualizar estado en vehiculos legacy
+    await $supabase
       .from('vehiculos')
       .update({ estado: 'rechazado', updated_at: now })
-      .eq('id', vehiculo.id)
+      .eq('id', vehiculoId)
 
-    if (vehError) {
-      console.error('Error actualizando vehiculo:', vehError)
-      throw new Error(vehError.message)
-    }
-
-    // Actualizar también la impronta a rechazado
+    // Marcar impronta como rechazada en improntas_registro
     if (vehiculo.improntaId) {
       await $supabase
-        .from('improntas')
-        .update({ estado: 'rechazado', updated_at: now })
-        .eq('id', Number(vehiculo.improntaId))
+        .from('improntas_registro')
+        .update({ estado: 'rechazado' })
+        .eq('id', vehiculo.improntaId)
     }
 
+    // Actualizar estado local
     vehiculo.inventarioCompletado = true
     vehiculo.inventarioAprobado = false
     vehiculo.improntaCompletada = false
@@ -340,6 +437,7 @@ export const useInventarioStore = defineStore('inventario', () => {
       na: 0,
       nota: motivo,
     }
+    vehiculo.estado = calcularEstado(vehiculo)
   }
 
   return {

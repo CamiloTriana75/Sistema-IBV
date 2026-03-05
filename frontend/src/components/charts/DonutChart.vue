@@ -20,7 +20,7 @@ const radius = computed(() => (size.value - thickness.value) / 2)
 const circumference = computed(() => 2 * Math.PI * radius.value)
 const center = computed(() => size.value / 2)
 
-const total = computed(() => props.segments.reduce((s, seg) => s + seg.value, 0))
+const total = computed(() => props.segments.reduce((s: number, seg: Segment) => s + seg.value, 0))
 
 interface ComputedSegment extends Segment {
   offset: number
@@ -30,7 +30,7 @@ interface ComputedSegment extends Segment {
 
 const computed_segments = computed<ComputedSegment[]>(() => {
   let accumulated = 0
-  return props.segments.map((seg) => {
+  return props.segments.map((seg: Segment) => {
     const dash = total.value > 0 ? (seg.value / total.value) * circumference.value : 0
     const gap = circumference.value - dash
     const offset = circumference.value - accumulated

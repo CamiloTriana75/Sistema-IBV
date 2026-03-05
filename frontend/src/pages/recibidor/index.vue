@@ -1,13 +1,11 @@
 <script setup lang="ts">
 import { ref, computed } from 'vue'
 import { useImprontaStore } from '~/stores/improntaStore'
-import { useContenedorStore } from '~/stores/contenedorStore'
 import { useVehiculoStore, type VehiculoPipeline } from '~/stores/vehiculoStore'
 
 definePageMeta({ layout: 'admin', middleware: ['auth', 'recibidor'] })
 
 const store = useImprontaStore()
-const contStore = useContenedorStore()
 const vehStore = useVehiculoStore()
 
 // Vehicle search
@@ -78,20 +76,6 @@ const estadoVehBadge = (e: string) =>
         <p class="text-gray-500 mt-1">Gestión de recepción e impronta de vehículos</p>
       </div>
       <div class="flex gap-3">
-        <NuxtLink
-          to="/recibidor/contenedores-recibir"
-          class="inline-flex items-center gap-2 px-5 py-2.5 bg-primary-600 text-white font-semibold rounded-xl hover:bg-primary-700 transition shadow-lg shadow-primary-500/25"
-        >
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-            />
-          </svg>
-          Contenedores por Recibir
-        </NuxtLink>
         <NuxtLink
           to="/recibidor/escaneo"
           class="inline-flex items-center gap-2 px-5 py-2.5 border border-gray-200 bg-white text-gray-700 font-semibold rounded-xl hover:bg-gray-50 transition"
@@ -226,55 +210,6 @@ const estadoVehBadge = (e: string) =>
     </div>
 
     <!-- Contenedores pendientes (acceso rápido) -->
-    <div
-      v-if="contStore.pendientes + contStore.enRecepcion > 0"
-      class="bg-gradient-to-r from-primary-50 to-blue-50 rounded-xl border border-primary-100 p-5 mb-6"
-    >
-      <div class="flex items-center justify-between mb-3">
-        <div class="flex items-center gap-3">
-          <div class="w-10 h-10 bg-primary-500 rounded-xl flex items-center justify-center">
-            <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-              />
-            </svg>
-          </div>
-          <div>
-            <h3 class="text-sm font-bold text-gray-900">Contenedores por Recibir</h3>
-            <p class="text-xs text-gray-500">
-              {{ contStore.pendientes }} pendientes · {{ contStore.enRecepcion }} en recepción
-            </p>
-          </div>
-        </div>
-        <NuxtLink
-          to="/recibidor/contenedores-recibir"
-          class="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition shadow-md shadow-primary-500/25"
-        >
-          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path
-              stroke-linecap="round"
-              stroke-linejoin="round"
-              stroke-width="2"
-              d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"
-            />
-          </svg>
-          Ver Contenedores
-        </NuxtLink>
-      </div>
-      <div class="flex gap-2 flex-wrap">
-        <span
-          v-for="cont in contStore.contenedores.filter((c: any) => c.estado !== 'completado')"
-          :key="cont.id"
-          class="text-xs font-mono font-bold bg-white px-3 py-1.5 rounded-lg border border-primary-200 text-primary-700"
-        >
-          {{ cont.codigo }} ({{ cont.vehiculosEsperados }} veh.)
-        </span>
-      </div>
-    </div>
-
     <!-- Búsqueda de Vehículos -->
     <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
       <!-- Header / toggle row -->
